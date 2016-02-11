@@ -22,10 +22,8 @@ DEFINE_LOGGER(DtlsSocket, "dtls.DtlsSocket");
 class dtls::DtlsSocketTimer : public DtlsTimer
 {
   public:
-     DtlsSocketTimer(unsigned int seq,DtlsSocket *socket): DtlsTimer(seq),mSocket(socket){}
-     ~DtlsSocketTimer()
-      {
-      }
+      DtlsSocketTimer(unsigned int seq, DtlsSocket *socket): DtlsTimer(seq), mSocket(socket){}
+      ~DtlsSocketTimer(){}
 
       void expired()
       {
@@ -40,8 +38,9 @@ int dummy_cb(int d, X509_STORE_CTX *x)
    return 1;
 }
 
-DtlsSocket::DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext, DtlsFactory* factory, enum SocketType type):
-   mSocketContext(socketContext),
+DtlsSocket::DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext, 
+	DtlsFactory* factory, enum SocketType type)
+	:mSocketContext(socketContext),
    mFactory(factory),
    mReadTimer(0),
    mSocketType(type),
@@ -53,8 +52,7 @@ DtlsSocket::DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext, DtlsF
    assert(mFactory->mContext);
    mSsl=SSL_new(mFactory->mContext);
    assert(mSsl!=0);
-   mSsl->ctx = mFactory->mContext;
-   mSsl->session_ctx = mFactory->mContext;
+   mSsl->ctx = mSsl->session_ctx = mFactory->mContext;
 
    switch(type)
    {
@@ -85,7 +83,9 @@ DtlsSocket::DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext, DtlsF
 
 DtlsSocket::~DtlsSocket()
 {
-   if(mReadTimer) mReadTimer->invalidate();
+	 if (mReadTimer){
+		  mReadTimer->invalidate();
+	 }
 
    // Properly shutdown the socket and free it - note: this also free's the BIO's
    if (mSsl != NULL) {
@@ -95,8 +95,10 @@ DtlsSocket::~DtlsSocket()
    }
 
    // Ownership of the factory is basically transferred to DtlsSocket.
-   delete mFactory;
-   mFactory = NULL;
+	 if (mFactory){
+		 delete mFactory;
+		 mFactory = NULL;
+	 }
 }
 
 void
@@ -115,9 +117,9 @@ DtlsSocket::startClient()
 bool
 DtlsSocket::handlePacketMaybe(const unsigned char* bytes, unsigned int len)
 {
-   DtlsFactory::PacketType pType=DtlsFactory::demuxPacket(bytes,len);
+   DtlsFactory::PacketType pType = DtlsFactory::demuxPacket(bytes,len);
 
-   if(pType!=DtlsFactory::dtls)
+   if(pType != DtlsFactory::dtls)
       return false;
 
    BIO_reset(mInBio);
@@ -130,7 +132,7 @@ DtlsSocket::handlePacketMaybe(const unsigned char* bytes, unsigned int len)
    try {
      doHandshakeIteration();
    } catch (int e) {
-	return false;
+		 return false;
    }
    return true;
 }
@@ -149,14 +151,13 @@ void
 DtlsSocket::doHandshakeIteration()
 {
    boost::mutex::scoped_lock lock(handshakeMutex_);
-   char errbuf[1024];
+	 char errbuf[1024] = {0};
    int sslerr;
 
    if(mHandshakeCompleted)
       return;
 
    int r=SSL_do_handshake(mSsl);
-   errbuf[0]=0;
    ERR_error_string_n(ERR_peek_error(),errbuf,sizeof(errbuf));
 
    // See what was written
@@ -169,8 +170,10 @@ DtlsSocket::doHandshakeIteration()
    case SSL_ERROR_NONE:
       mHandshakeCompleted = true;
       mSocketContext->handshakeCompleted();
-      if(mReadTimer) mReadTimer->invalidate();
-      mReadTimer = 0;
+			if (mReadTimer){
+				mReadTimer->invalidate();
+				mReadTimer = 0;
+			} 
       break;
    case SSL_ERROR_WANT_READ:
       // There are two cases here:
@@ -185,14 +188,13 @@ DtlsSocket::doHandshakeIteration()
       if(outBioLen)
       {
          if(mReadTimer) mReadTimer->invalidate();
-         mReadTimer=new DtlsSocketTimer(0,this);
+         mReadTimer = new DtlsSocketTimer(0, this);
          mFactory->mTimerContext->addTimer(mReadTimer,500);
       }
 
       break;
    default:
       ELOG_ERROR( "SSL error %d", sslerr );
-
       mSocketContext->handshakeFailed(errbuf);
       // Note: need to fall through to propagate alerts, if any
       break;

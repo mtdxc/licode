@@ -40,11 +40,13 @@ class RtpPacketQueue
     DECLARE_LOGGER();
 
 public:
-    RtpPacketQueue(double depthInSeconds = DEFAULT_DEPTH, double maxDepthInSeconds = DEFAULT_MAX );
+    RtpPacketQueue(double depthInSeconds = DEFAULT_DEPTH, double maxDepthInSeconds = DEFAULT_MAX);
     ~RtpPacketQueue(void);
+
     void setTimebase(unsigned int timebase);
     void pushPacket(const char *data, int length);
     boost::shared_ptr<dataPacket> popPacket(bool ignore_depth = false);
+
     int getSize();  // total size of all items in the queue
     bool hasData(); // whether or not current queue depth is >= depth_
 

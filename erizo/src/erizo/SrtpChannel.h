@@ -64,14 +64,14 @@ public:
 	 * @param receivingKey The key for unprotecting data
 	 * @return true if everything is ok
 	 */
-	bool setRtpParams(char* sendingKey, char* receivingKey);
+	bool setRtpParams(const char* sendingKey, const char* receivingKey);
 	/**
 	 * Sets a key pair for the RTCP channel
 	 * @param sendingKey The key for protecting data
 	 * @param receivingKey The key for unprotecting data
 	 * @return true if everything is ok
 	 */
-	bool setRtcpParams(char* sendingKey, char* receivingKey);
+	bool setRtcpParams(const char* sendingKey, const char* receivingKey);
 
 private:
 	enum TransmissionType {
@@ -84,6 +84,8 @@ private:
 	bool active_;
 	srtp_t send_session_;
 	srtp_t receive_session_;
+
+	// unused
 	srtp_t rtcp_send_session_;
 	srtp_t rtcp_receive_session_;
 };

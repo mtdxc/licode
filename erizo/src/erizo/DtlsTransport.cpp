@@ -74,7 +74,8 @@ void Resender::resend(const boost::system::error_code& ec) {
   }
 }
 
-DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, bool bundle, bool rtcp_mux, TransportListener *transportListener, 
+DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, 
+		bool bundle, bool rtcp_mux, TransportListener *transportListener, 
     const IceConfig& iceConfig, std::string username, std::string password, bool isServer):
   Transport(med, transport_name, bundle, rtcp_mux, transportListener, iceConfig), 
   readyRtp(false), readyRtcp(false), running_(false) {
@@ -84,11 +85,14 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, b
 
   isServer_ = isServer;
 
-  // TODO the ownership of classes here is....really awkward. Basically, the DtlsFactory created here ends up being owned the the created client
+  // TODO the ownership of classes here is....really awkward. 
+	// Basically, the DtlsFactory created here ends up being owned the the created client
   // which is in charge of nuking it.  All of the session state is tracked in the DtlsSocketContext.
   //
   // A much more sane architecture would be simply having the client _be_ the context.
   int comps = 1;
+
+	// create dtls context for rtp/rtcp, and register self as callback
   if (isServer_){
     ELOG_DEBUG("CREATE OFFER, WE USE A SERVER");
     (new DtlsFactory())->createServer(dtlsRtp);
@@ -111,8 +115,10 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, b
       dtlsRtcp->setDtlsReceiver(this);
     }
   }
+	// create nice compoment
   nice_.reset(new NiceConnection(med, transport_name, this, comps, iceConfig_, username, password));
-  running_ =true;
+  running_ = true;
+	// begin data recv process
   getNice_Thread_ = boost::thread(&DtlsTransport::getNiceDataLoop, this);
 
 }
@@ -128,13 +134,15 @@ DtlsTransport::~DtlsTransport() {
 
 void DtlsTransport::onNiceData(unsigned int component_id, char* data, int len, NiceConnection* nice) {
   int length = len;
-  SrtpChannel *srtp = srtp_.get();
-  if (DtlsTransport::isDtlsPacket(data, len)) {
+  //if (DtlsTransport::isDtlsPacket(data, len)) 
+	if (DtlsFactory::dtls == DtlsFactory::demuxPacket(reinterpret_cast<const unsigned char*>(data), len))
+	{
     ELOG_DEBUG("%s - Received DTLS message from %u", transport_name.c_str(), component_id);
     if (component_id == 1) {
       if (rtpResender.get()!=NULL) {
         rtpResender->cancel();
       }
+			// write to dtls context, exchange srtp key
       dtlsRtp->read(reinterpret_cast<unsigned char*>(data), len);
     } else {
       if (rtcpResender.get()!=NULL) {
@@ -145,18 +153,17 @@ void DtlsTransport::onNiceData(unsigned int component_id, char* data, int len, N
     return;
   } else if (this->getTransportState() == TRANSPORT_READY) {
     memcpy(unprotectBuf_, data, len);
-
+		SrtpChannel *srtp = srtp_.get();
     if (dtlsRtcp != NULL && component_id == 2) {
       srtp = srtcp_.get();
     }
     if (srtp != NULL){
-      RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (unprotectBuf_);
+      RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(unprotectBuf_);
       if (chead->isRtcp()){
         if(srtp->unprotectRtcp(unprotectBuf_, &length)<0){
           return;
         }
       } else {
-
         if(srtp->unprotectRtp(unprotectBuf_, &length)<0){
           return;
         }
@@ -168,20 +175,22 @@ void DtlsTransport::onNiceData(unsigned int component_id, char* data, int len, N
     if (length <= 0){
       return;
     }
+		// unprotected data callback
     getTransportListener()->onTransportData(unprotectBuf_, length, this);
   }
 }
 
 void DtlsTransport::onCandidate(const CandidateInfo &candidate, NiceConnection *conn) {
+	// pass through callback
   getTransportListener()->onCandidate(candidate, this);
 }
-  
-
 
 void DtlsTransport::write(char* data, int len) {
   boost::mutex::scoped_lock lock(writeMutex_);
-  if (nice_==NULL)
-    return;
+	if (nice_ == NULL){
+		ELOG_DEBUG("write %d error: skip without nice", len);
+		return;
+	}
   int length = len;
   SrtpChannel *srtp = srtp_.get();
 
@@ -189,6 +198,7 @@ void DtlsTransport::write(char* data, int len) {
     memcpy(protectBuf_, data, len);
     int comp = 1;
     RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (protectBuf_);
+		// perforence? use range compare
     if (chead->isRtcp()) {
       if (!rtcp_mux_) {
         comp = 2;
@@ -198,6 +208,7 @@ void DtlsTransport::write(char* data, int len) {
       }
       if (srtp && nice_->checkIceState() == NICE_READY) {
         if(srtp->protectRtcp(protectBuf_, &length)<0) {
+					ELOG_WARN("protectRtcp %d error", len);
           return;
         }
       }
@@ -207,6 +218,7 @@ void DtlsTransport::write(char* data, int len) {
 
       if (srtp && nice_->checkIceState() == NICE_READY) {
         if(srtp->protectRtp(protectBuf_, &length)<0) {
+					ELOG_WARN("protectRtp %d error", len);
           return;
         }
       }
@@ -214,6 +226,7 @@ void DtlsTransport::write(char* data, int len) {
     if (length <= 10) {
       return;
     }
+		// write data on ice
     if (nice_->checkIceState() == NICE_READY) {
       this->writeOnNice(comp, protectBuf_, length);
     }
@@ -222,6 +235,7 @@ void DtlsTransport::write(char* data, int len) {
 
 void DtlsTransport::writeDtls(DtlsSocketContext *ctx, const unsigned char* data, unsigned int len) {
   int comp = 1;
+	// 证书交换包，要重传
   if (ctx == dtlsRtcp.get()) {
     comp = 2;
     rtcpResender.reset(new Resender(nice_, comp, data, len));
@@ -232,7 +246,6 @@ void DtlsTransport::writeDtls(DtlsSocketContext *ctx, const unsigned char* data,
   }
 
   ELOG_DEBUG("%s - Sending DTLS message to %d", transport_name.c_str(), comp);
-
   nice_->sendData(comp, data, len);
 }
 
@@ -246,7 +259,7 @@ void DtlsTransport::onHandshakeCompleted(DtlsSocketContext *ctx, std::string cli
   if (ctx == dtlsRtp.get()) {
     ELOG_DEBUG("%s - Setting RTP srtp params, is Server? %d", transport_name.c_str(), this->isServer_);
     srtp_.reset(new SrtpChannel());
-    if (srtp_->setRtpParams((char*) clientKey.c_str(), (char*) serverKey.c_str())) {
+    if (srtp_->setRtpParams(clientKey.c_str(), serverKey.c_str())) {
       readyRtp = true;
     } else {
       updateTransportState(TRANSPORT_FAILED);
@@ -258,18 +271,19 @@ void DtlsTransport::onHandshakeCompleted(DtlsSocketContext *ctx, std::string cli
   if (ctx == dtlsRtcp.get()) {
     ELOG_DEBUG("%s - Setting RTCP srtp params", transport_name.c_str());
     srtcp_.reset(new SrtpChannel());
-    if (srtcp_->setRtpParams((char*) clientKey.c_str(), (char*) serverKey.c_str())) {
+    if (srtcp_->setRtpParams(clientKey.c_str(), serverKey.c_str())) {
       readyRtcp = true;
     } else {
       updateTransportState(TRANSPORT_FAILED);
     }
   }
-  ELOG_DEBUG("%s - Ready? %d %d", transport_name.c_str(), readyRtp, readyRtcp);
   if (readyRtp && readyRtcp) {
     ELOG_DEBUG("%s - Ready!!!", transport_name.c_str());
     updateTransportState(TRANSPORT_READY);
-  }
-
+	}
+	else{
+		ELOG_DEBUG("%s - Ready? %d %d", transport_name.c_str(), readyRtp, readyRtcp);
+	}
 }
 
 std::string DtlsTransport::getMyFingerprint() {
@@ -290,6 +304,7 @@ void DtlsTransport::updateIceState(IceState state, NiceConnection *conn) {
     updateTransportState(TRANSPORT_FAILED);
   }
   else if (state == NICE_READY) {
+		// start ssl key exchange
     ELOG_INFO("%s - Nice ready", transport_name.c_str());
     if (!isServer_ && dtlsRtp && !dtlsRtp->started) {
       ELOG_INFO("%s - DTLSRTP Start", transport_name.c_str());
@@ -306,6 +321,7 @@ void DtlsTransport::processLocalSdp(SdpInfo *localSdp_) {
   ELOG_DEBUG( "Processing Local SDP in DTLS Transport" );
   localSdp_->isFingerprint = true;
   localSdp_->fingerprint = getMyFingerprint();
+	// 由nice生成的用户名及密码
   std::string username;
   std::string password;
   nice_->getLocalCredentials(username, password);
@@ -318,6 +334,7 @@ void DtlsTransport::processLocalSdp(SdpInfo *localSdp_) {
   ELOG_DEBUG( "Processed Local SDP in DTLS Transport with credentials %s, %s", username.c_str(), password.c_str());
 }
 
+// read nice data and make onNiceData callback
 void DtlsTransport::getNiceDataLoop(){
   while(running_){
     p_ = nice_->getPacket();
@@ -330,15 +347,4 @@ void DtlsTransport::getNiceDataLoop(){
     }
   }
 }
-bool DtlsTransport::isDtlsPacket(const char* buf, int len) {
-  int data = DtlsFactory::demuxPacket(reinterpret_cast<const unsigned char*>(buf),len);
-  switch(data)
-  {
-    case DtlsFactory::dtls:
-      return true;
-      break;
-    default:
-      return false;
-      break;
-  }
-}
+

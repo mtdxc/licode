@@ -31,6 +31,7 @@ protected:
 class FeedbackSink {
 public:
     virtual ~FeedbackSink() {}
+		// 处理rtcp包
     int deliverFeedback(char* buf, int len){
         return this->deliverFeedback_(buf,len);
     }
@@ -49,7 +50,7 @@ public:
 };
 
 /*
- * A MediaSink
+ * A MediaSink 应该对应于某客户端
  */
 class MediaSink: public virtual Monitor{
 protected:
@@ -65,22 +66,23 @@ public:
     int deliverVideoData(char* buf, int len){
         return this->deliverVideoData_(buf, len);
     }
-    unsigned int getVideoSinkSSRC (){
+    unsigned int getVideoSinkSSRC(){
         boost::mutex::scoped_lock lock(myMonitor_);
         return videoSinkSSRC_;
     }
-    void setVideoSinkSSRC (unsigned int ssrc){
+    void setVideoSinkSSRC(unsigned int ssrc){
         boost::mutex::scoped_lock lock(myMonitor_);
         videoSinkSSRC_ = ssrc;
     }
-    unsigned int getAudioSinkSSRC (){
+    unsigned int getAudioSinkSSRC(){
         boost::mutex::scoped_lock lock(myMonitor_);
         return audioSinkSSRC_;
     }
-    void setAudioSinkSSRC (unsigned int ssrc){
+    void setAudioSinkSSRC(unsigned int ssrc){
         boost::mutex::scoped_lock lock(myMonitor_);
         audioSinkSSRC_ = ssrc;
     }
+		// why?
     FeedbackSource* getFeedbackSource(){
         boost::mutex::scoped_lock lock(myMonitor_);
         return sinkfbSource_;
@@ -107,6 +109,9 @@ protected:
     //can it accept feedback
     FeedbackSink* sourcefbSink_;
 public:
+		MediaSource() :videoSink_(NULL), audioSink_(NULL), sourcefbSink_(NULL){
+			videoSourceSSRC_ = audioSourceSSRC_ = 0;
+		}
     void setAudioSink(MediaSink* audioSink){
         boost::mutex::scoped_lock lock(myMonitor_);
         this->audioSink_ = audioSink;
@@ -121,19 +126,19 @@ public:
         return sourcefbSink_;
     }
     virtual int sendPLI()=0;
-    unsigned int getVideoSourceSSRC (){
+    unsigned int getVideoSourceSSRC(){
         boost::mutex::scoped_lock lock(myMonitor_);
         return videoSourceSSRC_;
     }
-    void setVideoSourceSSRC (unsigned int ssrc){
+    void setVideoSourceSSRC(unsigned int ssrc){
         boost::mutex::scoped_lock lock(myMonitor_);
         videoSourceSSRC_ = ssrc;
     }
-    unsigned int getAudioSourceSSRC (){
+    unsigned int getAudioSourceSSRC(){
         boost::mutex::scoped_lock lock(myMonitor_);
         return audioSourceSSRC_;
     }
-    void setAudioSourceSSRC (unsigned int ssrc){
+    void setAudioSourceSSRC(unsigned int ssrc){
         boost::mutex::scoped_lock lock(myMonitor_);
         audioSourceSSRC_ = ssrc;
     }

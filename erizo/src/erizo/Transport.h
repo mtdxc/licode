@@ -24,20 +24,26 @@ namespace erizo {
   };
   class Transport : public NiceConnectionListener {
     public:
-      boost::shared_ptr<NiceConnection> nice_;
       MediaType mediaType;
       std::string transport_name;
-      Transport(MediaType med, const std::string &transport_name, bool bundle, bool rtcp_mux, TransportListener *transportListener, const IceConfig& iceConfig) :
-        mediaType(med), transport_name(transport_name),rtcp_mux_(rtcp_mux), transpListener_(transportListener), state_(TRANSPORT_INITIAL), iceConfig_(iceConfig), bundle_(bundle)
-      {
+
+      Transport(MediaType med, const std::string &transport_name, bool bundle, bool rtcp_mux, 
+				TransportListener *transportListener, const IceConfig& iceConfig) :
+        mediaType(med), transport_name(transport_name),rtcp_mux_(rtcp_mux), transpListener_(transportListener), 
+				state_(TRANSPORT_INITIAL), iceConfig_(iceConfig), bundle_(bundle){
       }
       virtual ~Transport(){}
+
+			// declare in NiceConnectionListener noneed to do this why?
       virtual void updateIceState(IceState state, NiceConnection *conn) = 0;
       virtual void onNiceData(unsigned int component_id, char* data, int len, NiceConnection* nice) = 0;
       virtual void onCandidate(const CandidateInfo &candidate, NiceConnection *conn)=0;
+			//
       virtual void write(char* data, int len) = 0;
       virtual void processLocalSdp(SdpInfo *localSdp_) = 0;
+
       virtual boost::shared_ptr<NiceConnection> getNiceConnection() { return nice_; };
+
       void setTransportListener(TransportListener * listener) {
         transpListener_ = listener;
       }
@@ -62,14 +68,20 @@ namespace erizo {
       bool setRemoteCandidates(std::vector<CandidateInfo> &candidates, bool isBundle) {
         return nice_->setRemoteCandidates(candidates, isBundle);
       }
-      bool rtcp_mux_;
+			void setRemoteCredentials(const std::string& username, const std::string& password){
+				nice_->setRemoteCredentials(username, password);
+			}
     private:
       TransportListener *transpListener_;
-
       TransportState state_;
+
     protected:
+			boost::shared_ptr<NiceConnection> nice_;
       IceConfig iceConfig_;
+			// bundle stream audio and video
       bool bundle_;
+			// mux rtcp and rtp
+      bool rtcp_mux_;
   };
 }
 #endif

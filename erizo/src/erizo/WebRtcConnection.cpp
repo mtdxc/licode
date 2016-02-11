@@ -15,13 +15,12 @@ namespace erizo {
   WebRtcConnection::WebRtcConnection(bool audioEnabled, bool videoEnabled, 
       const IceConfig& iceConfig, bool trickleEnabled, WebRtcConnectionEventListener* listener)
       : connEventListener_(listener), iceConfig_(iceConfig), fec_receiver_(this){
-    ELOG_WARN("WebRtcConnection constructor stunserver %s stunPort %d minPort %d maxPort %d\n", iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.maxPort);
+    ELOG_INFO("WebRtcConnection %p constructor stunserver %s stunPort %d minPort %d maxPort %d\n", 
+			this, iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.maxPort);
     sequenceNumberFIR_ = 0;
     bundle_ = false;
     this->setVideoSinkSSRC(55543);
     this->setAudioSinkSSRC(44444);
-    videoSink_ = NULL;
-    audioSink_ = NULL;
     fbSink_ = NULL;
     sourcefbSink_ = this;
     sinkfbSource_ = this;
@@ -40,7 +39,7 @@ namespace erizo {
     rateControl_ = 0;
      
     sending_ = true;
-    rtcpProcessor_ = boost::shared_ptr<RtcpProcessor> (new RtcpProcessor((MediaSink*)this, (MediaSource*) this));
+    rtcpProcessor_.reset(new RtcpProcessor((MediaSink*)this, (MediaSource*)this));
     send_Thread_ = boost::thread(&WebRtcConnection::sendLoop, this);
   }
 
@@ -58,10 +57,14 @@ namespace erizo {
     videoSink_ = NULL;
     audioSink_ = NULL;
     fbSink_ = NULL;
-    delete videoTransport_;
-    videoTransport_=NULL;
-    delete audioTransport_;
-    audioTransport_= NULL;
+		if (videoTransport_){
+			delete videoTransport_;
+			videoTransport_=NULL;
+		}
+		if (audioTransport_){
+			delete audioTransport_;
+			audioTransport_= NULL;
+		}
   }
 
   bool WebRtcConnection::init() {
@@ -71,23 +74,21 @@ namespace erizo {
     return true;
   }
 
-  bool WebRtcConnection::createOffer (){
-
+  bool WebRtcConnection::createOffer(){
     bundle_ = true;
-    this->localSdp_.createOfferSdp();
-
+    localSdp_.createOfferSdp();
     ELOG_DEBUG("Creating sdp offer");
     ELOG_DEBUG("Setting SSRC to localSdp %u", this->getVideoSinkSSRC());
 
     localSdp_.videoSsrc = this->getVideoSinkSSRC();
     localSdp_.audioSsrc = this->getAudioSinkSSRC();
 
-
     if (!videoTransport_ ){ // For now we don't re/check transports, if they are already created we leave them there
       videoTransport_ = new DtlsTransport(VIDEO_TYPE, "video", bundle_, true, this, iceConfig_ , "", "", true);
     }
 
     if (connEventListener_ != NULL) {
+			// 根据transport创建sdp
       std::string msg = this->getLocalSdp();
       connEventListener_->notifyEvent(globalState_, msg);
     }
@@ -98,22 +99,21 @@ namespace erizo {
     ELOG_DEBUG("Set Remote SDP %s", sdp.c_str());
     remoteSdp_.initWithSdp(sdp, "");
 
-
     bundle_ = remoteSdp_.isBundle;
     ELOG_DEBUG("Is bundle? %d", bundle_);
     localSdp_.setOfferSdp(remoteSdp_);
         
-    ELOG_DEBUG("Video %d videossrc %u Audio %d audio ssrc %u Bundle %d", remoteSdp_.hasVideo, remoteSdp_.videoSsrc, remoteSdp_.hasAudio, remoteSdp_.audioSsrc,  bundle_);
+    ELOG_DEBUG("Video %d videossrc %u Audio %d audio ssrc %u Bundle %d", 
+			remoteSdp_.hasVideo, remoteSdp_.videoSsrc, remoteSdp_.hasAudio, remoteSdp_.audioSsrc,  bundle_);
 
     ELOG_DEBUG("Setting SSRC to localSdp %u", this->getVideoSinkSSRC());
-
     localSdp_.videoSsrc = this->getVideoSinkSSRC();
     localSdp_.audioSsrc = this->getAudioSinkSSRC();
 
     this->setVideoSourceSSRC(remoteSdp_.videoSsrc);
-    this->thisStats_.setVideoSourceSSRC(this->getVideoSourceSSRC());
+    thisStats_.setVideoSourceSSRC(this->getVideoSourceSSRC());
     this->setAudioSourceSSRC(remoteSdp_.audioSsrc);
-    this->thisStats_.setAudioSourceSSRC(this->getAudioSourceSSRC());
+    thisStats_.setAudioSourceSSRC(this->getAudioSourceSSRC());
     rtcpProcessor_->addSourceSsrc(this->getAudioSourceSSRC());
     rtcpProcessor_->addSourceSsrc(this->getVideoSourceSSRC());
 
@@ -124,10 +124,11 @@ namespace erizo {
           remoteSdp_.getCredentials(username, password, VIDEO_TYPE);
           if (!videoTransport_){
             ELOG_DEBUG("Creating videoTransport with creds %s, %s", username.c_str(), password.c_str());
-            videoTransport_ = new DtlsTransport(VIDEO_TYPE, "video", bundle_, remoteSdp_.isRtcpMux, this, iceConfig_ , username, password, false);
+            videoTransport_ = new DtlsTransport(VIDEO_TYPE, "video", bundle_, remoteSdp_.isRtcpMux, 
+							this, iceConfig_ , username, password, false);
           }else{ 
             ELOG_DEBUG("UPDATING videoTransport with creds %s, %s", username.c_str(), password.c_str());
-            videoTransport_->getNiceConnection()->setRemoteCredentials(username, password);
+            videoTransport_->setRemoteCredentials(username, password);
           }
         }
         if (!bundle_ && remoteSdp_.hasAudio) {
@@ -135,12 +136,12 @@ namespace erizo {
           remoteSdp_.getCredentials(username, password, AUDIO_TYPE);
           if (!audioTransport_){
             ELOG_DEBUG("Creating audioTransport with creds %s, %s", username.c_str(), password.c_str());
-            audioTransport_ = new DtlsTransport(AUDIO_TYPE, "audio", bundle_, remoteSdp_.isRtcpMux, this, iceConfig_, username, password, false);
+            audioTransport_ = new DtlsTransport(AUDIO_TYPE, "audio", bundle_, remoteSdp_.isRtcpMux, 
+							this, iceConfig_, username, password, false);
           }else{
             ELOG_DEBUG("UPDATING audioTransport with creds %s, %s", username.c_str(), password.c_str());
-            audioTransport_->getNiceConnection()->setRemoteCredentials(username, password);
+            audioTransport_->setRemoteCredentials(username, password);
           }
-
         }
       }
     }
@@ -165,7 +166,7 @@ namespace erizo {
 
     if (remoteSdp_.videoBandwidth !=0){
       ELOG_DEBUG("Setting remote bandwidth %u", remoteSdp_.videoBandwidth);
-      this->rtcpProcessor_->setVideoBW(remoteSdp_.videoBandwidth*1000);
+      rtcpProcessor_->setVideoBW(remoteSdp_.videoBandwidth*1000);
     }
 
     return true;
@@ -199,7 +200,7 @@ namespace erizo {
         ELOG_ERROR("Cannot add remote candidate with no Media (video or audio)");
       }
     }
-
+		// 把新增的候选地址加到remoteSdp_中
     for (uint8_t it = 0; it < tempSdp.getCandidateInfos().size(); it++){
       remoteSdp_.addCandidate(tempSdp.getCandidateInfos()[it]);
     }
@@ -257,7 +258,6 @@ namespace erizo {
             connEventListener_->notifyEvent(CONN_CANDIDATE, object2);
           }
         }
-        
       }
     }
   }
@@ -284,7 +284,10 @@ namespace erizo {
       return true;
   }
 
-  int32_t WebRtcConnection::OnReceivedPayloadData(const uint8_t* /*payload_data*/, const uint16_t /*payload_size*/, const webrtc::WebRtcRTPHeader* /*rtp_header*/) {
+  int32_t WebRtcConnection::OnReceivedPayloadData(
+		const uint8_t* /*payload_data*/, 
+		const uint16_t /*payload_size*/, 
+		const webrtc::WebRtcRTPHeader* /*rtp_header*/) {
       // Unused by WebRTC's FEC implementation; just something we have to implement.
       return 0;
   }
@@ -314,7 +317,6 @@ namespace erizo {
 
   int WebRtcConnection::deliverFeedback_(char* buf, int len){
     // Check where to send the feedback
-
     rtcpProcessor_->analyzeFeedback(buf,len);
     return len;
   }
@@ -386,7 +388,8 @@ namespace erizo {
           parseIncomingPayloadType(buf, len, AUDIO_PACKET);
           audioSink_->deliverAudioData(buf, len);
         } else {
-          ELOG_ERROR("Unknown SSRC %u, localVideo %u, remoteVideo %u, ignoring", recvSSRC, this->getVideoSourceSSRC(), this->getVideoSinkSSRC());
+          ELOG_ERROR("Unknown SSRC %u, localVideo %u, remoteVideo %u, ignoring", 
+						recvSSRC, this->getVideoSourceSSRC(), this->getVideoSinkSSRC());
         }
       } else if (transport->mediaType == AUDIO_TYPE) {
         if (audioSink_ != NULL) {
@@ -446,8 +449,6 @@ namespace erizo {
     
   }
 
-  
-     
   void WebRtcConnection::updateState(TransportState state, Transport * transport) {
     boost::mutex::scoped_lock lock(updateStateMutex_);
     WebRTCEvent temp = globalState_;
@@ -458,7 +459,6 @@ namespace erizo {
       return;
     }
     
-
     if (globalState_ == CONN_FAILED) {
       // if current state is failed -> noop
       return;
@@ -578,15 +578,17 @@ namespace erizo {
 
 
   void WebRtcConnection::queueData(int comp, const char* buf, int length, Transport *transport, packetType type) {
-    if ((audioSink_ == NULL && videoSink_ == NULL && fbSink_==NULL) || !sending_) //we don't enqueue data if there is nothing to receive it
+		if ((audioSink_ == NULL && videoSink_ == NULL && fbSink_ == NULL) || !sending_){
+			//we don't enqueue data if there is nothing to receive it
       return;
+		}
     boost::mutex::scoped_lock lock(receiveVideoMutex_);
     if (!sending_)
       return;
     if (comp == -1){
       sending_ = false;
       std::queue<dataPacket> empty;
-      std::swap( sendQueue_, empty);
+      std::swap(sendQueue_, empty);
       dataPacket p_;
       p_.comp = -1;
       sendQueue_.push(p_);
@@ -620,50 +622,51 @@ namespace erizo {
     uint32_t partial_bitrate = 0;
     uint64_t sentVideoBytes = 0;
     uint64_t lastSecondVideoBytes = 0;
-      while (sending_) {
-          dataPacket p;
-          {
-              boost::unique_lock<boost::mutex> lock(receiveVideoMutex_);
-              while (sendQueue_.size() == 0) {
-                  cond_.wait(lock);
-                  if (!sending_) {
-                      return;
-                  }
-              }
-              if(sendQueue_.front().comp ==-1){
-                  sending_ =  false;
-                  ELOG_DEBUG("Finishing send Thread, packet -1");
-                  sendQueue_.pop();
-                  return;
-              }
-
-              p = sendQueue_.front();
-              sendQueue_.pop();
-          }
-
-          if (bundle_ || p.type == VIDEO_PACKET) {
-            if (rateControl_){
-              if (p.type == VIDEO_PACKET){
-                if (rateControl_ == 1)
-                  continue;
-                gettimeofday(&now_, NULL);
-                uint64_t nowms = (now_.tv_sec * 1000) + (now_.tv_usec / 1000);
-                uint64_t markms = (mark_.tv_sec * 1000) + (mark_.tv_usec/1000);
-                if ((nowms - markms)>=100){
-                  mark_ = now_;
-                  lastSecondVideoBytes = sentVideoBytes;
+    while (sending_) {
+        dataPacket p;
+        {
+            boost::unique_lock<boost::mutex> lock(receiveVideoMutex_);
+            while (sendQueue_.size() == 0) {
+                cond_.wait(lock);
+                if (!sending_) {
+                    return;
                 }
-                partial_bitrate = ((sentVideoBytes - lastSecondVideoBytes)*8)*10;
-                if (partial_bitrate > this->rateControl_){
-                  continue;
-                }
-                sentVideoBytes+=p.length;
-              }
             }
-              videoTransport_->write(p.data, p.length);
-          } else {
-              audioTransport_->write(p.data, p.length);
+            if(sendQueue_.front().comp ==-1){
+                sending_ =  false;
+                ELOG_DEBUG("Finishing send Thread, packet -1");
+                sendQueue_.pop();
+                return;
+            }
+
+            p = sendQueue_.front();
+            sendQueue_.pop();
+        }
+
+        if (bundle_ || p.type == VIDEO_PACKET) {
+          if (rateControl_){
+            if (p.type == VIDEO_PACKET){
+              if (rateControl_ == 1)
+                continue;
+              gettimeofday(&now_, NULL);
+              uint64_t nowms = (now_.tv_sec * 1000) + (now_.tv_usec / 1000);
+              uint64_t markms = (mark_.tv_sec * 1000) + (mark_.tv_usec/1000);
+              if ((nowms - markms)>=100){
+                mark_ = now_;
+                lastSecondVideoBytes = sentVideoBytes;
+              }
+              partial_bitrate = ((sentVideoBytes - lastSecondVideoBytes)*8)*10;
+              if (partial_bitrate > this->rateControl_){
+								// 这边的continue可是直接丢弃视频包..
+                continue;
+              }
+              sentVideoBytes+=p.length;
+            }
           }
+          videoTransport_->write(p.data, p.length);
+        } else {
+          audioTransport_->write(p.data, p.length);
+        }
       }
   }
 }

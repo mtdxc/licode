@@ -68,15 +68,15 @@ namespace erizo{
       uint32_t version :2;
       uint32_t payloadtype :7;
       uint32_t marker :1;
-      uint32_t seqnum :16;
+			uint16_t seqnum;
       uint32_t timestamp;
       uint32_t ssrc;
-      uint32_t extensionpayload:16;
-      uint32_t extensionlength:16;
+			uint16_t extensionpayload;
+			uint16_t extensionlength;
 
       inline RtpHeader() :
-        cc(0), extension(0), padding(0), version(2), payloadtype(0), marker(
-            0), seqnum(0), timestamp(0), ssrc(0), extensionpayload(0), extensionlength(0) {
+        cc(0), extension(0), padding(0), version(2), payloadtype(0), marker(0), 
+				seqnum(0), timestamp(0), ssrc(0), extensionpayload(0), extensionlength(0) {
           // No implementation required
       }
 
@@ -150,10 +150,10 @@ namespace erizo{
       uint16_t osn;
 
       inline uint16_t getOsn(){
-        return ntohs (osn);
+        return ntohs(osn);
       }
       inline void setOs (uint16_t theOsn){
-        osn = htons (theOsn);
+        osn = htons(theOsn);
       }
   };
 
@@ -272,7 +272,7 @@ namespace erizo{
         
         struct remb_t{
           uint32_t ssrcsource;
-          uint32_t uniqueid;
+          uint32_t uniqueid; // "remb"
           uint32_t numssrc:8;
           uint32_t brLength :24;
           uint32_t ssrcfeedb;
@@ -285,15 +285,16 @@ namespace erizo{
         } pli;
 
       } report;
-      inline RtcpHeader(): blockcount(0), padding(0), version(2), packettype (0), length(0),
-     ssrc(0){
+      inline RtcpHeader(): blockcount(0), padding(0), version(2), packettype (0), length(0),ssrc(0){
       };
       inline bool isFeedback(void) {
         return (packettype==RTCP_Receiver_PT || 
             packettype==RTCP_PS_Feedback_PT ||
             packettype == RTCP_RTP_Feedback_PT);
       }
-      inline bool isRtcp(void) {        
+      inline bool isRtcp(void) {
+				// it should be okay?
+				// return packettype >= RTCP_Sender_PT && packettype <= RTCP_PS_Feedback_PT;
         return (packettype == RTCP_Sender_PT ||
             packettype == RTCP_APP ||
             isFeedback()            

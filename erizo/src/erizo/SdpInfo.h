@@ -69,8 +69,6 @@ public:
     CandidateInfo() :
             tag(0) {
     }
-    bool isBundle;
-    int tag;
     unsigned int priority;
     unsigned int componentId;
     std::string foundation;
@@ -84,6 +82,8 @@ public:
     std::string username;
     std::string password;
     MediaType mediaType;
+    bool isBundle;
+    int tag;
 };
 
 /**

@@ -207,7 +207,7 @@ int32_t FecReceiverImpl::AddReceivedRedPacket(
 
 int32_t FecReceiverImpl::ProcessReceivedFec() {
 
-    crit_sect_.lock();
+  crit_sect_.lock();
   if (!received_packet_list_.empty()) {
     // Send received media packet to VCM.
     if (!received_packet_list_.front()->is_fec) {

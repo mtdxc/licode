@@ -68,7 +68,7 @@ namespace erizo {
     bool shouldReset;
 
     MediaType mediaType;
-
+		// 保留最后20个sr
     std::list<boost::shared_ptr<SrData>> senderReports;
 
     void reset(uint32_t bandwidth);
@@ -123,8 +123,10 @@ class RtcpProcessor{
     static const int RR_VIDEO_BASE = 1000; 
     static const int REMB_TIMEOUT = 5000;
     static const uint64_t NTPTOMSCONV = 4294967296;
+		// ssrc->RtcpData
     std::map<uint32_t, boost::shared_ptr<RtcpData>> rtcpData_;
     boost::mutex mapLock_;
+
     MediaSink* rtcpSink_;  // The sink to send RRs
     MediaSource* rtcpSource_; // The source of SRs
     uint32_t defaultBw_;

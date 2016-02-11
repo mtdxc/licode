@@ -29,7 +29,8 @@ void RtpPacketQueue::pushPacket(const char *data, int length)
 
     if(lastSequenceNumberGiven_ >= 0 && (rtpSequenceLessThan(currentSequenceNumber, (uint16_t)lastSequenceNumberGiven_) || currentSequenceNumber == lastSequenceNumberGiven_)) {
         // this sequence number is less than the stuff we've already handed out, which means it's too late to be of any value.
-        ELOG_WARN("SSRC:%u, Payload: %u, discarding very late sample %d that is <= %d",currentHeader->getSSRC(),currentHeader->getPayloadType(), currentSequenceNumber, lastSequenceNumberGiven_);
+        ELOG_WARN("SSRC:%u, Payload: %u, discarding very late sample %d that is <= %d",
+					currentHeader->getSSRC(), currentHeader->getPayloadType(), currentSequenceNumber, lastSequenceNumberGiven_);
         return;
     }
 
@@ -81,6 +82,7 @@ boost::shared_ptr<dataPacket> RtpPacketQueue::popPacket(bool ignore_depth)
             packet = queue_.back();
             queue_.pop_back();
             const RtpHeader *header = reinterpret_cast<const RtpHeader*>(packet->data);
+						// last popPacket
             lastSequenceNumberGiven_ = (int)header->getSeqNumber();
         }
     }
@@ -107,7 +109,6 @@ double RtpPacketQueue::getDepthInSeconds() {
         const RtpHeader *newest = reinterpret_cast<const RtpHeader*>(queue_.front()->data);
         depth = ((double)(newest->getTimestamp() - oldest->getTimestamp())) / ((double)timebase_);
     }
-
     return depth;
 }
 

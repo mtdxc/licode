@@ -12,11 +12,11 @@ using boost::asio::ip::udp;
 namespace erizo {
   DEFINE_LOGGER(RtpSource, "RtpSource");
 
-  RtpSource::RtpSource(const int mediaPort, const std::string& feedbackDir, 
+  RtpSource::RtpSource(const int mediaPort, 
+			const std::string& feedbackDir, 
       const std::string& feedbackPort){
     socket_.reset(new udp::socket(io_service_, 
-          udp::endpoint(udp::v4(), 
-            mediaPort)));
+          udp::endpoint(udp::v4(), mediaPort)));
     resolver_.reset(new udp::resolver(io_service_));
     fbSocket_.reset(new udp::socket(io_service_, udp::endpoint(udp::v4(), 0)));
     query_.reset(new udp::resolver::query(udp::v4(), feedbackDir.c_str(), feedbackPort.c_str()));
@@ -31,13 +31,11 @@ namespace erizo {
   RtpSource::~RtpSource() {
     io_service_.stop();
     rtpSource_thread_.join();
-
   }
 
   int RtpSource::deliverFeedback_(char* buf, int len){
     fbSocket_->send_to(boost::asio::buffer(buf, len), *iterator_);
     return len;
-
   }
 
   void RtpSource::handleReceive(const::boost::system::error_code& error, 

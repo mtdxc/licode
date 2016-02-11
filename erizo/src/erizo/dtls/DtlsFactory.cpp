@@ -59,7 +59,8 @@ SSLInfoCallback(const SSL* s, int where, int ret) {
 int SSLVerifyCallback(int ok, X509_STORE_CTX* store) {
 
   if (!ok) {
-    char data[256], data2[256];
+		char data[256] = { 0 };
+		char data2[256] = { 0 };
     X509* cert = X509_STORE_CTX_get_current_cert(store);
     int depth = X509_STORE_CTX_get_error_depth(store);
     int err = X509_STORE_CTX_get_error(store);
@@ -92,16 +93,13 @@ int SSLVerifyCallback(int ok, X509_STORE_CTX* store) {
     // peer-to-peer mode: allow the certificate to be self-signed,
     // assuming it matches the digest that was specified.
     if (err == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) {
-      //unsigned char digest[EVP_MAX_MD_SIZE];
-      //std::size_t digest_length;
-
       ELOG_DEBUG2(sslLogger, "Accepted self-signed peer certificate authority");
       ok = 1;
 
       /* TODO
-
-      if (OpenSSLCertificate::
-         ComputeDigest(cert,
+			unsigned char digest[EVP_MAX_MD_SIZE];
+			std::size_t digest_length;
+      if (OpenSSLCertificate::ComputeDigest(cert,
                        stream->peer_certificate_digest_algorithm_,
                        digest, sizeof(digest),
                        &digest_length)) {
@@ -124,7 +122,7 @@ int SSLVerifyCallback(int ok, X509_STORE_CTX* store) {
 
 static const int KEY_LENGTH = 1024;
 
-int createCert (const string& pAor, int expireDays, int keyLen, X509*& outCert, EVP_PKEY*& outKey )
+int createCert(const string& pAor, int expireDays, int keyLen, X509*& outCert, EVP_PKEY*& outKey )
 {
    std::ostringstream info;
    info << "Generating new user cert for" << pAor;
@@ -137,11 +135,10 @@ int createCert (const string& pAor, int expireDays, int keyLen, X509*& outCert, 
    EVP_PKEY* privkey = EVP_PKEY_new();
    assert(privkey);
 
-   RSA* rsa = RSA_new();
-
    BIGNUM* exponent = BN_new();
    BN_set_word(exponent, 0x10001);
 
+   RSA* rsa = RSA_new();
    RSA_generate_key_ex(rsa, KEY_LENGTH, exponent, NULL);
 
    //RSA* rsa = RSA_generate_key(keyLen, RSA_F4, NULL, NULL);
@@ -217,7 +214,6 @@ void DtlsFactory::Init() {
 
     createCert("sip:licode@lynckia.com",365,1024,DtlsFactory::mCert,DtlsFactory::privkey);
   }
-
 }
 
 DtlsFactory::DtlsFactory()
@@ -226,10 +222,9 @@ DtlsFactory::DtlsFactory()
 
     mTimerContext = std::auto_ptr<TestTimerContext>(new TestTimerContext());
 
-
     ELOG_DEBUG("Creating Dtls factory");
 
-    mContext=SSL_CTX_new(DTLSv1_method());
+    mContext = SSL_CTX_new(DTLSv1_method());
     assert(mContext);
 
     int r = SSL_CTX_use_certificate(mContext, mCert);
@@ -241,7 +236,6 @@ DtlsFactory::DtlsFactory()
     SSL_CTX_set_cipher_list(mContext, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
 
     SSL_CTX_set_info_callback(mContext, SSLInfoCallback);
-
     SSL_CTX_set_verify(mContext, SSL_VERIFY_PEER |SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
                      SSLVerifyCallback);
 
@@ -251,7 +245,7 @@ DtlsFactory::DtlsFactory()
     r=SSL_CTX_set_tlsext_use_srtp(mContext, DefaultSrtpProfile);
     assert(r==0);
 
-    SSL_CTX_set_verify_depth (mContext, 2);
+    SSL_CTX_set_verify_depth(mContext, 2);
     SSL_CTX_set_read_ahead(mContext, 1);
 
     ELOG_DEBUG("Dtls factory created");

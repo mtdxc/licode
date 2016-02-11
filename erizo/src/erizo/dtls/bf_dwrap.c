@@ -90,7 +90,6 @@ static int dwrap_read(BIO *b, char *out, int outl)
 
 static int dwrap_write(BIO *b, const char *in, int inl)
 {
-
    if(!b || !in || (inl<=0)) {
     return 0;
   }
@@ -102,23 +101,19 @@ static int dwrap_write(BIO *b, const char *in, int inl)
 static int dwrap_puts(BIO *b, const char *in)
 {
    assert(0);
-
    return 0;
 }
 
 static int dwrap_gets(BIO *b, char *buf, int size)
 {
    assert(0);
-
    return 0;
 }
 
 static long dwrap_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
    long ret;
-   BIO_F_DWRAP_CTX *ctx;
-
-   ctx=b->ptr;
+   BIO_F_DWRAP_CTX *ctx = b->ptr;
 
    switch(cmd){
     case BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP:
@@ -139,17 +134,12 @@ static long dwrap_ctrl(BIO *b, int cmd, long num, void *ptr)
        ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
        break;
    }
-
    return ret;
 }
 
 static long dwrap_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 {
-   long ret;
-
-   ret=BIO_callback_ctrl(b->next_bio,cmd,fp);
-
-   return ret;
+   return BIO_callback_ctrl(b->next_bio,cmd,fp);
 }
 
 

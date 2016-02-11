@@ -24,7 +24,6 @@ namespace erizo {
           boost::asio::placeholders::bytes_transferred));
     send_Thread_ = boost::thread(&RtpSink::sendLoop, this);
     receive_Thread_ = boost::thread(&RtpSink::serviceLoop, this);
-
   }
 
   RtpSink::~RtpSink() {
@@ -63,31 +62,32 @@ namespace erizo {
     cond_.notify_one();
   }
 
-    void RtpSink::sendLoop(){
-        while (sending_ ) {
-            boost::unique_lock<boost::mutex> lock(queueMutex_);
-            while (sendQueue_.size() == 0) {
-                cond_.wait(lock);
-                if (!sending_) {
-                    return;
-                }
-            }
-            if(sendQueue_.front().comp ==-1){
-                sending_ =  false;
-                ELOG_DEBUG("Finishing send Thread, packet -1");
-                sendQueue_.pop();
-                return;
-            }
-            this->sendData(sendQueue_.front().data, sendQueue_.front().length);
-            sendQueue_.pop();
-        }
-    }
+  void RtpSink::sendLoop(){
+		while (sending_) {
+			boost::unique_lock<boost::mutex> lock(queueMutex_);
+			while (sendQueue_.size() == 0) {
+				cond_.wait(lock);
+				if (!sending_) {
+					return;
+				}
+			}
+			if (sendQueue_.front().comp == -1){
+				sending_ = false;
+				ELOG_DEBUG("Finishing send Thread, packet -1");
+				sendQueue_.pop();
+				return;
+			}
+			this->sendData(sendQueue_.front().data, sendQueue_.front().length);
+			sendQueue_.pop();
+		}
+  }
 
   void RtpSink::handleReceive(const::boost::system::error_code& error, 
       size_t bytes_recvd) {
     if (bytes_recvd>0&&this->fbSink_){
       this->fbSink_->deliverFeedback((char*)buffer_, (int)bytes_recvd);
     }
+		// no do async recv from again? only recv a packet?
   }
   
   void RtpSink::serviceLoop() {

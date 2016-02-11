@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 #include <queue>
-#include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
 
 #include "MediaDefinitions.h"
@@ -46,10 +45,6 @@ class IceConfig {
     std::string stunServer;
     uint16_t stunPort, turnPort, minPort, maxPort;
     IceConfig(){
-      turnServer = "";
-      turnUsername = "";
-      turnPass = "";
-      stunServer = "";
       stunPort = 0;
       turnPort = 0;
       minPort = 0;
@@ -66,8 +61,11 @@ enum IceState {
 
 class NiceConnectionListener {
 public:
+	// call on data recv
 	virtual void onNiceData(unsigned int component_id, char* data, int len, NiceConnection* conn)=0;
-	virtual void onCandidate(const CandidateInfo &candidate, NiceConnection *conn)=0;
+	// call when got local candidate on conn(candidate maybe repeat)
+	virtual void onCandidate(const CandidateInfo &candidate, NiceConnection *conn) = 0;
+	// call on ice state change
 	virtual void updateIceState(IceState state, NiceConnection *conn)=0;
 };
 
@@ -87,9 +85,10 @@ public:
 	/**
 	 * The transport name
 	 */
-  boost::scoped_ptr<std::string> transportName;
+  std::string transportName;
 	/**
 	 * The Obtained local candidates.
+	 * no used now.
 	 */
   boost::shared_ptr<std::vector<CandidateInfo> > localCandidates;
 
@@ -99,8 +98,13 @@ public:
 	 * @param transportName The name of the transport protocol. Was used when WebRTC used video_rtp instead of just rtp.
    * @param iceComponents Number of ice components pero connection. Default is 1 (rtcp-mux).
 	 */
-	NiceConnection(MediaType med, const std::string &transportName, NiceConnectionListener* listener, unsigned int iceComponents,
-		const IceConfig& iceConfig, std::string username = "", std::string password = "");
+	NiceConnection(MediaType med, 
+		const std::string &transportName, 
+		NiceConnectionListener* listener, 
+		unsigned int iceComponents,
+		const IceConfig& iceConfig, 
+		std::string username = "", 
+		std::string password = "");
 
 	virtual ~NiceConnection();
 	/**
@@ -115,7 +119,6 @@ public:
 	bool setRemoteCandidates(std::vector<CandidateInfo> &candidates, bool isBundle);
 	/**
 	 * Sets the local ICE Candidates. Called by C Nice functions.
-	 * @param candidates A vector containing the CandidateInfo.
 	 * @return true if successfull.
 	 */
 	void gatheringDone(uint stream_id);
@@ -123,7 +126,7 @@ public:
 	 * Sets a local ICE Candidates. Called by C Nice functions.
 	 * @param candidate info to look for
 	 */
-	void getCandidate(uint stream_id, uint component_id, const std::string &foundation);
+	void gotCandidate(uint stream_id, uint component_id, const std::string &foundation);
 	/**
 	 * Get local ICE credentials.
 	 * @param username and password where credentials will be stored
@@ -134,16 +137,16 @@ public:
 	 * Set remote credentials
 	 * @param username and password
 	 */
-  void setRemoteCredentials (const std::string& username, const std::string& password);
+  void setRemoteCredentials(const std::string& username, const std::string& password);
 
 	/**
 	 * Sets the associated Listener.
-	 * @param connection Pointer to the NiceConnectionListener.
+	 * @param listener Pointer to the NiceConnectionListener.
 	 */
 	void setNiceListener(NiceConnectionListener *listener);
-        /**
+  /**
 	 * Gets the associated Listener.
-	 * @param connection Pointer to the NiceConnectionListener.
+	 * @return Pointer to the NiceConnectionListener.
 	 */
 	NiceConnectionListener* getNiceListener();
 	/**
@@ -154,35 +157,35 @@ public:
 	 */
 	int sendData(unsigned int compId, const void* buf, int len);
 
-
-
-
 	void updateIceState(IceState state);
-  IceState checkIceState();
 	void updateComponentState(unsigned int compId, IceState state);
+  IceState checkIceState();
 
   void queueData(unsigned int component_id, char* buf, int len);
   
   CandidatePair getSelectedPair();
 
   packetPtr getPacket();
-  void close();
 
 private:
 	void init();
+  void close();
+
 	NiceAgent* agent_;
 	NiceConnectionListener* listener_;
-  	std::queue<packetPtr> niceQueue_;
-  	unsigned int candsDelivered_;
+	unsigned int candsDelivered_;
 
 	GMainContext* context_;
 	boost::thread m_Thread_;
 	IceState iceState_;
-  	boost::mutex queueMutex_;
+
+	boost::mutex queueMutex_;
 	boost::condition_variable cond_;
-  	unsigned int iceComponents_;
-  	std::map <unsigned int, IceState> comp_state_list_;
-  	bool running_;
+	std::queue<packetPtr> niceQueue_;
+
+	unsigned int iceComponents_;
+	std::map <unsigned int, IceState> comp_state_list_;
+	bool running_;
 	std::string ufrag_, upass_;
 };
 

@@ -41,37 +41,19 @@ class SrtpSessionKeys
 {
 public:
     SrtpSessionKeys() {
-        clientMasterKey = new unsigned char[SRTP_MASTER_KEY_KEY_LEN];
         clientMasterKeyLen = 0;
-        clientMasterSalt = new unsigned char[SRTP_MASTER_KEY_SALT_LEN];
         clientMasterSaltLen = 0;
-        serverMasterKey = new unsigned char[SRTP_MASTER_KEY_KEY_LEN];
         serverMasterKeyLen = 0;
-        serverMasterSalt = new unsigned char[SRTP_MASTER_KEY_SALT_LEN];
         serverMasterSaltLen = 0;
     }
-    ~SrtpSessionKeys() {
-        if(clientMasterKey) {
-            delete[] clientMasterKey; clientMasterKey = NULL;
-        }
-        if(serverMasterKey) {
-            delete[] serverMasterKey; serverMasterKey = NULL;
-        }
-        if( clientMasterSalt) {
-            delete[] clientMasterSalt; clientMasterSalt = NULL;
-        }
-        if(serverMasterSalt) {
-            delete[] serverMasterSalt; serverMasterSalt = NULL;
-        }
-    }
-      unsigned char *clientMasterKey;
-      int clientMasterKeyLen;
-      unsigned char *serverMasterKey;
-      int serverMasterKeyLen;
-      unsigned char *clientMasterSalt;
-      int clientMasterSaltLen;
-      unsigned char *serverMasterSalt;
-      int serverMasterSaltLen;
+		unsigned char clientMasterKey[SRTP_MASTER_KEY_KEY_LEN];
+		int clientMasterKeyLen;
+		unsigned char serverMasterKey[SRTP_MASTER_KEY_KEY_LEN];
+		int serverMasterKeyLen;
+		unsigned char clientMasterSalt[SRTP_MASTER_KEY_SALT_LEN];
+		int clientMasterSaltLen;
+		unsigned char serverMasterSalt[SRTP_MASTER_KEY_SALT_LEN];
+		int serverMasterSaltLen;
 };
 
 class DtlsSocket
@@ -145,8 +127,11 @@ class DtlsSocket
 class DtlsReceiver
 {
 public:
-      virtual void writeDtls(DtlsSocketContext *ctx, const unsigned char* data, unsigned int len)=0;
-      virtual void onHandshakeCompleted(DtlsSocketContext *ctx, std::string clientKey, std::string serverKey, std::string srtp_profile) = 0;
+      virtual void writeDtls(DtlsSocketContext *ctx, 
+				const unsigned char* data, unsigned int len)=0;
+      virtual void onHandshakeCompleted(DtlsSocketContext *ctx, 
+		  std::string clientKey, std::string serverKey, 
+		  std::string srtp_profile) = 0;
 };
 
 class DtlsSocketContext
@@ -158,11 +143,17 @@ class DtlsSocketContext
       //is required
       DtlsSocketContext();
       virtual ~DtlsSocketContext();
+
       void start();
+			// read for socket
       void read(const unsigned char* data, unsigned int len);
+			// write to socket(call DtlsReceiver::writeDtls need retransmite)
       void write(const unsigned char* data, unsigned int len);
+
+			// make onHandshakeCompleted callback
       void handshakeCompleted();
       void handshakeFailed(const char *err);
+
       void setDtlsReceiver(DtlsReceiver *recv);
       void setDtlsSocket(DtlsSocket *sock) {mSocket = sock;}
       std::string getFingerprint();

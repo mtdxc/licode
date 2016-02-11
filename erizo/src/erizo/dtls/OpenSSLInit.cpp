@@ -36,7 +36,7 @@ OpenSSLInit::init()
 OpenSSLInit::OpenSSLInit()
 {
 	int locks = CRYPTO_num_locks();
-   mMutexes = new boost::mutex[locks];
+    mMutexes = new boost::mutex[locks];
 	//mMutexes = new Mutex[locks];
 	CRYPTO_set_locking_callback(::resip_OpenSSLInit_lockingFunction);
 
@@ -62,10 +62,10 @@ OpenSSLInit::OpenSSLInit()
 	SSL_load_error_strings();
 //	OpenSSL_add_all_algorithms();
 //	OpenSSL_add_all_digests();
-//   	OpenSSL_add_all_ciphers();
+//  OpenSSL_add_all_ciphers();
 //	EVP_MD_CTX_init(ctx_);
-//   	EVP_DigestInit_ex(ctx_, EVP_sha256(), NULL);
-//   	EVP_MD_CTX_cleanup(&ctx_);
+//   EVP_DigestInit_ex(ctx_, EVP_sha256(), NULL);
+//   EVP_MD_CTX_cleanup(&ctx_);
 	assert(EVP_des_ede3_cbc());
    mInitialized = true;
 }

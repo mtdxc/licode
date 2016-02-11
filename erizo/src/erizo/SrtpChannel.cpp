@@ -7,12 +7,10 @@
 
 #include "SrtpChannel.h"
 
-
-
 namespace erizo {
-    DEFINE_LOGGER(SrtpChannel, "SrtpChannel");
-    bool SrtpChannel::initialized = false;
-    boost::mutex SrtpChannel::sessionMutex_;
+DEFINE_LOGGER(SrtpChannel, "SrtpChannel");
+bool SrtpChannel::initialized = false;
+boost::mutex SrtpChannel::sessionMutex_;
 
 SrtpChannel::SrtpChannel() {
   boost::mutex::scoped_lock lock(SrtpChannel::sessionMutex_);
@@ -39,17 +37,17 @@ SrtpChannel::~SrtpChannel() {
   }
 }
 
-bool SrtpChannel::setRtpParams(char* sendingKey, char* receivingKey) {
-    ELOG_DEBUG("Configuring srtp local key %s remote key %s", sendingKey,
-            receivingKey);
-  if (configureSrtpSession(&send_session_, sendingKey, SENDING) && configureSrtpSession(&receive_session_, receivingKey, RECEIVING)){
+bool SrtpChannel::setRtpParams(const char* sendingKey, const char* receivingKey) {
+    ELOG_DEBUG("Configuring srtp local key %s remote key %s", sendingKey, receivingKey);
+  if (configureSrtpSession(&send_session_, sendingKey, SENDING) 
+		&& configureSrtpSession(&receive_session_, receivingKey, RECEIVING)){
     active_ = true;
     return active_;
   }
   return false; 
 }
 
-bool SrtpChannel::setRtcpParams(char* sendingKey, char* receivingKey) {
+bool SrtpChannel::setRtcpParams(const char* sendingKey, const char* receivingKey) {
 
     return 0;
 }
@@ -65,7 +63,8 @@ int SrtpChannel::protectRtp(char* buffer, int *len) {
         RtcpHeader* head = reinterpret_cast<RtcpHeader*>(buffer);
         RtpHeader* headrtp = reinterpret_cast<RtpHeader*>(buffer);
 
-        ELOG_WARN("Error SrtpChannel::protectRtp %u packettype %d pt %d seqnum %u", val,head->packettype, headrtp->payloadtype, headrtp->seqnum);
+        ELOG_WARN("Error SrtpChannel::protectRtp %u packettype %d pt %d seqnum %u", val,
+					head->packettype, headrtp->payloadtype, headrtp->seqnum);
         return -1;
     }
 }
@@ -80,7 +79,8 @@ int SrtpChannel::unprotectRtp(char* buffer, int *len) {
     } else {
       RtcpHeader* head = reinterpret_cast<RtcpHeader*>(buffer);
       RtpHeader* headrtp = reinterpret_cast<RtpHeader*>(buffer);
-      ELOG_WARN("Error SrtpChannel::unprotectRtp %u packettype %d pt %d", val,head->packettype, headrtp->payloadtype);
+      ELOG_WARN("Error SrtpChannel::unprotectRtp %u packettype %d pt %d", val,
+				head->packettype, headrtp->payloadtype);
       return -1;
     }
 }

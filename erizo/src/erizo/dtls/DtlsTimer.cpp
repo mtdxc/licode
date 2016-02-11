@@ -52,11 +52,8 @@ TestTimerContext::addTimer(DtlsTimer *timer, unsigned int lifetime)
    delete mTimer;
 
    mTimer=timer;
-
    long timeMs = getTimeMS();
-
    mExpiryTime=timeMs+lifetime;
-
 }
 
 long long

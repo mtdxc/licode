@@ -29,18 +29,21 @@ DEFINE_LOGGER(DtlsSocketContext, "dtls.DtlsSocketContext");
 
 //memory is only valid for duration of callback; must be copied if queueing
 //is required
-DtlsSocketContext::DtlsSocketContext() {
+DtlsSocketContext::DtlsSocketContext():mSocket(NULL), receiver(NULL), clientFactory(NULL){
   started = false;
 }
 
 DtlsSocketContext::~DtlsSocketContext(){
-  delete mSocket;
-  mSocket = NULL;
+	if (mSocket){
+		delete mSocket;
+		mSocket = NULL;
+	}
 }
 
 std::string DtlsSocketContext::getFingerprint() {
-  char fprint[100];
-  mSocket->getMyCertFingerprint(fprint);
+	char fprint[100] = {0};
+	if (mSocket)
+		mSocket->getMyCertFingerprint(fprint);
   return std::string(fprint, strlen(fprint));
 }
 
@@ -72,10 +75,10 @@ void DtlsSocketContext::handshakeCompleted()
   if(mSocket->getRemoteFingerprint(fprint)){
     ELOG_TRACE("Remote fingerprint == %s", fprint);
 
-    bool check=mSocket->checkFingerprint(fprint,strlen(fprint));
+    bool check = mSocket->checkFingerprint(fprint,strlen(fprint));
     ELOG_DEBUG("Fingerprint check == %d", check);
 
-    SrtpSessionKeys* keys=mSocket->getSrtpSessionKeys();
+    SrtpSessionKeys* keys = mSocket->getSrtpSessionKeys();
 
     unsigned char* cKey = (unsigned char*)malloc(keys->clientMasterKeyLen + keys->clientMasterSaltLen);
     unsigned char* sKey = (unsigned char*)malloc(keys->serverMasterKeyLen + keys->serverMasterSaltLen);
@@ -103,7 +106,7 @@ void DtlsSocketContext::handshakeCompleted()
     free(sKey);
     delete keys;
 
-    srtp_profile=mSocket->getSrtpProfile();
+    srtp_profile = mSocket->getSrtpProfile();
 
     if(srtp_profile){
       ELOG_DEBUG("SRTP Extension negotiated profile=%s", srtp_profile->name);

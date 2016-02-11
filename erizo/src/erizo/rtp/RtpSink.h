@@ -21,7 +21,7 @@ namespace erizo {
 
 class RtpSink: public MediaSink, public FeedbackSource {
   DECLARE_LOGGER();
-  public:
+public:
 	RtpSink(const std::string& url, const std::string& port, int feedbackPort);
 	virtual ~RtpSink();
 
@@ -45,6 +45,7 @@ private:
 
   int deliverAudioData_(char* buf, int len);
   int deliverVideoData_(char* buf, int len);
+
 	int sendData(char* buffer, int len);
   void sendLoop();
   void serviceLoop();

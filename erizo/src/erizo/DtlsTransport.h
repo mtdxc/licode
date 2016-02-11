@@ -14,41 +14,73 @@
 namespace erizo {
   class SrtpChannel;
   class Resender;
+/*!
+ @brief 完整意义上的传输类，代表一个客户端的webrtc连接.
+ 典型的数据处理流程如下:
+ - ice连接处理(NiceConnection)：收集地址，交换候选地址，打洞连接建立 
+ - ssl证书交换和密钥协商(DtlsSocketContext),这里的包需要重传
+ - srtp再利用协商好的密钥进行加解密(SrtpChannel)
+ @todo 单连接使用太多线程，当前线程有：
+ - ice 流程处理线程
+ - ice 数据处理线程(getNiceDataLoop)
+ - dtls重传定时器线程(Resender 可能有两!)
+ */
   class DtlsTransport : dtls::DtlsReceiver, public Transport {
     DECLARE_LOGGER();
-    public:
-    DtlsTransport(MediaType med, const std::string &transport_name, bool bundle, bool rtcp_mux, TransportListener *transportListener, const IceConfig& iceConfig, std::string username, std::string password, bool isServer);
+  public:
+    DtlsTransport(MediaType med, 
+			const std::string &transport_name, 
+			bool bundle, bool rtcp_mux, 
+			TransportListener *transportListener, 
+			const IceConfig& iceConfig, 
+			std::string username, std::string password, 
+			bool isServer);
     virtual ~DtlsTransport();
-    void connectionStateChanged(IceState newState);
+
     std::string getMyFingerprint();
-    static bool isDtlsPacket(const char* buf, int len);
+		
+    void connectionStateChanged(IceState newState);
+		// implement NiceConnectionListener method
     void onNiceData(unsigned int component_id, char* data, int len, NiceConnection* nice);
     void onCandidate(const CandidateInfo &candidate, NiceConnection *conn);
-    void write(char* data, int len);
-    void writeDtls(dtls::DtlsSocketContext *ctx, const unsigned char* data, unsigned int len);
-    void onHandshakeCompleted(dtls::DtlsSocketContext *ctx, std::string clientKey, std::string serverKey, std::string srtp_profile);
     void updateIceState(IceState state, NiceConnection *conn);
+
+    void write(char* data, int len);
+		// implement DtlsReceiver method
+    void writeDtls(dtls::DtlsSocketContext *ctx, const unsigned char* data, unsigned int len);
+    void onHandshakeCompleted(dtls::DtlsSocketContext *ctx, 
+			std::string clientKey, std::string serverKey, 
+			std::string srtp_profile);
+
     void processLocalSdp(SdpInfo *localSdp_);
 
-    private:
+  private:
+		// 发送缓冲区
     char protectBuf_[5000];
+		// 接收缓冲区
     char unprotectBuf_[5000];
-    boost::shared_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
     boost::mutex writeMutex_,sessionMutex_;
+		// 证书交换和密钥协商上下文(rtp和rtcp各一个，如rtcp_mux则没有rtcp)
+    boost::shared_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
+    boost::scoped_ptr<Resender> rtcpResender, rtpResender;
+		// 加解密上下文(rtp和rtcp各一个，如果rtcp_mux则没有rtcp)
     boost::scoped_ptr<SrtpChannel> srtp_, srtcp_;
     bool readyRtp, readyRtcp;
     bool running_, isServer_;
-    boost::scoped_ptr<Resender> rtcpResender, rtpResender;
+		// 数据接收线程
     boost::thread getNice_Thread_;
     void getNiceDataLoop();
     packetPtr p_;
   };
 
+	// 负责dlts包的重发
   class Resender {
     DECLARE_LOGGER();
   public:
-    Resender(boost::shared_ptr<NiceConnection> nice, unsigned int comp, const unsigned char* data, unsigned int len);
+    Resender(boost::shared_ptr<NiceConnection> nice, unsigned int comp, 
+			const unsigned char* data, unsigned int len);
     virtual ~Resender();
+
     void start();
     void run();
     void cancel();
@@ -57,11 +89,20 @@ namespace erizo {
   private:
     boost::shared_ptr<NiceConnection> nice_;
     unsigned int comp_;
-    int sent_;
     const unsigned char* data_;
     unsigned int len_;
-    boost::asio::io_service service;
+		/* 
+		resend status.
+		- 0 init 
+		- 1 user cancel
+		- -1 reset error
+		- 2 resend okay
+		*/
+    int sent_;
     boost::asio::deadline_timer timer;
+
+		// @todo move all timer to one thread(current every resend has one thread)
+    boost::asio::io_service service;
     boost::scoped_ptr<boost::thread> thread_;
   };
 }
