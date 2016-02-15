@@ -78,23 +78,22 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name,
 		bool bundle, bool rtcp_mux, TransportListener *transportListener, 
     const IceConfig& iceConfig, std::string username, std::string password, bool isServer):
   Transport(med, transport_name, bundle, rtcp_mux, transportListener, iceConfig), 
-  readyRtp(false), readyRtcp(false), running_(false) {
+  readyRtp(false), readyRtcp(false), running_(false), isServer_(isServer) {
   ELOG_DEBUG( "Initializing DtlsTransport" );
-
   dtlsRtp.reset(new DtlsSocketContext());
 
-  isServer_ = isServer;
 
   // TODO the ownership of classes here is....really awkward. 
 	// Basically, the DtlsFactory created here ends up being owned the the created client
   // which is in charge of nuking it.  All of the session state is tracked in the DtlsSocketContext.
   //
   // A much more sane architecture would be simply having the client _be_ the context.
+  isServer_ = false; // No way to change from active to passive, for now always active
   int comps = 1;
 
 	// create dtls context for rtp/rtcp, and register self as callback
   if (isServer_){
-    ELOG_DEBUG("CREATE OFFER, WE USE A SERVER");
+    ELOG_DEBUG("Creating a DTLS server: passive");
     (new DtlsFactory())->createServer(dtlsRtp);
     dtlsRtp->setDtlsReceiver(this);
 
@@ -105,6 +104,7 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name,
       dtlsRtcp->setDtlsReceiver(this);
     }
   }else{
+    ELOG_DEBUG("Creating a DTLS client: active");
     (new DtlsFactory())->createClient(dtlsRtp);
     dtlsRtp->setDtlsReceiver(this);
 
