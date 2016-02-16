@@ -1,0 +1,172 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A45F204C-A7A6-4C93-8E92-AE0FFBCB9A38}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>erizo</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\SDK\boost_1_60_0;C:\SDK\OpenSSL-Win32\include</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>erizo;..\..\third_party;..\..\third_party\srtp\include;..\..\third_party\srtp\crypto\include</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="erizo\DtlsTransport.cpp" />
+    <ClCompile Include="erizo\dtls\bf_dwrap.c" />
+    <ClCompile Include="erizo\dtls\DtlsClient.cpp" />
+    <ClCompile Include="erizo\dtls\DtlsFactory.cpp" />
+    <ClCompile Include="erizo\dtls\DtlsSocket.cpp" />
+    <ClCompile Include="erizo\dtls\DtlsTimer.cpp" />
+    <ClCompile Include="erizo\dtls\OpenSSLInit.cpp" />
+    <ClCompile Include="erizo\media\codecs\AudioCodec.cpp" />
+    <ClCompile Include="erizo\media\codecs\VideoCodec.cpp" />
+    <ClCompile Include="erizo\media\ExternalInput.cpp" />
+    <ClCompile Include="erizo\media\ExternalOutput.cpp" />
+    <ClCompile Include="erizo\media\MediaProcessor.cpp" />
+    <ClCompile Include="erizo\media\mixers\VideoMixer.cpp" />
+    <ClCompile Include="erizo\media\mixers\VideoUtils.cpp" />
+    <ClCompile Include="erizo\media\OneToManyTranscoder.cpp" />
+    <ClCompile Include="erizo\NiceConnection.cpp" />
+    <ClCompile Include="erizo\OneToManyProcessor.cpp" />
+    <ClCompile Include="erizo\rtp\RtcpProcessor.cpp" />
+    <ClCompile Include="erizo\rtp\RtpPacketQueue.cpp" />
+    <ClCompile Include="erizo\rtp\RtpSink.cpp" />
+    <ClCompile Include="erizo\rtp\RtpSource.cpp" />
+    <ClCompile Include="erizo\rtp\RtpVP8Fragmenter.cpp" />
+    <ClCompile Include="erizo\rtp\RtpVP8Parser.cpp" />
+    <ClCompile Include="erizo\rtp\webrtc\fec_receiver_impl.cc" />
+    <ClCompile Include="erizo\rtp\webrtc\forward_error_correction.cc" />
+    <ClCompile Include="erizo\rtp\webrtc\forward_error_correction_internal.cc" />
+    <ClCompile Include="erizo\rtp\webrtc\rtp_utility.cc" />
+    <ClCompile Include="erizo\SdpInfo.cpp" />
+    <ClCompile Include="erizo\SrtpChannel.cpp" />
+    <ClCompile Include="erizo\Stats.cpp" />
+    <ClCompile Include="erizo\StringUtil.cpp" />
+    <ClCompile Include="erizo\WebRtcConnection.cpp" />
+    <ClCompile Include="examples\hsam.cpp" />
+    <ClCompile Include="examples\pc\Observer.cpp" />
+    <ClCompile Include="examples\pc\PCSocket.cpp" />
+    <ClCompile Include="examples\Test.cpp" />
+    <ClCompile Include="test\main.cpp" />
+    <ClCompile Include="test\PacketTest.cpp" />
+    <ClCompile Include="test\SdpTest.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="erizo\DtlsTransport.h" />
+    <ClInclude Include="erizo\dtls\bf_dwrap.h" />
+    <ClInclude Include="erizo\dtls\config.h" />
+    <ClInclude Include="erizo\dtls\DtlsFactory.h" />
+    <ClInclude Include="erizo\dtls\DtlsSocket.h" />
+    <ClInclude Include="erizo\dtls\DtlsTimer.h" />
+    <ClInclude Include="erizo\dtls\OpenSSLInit.h" />
+    <ClInclude Include="erizo\logger.h" />
+    <ClInclude Include="erizo\MediaDefinitions.h" />
+    <ClInclude Include="erizo\media\codecs\AudioCodec.h" />
+    <ClInclude Include="erizo\media\codecs\Codecs.h" />
+    <ClInclude Include="erizo\media\codecs\VideoCodec.h" />
+    <ClInclude Include="erizo\media\ExternalInput.h" />
+    <ClInclude Include="erizo\media\ExternalOutput.h" />
+    <ClInclude Include="erizo\media\MediaProcessor.h" />
+    <ClInclude Include="erizo\media\mixers\VideoMixer.h" />
+    <ClInclude Include="erizo\media\mixers\VideoUtils.h" />
+    <ClInclude Include="erizo\media\OneToManyTranscoder.h" />
+    <ClInclude Include="erizo\NiceConnection.h" />
+    <ClInclude Include="erizo\OneToManyProcessor.h" />
+    <ClInclude Include="erizo\rtp\RtcpProcessor.h" />
+    <ClInclude Include="erizo\rtp\RtpHeaders.h" />
+    <ClInclude Include="erizo\rtp\RtpPacketQueue.h" />
+    <ClInclude Include="erizo\rtp\RtpSink.h" />
+    <ClInclude Include="erizo\rtp\RtpSource.h" />
+    <ClInclude Include="erizo\rtp\RtpVP8Fragmenter.h" />
+    <ClInclude Include="erizo\rtp\RtpVP8Parser.h" />
+    <ClInclude Include="erizo\rtp\webrtc\fec_private_tables_bursty.h" />
+    <ClInclude Include="erizo\rtp\webrtc\fec_private_tables_random.h" />
+    <ClInclude Include="erizo\rtp\webrtc\fec_receiver_impl.h" />
+    <ClInclude Include="erizo\rtp\webrtc\forward_error_correction.h" />
+    <ClInclude Include="erizo\rtp\webrtc\forward_error_correction_internal.h" />
+    <ClInclude Include="erizo\rtp\webrtc\rtp_utility.h" />
+    <ClInclude Include="erizo\rtp\webrtc\scoped_refptr.h" />
+    <ClInclude Include="erizo\SdpInfo.h" />
+    <ClInclude Include="erizo\SrtpChannel.h" />
+    <ClInclude Include="erizo\Stats.h" />
+    <ClInclude Include="erizo\StringUtil.h" />
+    <ClInclude Include="erizo\Transport.h" />
+    <ClInclude Include="erizo\WebRtcConnection.h" />
+    <ClInclude Include="examples\pc\Observer.h" />
+    <ClInclude Include="examples\pc\PCSocket.h" />
+    <ClInclude Include="examples\pc\SDPReceiver.h" />
+    <ClInclude Include="examples\Test.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

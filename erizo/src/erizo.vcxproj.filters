@@ -1,0 +1,321 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\erizo">
+      <UniqueIdentifier>{4ee299f3-6ac9-4f1a-9cb3-6e79ad5b33e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\erizo\dtls">
+      <UniqueIdentifier>{7ecdc40b-370e-43c3-989e-a207aa298d73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\erizo\media">
+      <UniqueIdentifier>{eda8cf75-37c6-4114-bfac-0a5edcd8245d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\erizo\media\codecs">
+      <UniqueIdentifier>{70d89183-f1e2-4f02-9d44-356ba1be895b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\erizo\media\mixers">
+      <UniqueIdentifier>{159258a8-a2c9-4f26-859a-8be0e0d9e61b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\erizo\rtp">
+      <UniqueIdentifier>{5e07aa6b-0197-4e47-ad40-47e2e1956460}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\erizo\rtp\webrtc">
+      <UniqueIdentifier>{fabb54b6-c16d-4b4c-85e2-5d804afb6dc7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\erizo">
+      <UniqueIdentifier>{281515dd-0112-4d0e-98f8-2437ce426ba2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\erizo\dtls">
+      <UniqueIdentifier>{4c870e45-6e7d-4a04-b8aa-fb9e64a93c56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\erizo\media">
+      <UniqueIdentifier>{12f9ff96-4f3f-488c-9306-7ccb15269e9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\erizo\media\codecs">
+      <UniqueIdentifier>{1bf1e00c-28de-4a9b-a9f1-383803753e5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\erizo\media\mixers">
+      <UniqueIdentifier>{fabf130b-f3aa-453d-a6e4-b3b4b5b260cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\erizo\rtp">
+      <UniqueIdentifier>{32724184-1370-4711-a9b1-bc05e99083f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\erizo\rtp\webrtc">
+      <UniqueIdentifier>{52a7bbad-f2fa-4045-8561-d5f1f41e352b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\examples">
+      <UniqueIdentifier>{525660f1-86c3-4ec4-8749-fd82ae929c02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\examples\pc">
+      <UniqueIdentifier>{0d85416a-d75d-4876-87d3-2bf4b7d333cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\test">
+      <UniqueIdentifier>{49d05e19-290e-4184-9398-43b79d86736e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="erizo\DtlsTransport.cpp">
+      <Filter>Source Files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\NiceConnection.cpp">
+      <Filter>Source Files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\OneToManyProcessor.cpp">
+      <Filter>Source Files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\SdpInfo.cpp">
+      <Filter>Source Files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\SrtpChannel.cpp">
+      <Filter>Source Files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\Stats.cpp">
+      <Filter>Source Files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\StringUtil.cpp">
+      <Filter>Source Files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\WebRtcConnection.cpp">
+      <Filter>Source Files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\dtls\bf_dwrap.c">
+      <Filter>Source Files\erizo\dtls</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\dtls\DtlsClient.cpp">
+      <Filter>Source Files\erizo\dtls</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\dtls\DtlsFactory.cpp">
+      <Filter>Source Files\erizo\dtls</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\dtls\DtlsSocket.cpp">
+      <Filter>Source Files\erizo\dtls</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\dtls\DtlsTimer.cpp">
+      <Filter>Source Files\erizo\dtls</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\dtls\OpenSSLInit.cpp">
+      <Filter>Source Files\erizo\dtls</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\ExternalInput.cpp">
+      <Filter>Source Files\erizo\media</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\ExternalOutput.cpp">
+      <Filter>Source Files\erizo\media</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\MediaProcessor.cpp">
+      <Filter>Source Files\erizo\media</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\OneToManyTranscoder.cpp">
+      <Filter>Source Files\erizo\media</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\codecs\AudioCodec.cpp">
+      <Filter>Source Files\erizo\media\codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\codecs\VideoCodec.cpp">
+      <Filter>Source Files\erizo\media\codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\mixers\VideoMixer.cpp">
+      <Filter>Source Files\erizo\media\mixers</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\mixers\VideoUtils.cpp">
+      <Filter>Source Files\erizo\media\mixers</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtcpProcessor.cpp">
+      <Filter>Source Files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpPacketQueue.cpp">
+      <Filter>Source Files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpSink.cpp">
+      <Filter>Source Files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpSource.cpp">
+      <Filter>Source Files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpVP8Fragmenter.cpp">
+      <Filter>Source Files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpVP8Parser.cpp">
+      <Filter>Source Files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\webrtc\fec_receiver_impl.cc">
+      <Filter>Source Files\erizo\rtp\webrtc</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\webrtc\forward_error_correction.cc">
+      <Filter>Source Files\erizo\rtp\webrtc</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\webrtc\forward_error_correction_internal.cc">
+      <Filter>Source Files\erizo\rtp\webrtc</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\webrtc\rtp_utility.cc">
+      <Filter>Source Files\erizo\rtp\webrtc</Filter>
+    </ClCompile>
+    <ClCompile Include="examples\hsam.cpp">
+      <Filter>Source Files\examples</Filter>
+    </ClCompile>
+    <ClCompile Include="examples\Test.cpp">
+      <Filter>Source Files\examples</Filter>
+    </ClCompile>
+    <ClCompile Include="examples\pc\Observer.cpp">
+      <Filter>Source Files\examples\pc</Filter>
+    </ClCompile>
+    <ClCompile Include="examples\pc\PCSocket.cpp">
+      <Filter>Source Files\examples\pc</Filter>
+    </ClCompile>
+    <ClCompile Include="test\main.cpp">
+      <Filter>Source Files\test</Filter>
+    </ClCompile>
+    <ClCompile Include="test\PacketTest.cpp">
+      <Filter>Source Files\test</Filter>
+    </ClCompile>
+    <ClCompile Include="test\SdpTest.cpp">
+      <Filter>Source Files\test</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="erizo\DtlsTransport.h">
+      <Filter>Header Files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\logger.h">
+      <Filter>Header Files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\MediaDefinitions.h">
+      <Filter>Header Files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\NiceConnection.h">
+      <Filter>Header Files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\OneToManyProcessor.h">
+      <Filter>Header Files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\SdpInfo.h">
+      <Filter>Header Files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\SrtpChannel.h">
+      <Filter>Header Files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\Stats.h">
+      <Filter>Header Files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\StringUtil.h">
+      <Filter>Header Files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\Transport.h">
+      <Filter>Header Files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\WebRtcConnection.h">
+      <Filter>Header Files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\dtls\bf_dwrap.h">
+      <Filter>Header Files\erizo\dtls</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\dtls\config.h">
+      <Filter>Header Files\erizo\dtls</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\dtls\DtlsFactory.h">
+      <Filter>Header Files\erizo\dtls</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\dtls\DtlsSocket.h">
+      <Filter>Header Files\erizo\dtls</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\dtls\DtlsTimer.h">
+      <Filter>Header Files\erizo\dtls</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\dtls\OpenSSLInit.h">
+      <Filter>Header Files\erizo\dtls</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\ExternalInput.h">
+      <Filter>Header Files\erizo\media</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\ExternalOutput.h">
+      <Filter>Header Files\erizo\media</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\MediaProcessor.h">
+      <Filter>Header Files\erizo\media</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\OneToManyTranscoder.h">
+      <Filter>Header Files\erizo\media</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\codecs\AudioCodec.h">
+      <Filter>Header Files\erizo\media\codecs</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\codecs\Codecs.h">
+      <Filter>Header Files\erizo\media\codecs</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\codecs\VideoCodec.h">
+      <Filter>Header Files\erizo\media\codecs</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\mixers\VideoMixer.h">
+      <Filter>Header Files\erizo\media\mixers</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\mixers\VideoUtils.h">
+      <Filter>Header Files\erizo\media\mixers</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtcpProcessor.h">
+      <Filter>Header Files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpHeaders.h">
+      <Filter>Header Files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpPacketQueue.h">
+      <Filter>Header Files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpSink.h">
+      <Filter>Header Files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpSource.h">
+      <Filter>Header Files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpVP8Fragmenter.h">
+      <Filter>Header Files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpVP8Parser.h">
+      <Filter>Header Files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\webrtc\fec_private_tables_bursty.h">
+      <Filter>Header Files\erizo\rtp\webrtc</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\webrtc\fec_private_tables_random.h">
+      <Filter>Header Files\erizo\rtp\webrtc</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\webrtc\fec_receiver_impl.h">
+      <Filter>Header Files\erizo\rtp\webrtc</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\webrtc\forward_error_correction.h">
+      <Filter>Header Files\erizo\rtp\webrtc</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\webrtc\forward_error_correction_internal.h">
+      <Filter>Header Files\erizo\rtp\webrtc</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\webrtc\rtp_utility.h">
+      <Filter>Header Files\erizo\rtp\webrtc</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\webrtc\scoped_refptr.h">
+      <Filter>Header Files\erizo\rtp\webrtc</Filter>
+    </ClInclude>
+    <ClInclude Include="examples\pc\Observer.h">
+      <Filter>Source Files\examples\pc</Filter>
+    </ClInclude>
+    <ClInclude Include="examples\pc\PCSocket.h">
+      <Filter>Source Files\examples\pc</Filter>
+    </ClInclude>
+    <ClInclude Include="examples\pc\SDPReceiver.h">
+      <Filter>Source Files\examples\pc</Filter>
+    </ClInclude>
+    <ClInclude Include="examples\Test.h">
+      <Filter>Source Files\examples</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
