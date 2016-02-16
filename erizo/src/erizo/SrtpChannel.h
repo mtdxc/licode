@@ -6,13 +6,11 @@
 #define SRTPCHANNEL_H_
 
 #include <string>
-#include <netinet/in.h>
-#include <srtp/srtp.h>
 #include <boost/thread/mutex.hpp>
 
 #include "rtp/RtpHeaders.h"
 #include "logger.h"
-
+typedef struct srtp_ctx_t *srtp_t;
 namespace erizo {
 
 /**

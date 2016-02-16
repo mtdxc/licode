@@ -39,14 +39,15 @@ namespace erizo{
     
     private:
     typedef std::map<std::string, uint64_t> singleSSRCstatsMap_t;
+		// ssrc -> Map(name->uint64_t value)
     typedef std::map <uint32_t, singleSSRCstatsMap_t> fullStatsMap_t;
     fullStatsMap_t statsPacket_;
     boost::recursive_mutex mapMutex_;
+
     WebRtcConnectionStatsListener* theListener_;
     unsigned int videoSSRC_, audioSSRC_;
 
     void processRtcpPacket(RtcpHeader* chead);
-
 
     uint32_t getPacketsLost(unsigned int ssrc){
       return (statsPacket_[ssrc]["packetsLost"]);
@@ -75,6 +76,7 @@ namespace erizo{
     void setRtcpBytesSent(unsigned int count, unsigned int ssrc){
       statsPacket_[ssrc]["rtcpBytesSent"] = count;
     };
+
     uint32_t getJitter(unsigned int ssrc){
       return statsPacket_[ssrc]["jitter"];
     };
@@ -122,7 +124,7 @@ namespace erizo{
     unsigned int getSourceSSRC (unsigned int sourceSSRC, unsigned int ssrc){
       return statsPacket_[ssrc]["sourceSsrc"];
     };
-    void setSourceSSRC (unsigned int sourceSSRC, unsigned int ssrc){
+    void setSourceSSRC(unsigned int sourceSSRC, unsigned int ssrc){
       statsPacket_[ssrc]["sourceSsrc"] = sourceSSRC;
     };
 

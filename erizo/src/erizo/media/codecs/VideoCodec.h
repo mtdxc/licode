@@ -8,19 +8,10 @@
 #include "Codecs.h"
 #include "logger.h"
 
-extern "C" {
-#ifndef INT64_C
-#define INT64_C(c) (c ## LL)
-#define UINT64_C(c) (c ## ULL)
-#endif
-#include <libavutil/avutil.h>
-#include <libavcodec/avcodec.h>
-}
 //Forward Declarations
-
-//struct AVCodec;
-//struct AVCodecContext;
-//struct AVFrame;
+struct AVCodec;
+struct AVCodecContext;
+struct AVFrame;
 
 namespace erizo {
 

@@ -4,8 +4,12 @@
 
 #ifndef RTPHEADERS_H_
 #define RTPHEADERS_H_
-
+#ifdef WIN32
+#include <winsock.h>
+#include <stdint.h>
+#else
 #include <netinet/in.h>
+#endif
 
 namespace erizo{
   // Payload types
@@ -361,7 +365,7 @@ namespace erizo{
         report.receiverReport.lastsr = htonl(lastsr);
       }
       inline uint32_t getDelaySinceLastSr(){
-        return ntohl (report.receiverReport.delaysincelast);
+        return ntohl(report.receiverReport.delaysincelast);
       }
       inline void setDelaySinceLastSr(uint32_t delaylastsr) {
         report.receiverReport.delaysincelast = htonl(delaylastsr);
@@ -430,7 +434,10 @@ namespace erizo{
       inline void setFCI(uint32_t fci){
         report.pli.fci = htonl(fci);
       }
-
+			inline int getPduSize(){
+				// payload and head length
+				return 4 * getLength() + 4;
+			}
   };
 
 

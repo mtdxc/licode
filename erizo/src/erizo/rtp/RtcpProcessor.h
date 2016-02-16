@@ -11,7 +11,12 @@
 #include "rtp/RtpHeaders.h"
 
 namespace erizo {
- 
+	inline uint64_t msTime(struct timeval& now){
+		return (now.tv_sec * 1000) + (now.tv_usec / 1000);
+	}
+	inline int64_t msDelta(struct timeval& tv1, struct timeval& tv2){
+		return (tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000;
+	}
   // Forward declaration
 
   class SrData {
@@ -21,7 +26,7 @@ namespace erizo {
 
       SrData() {
         srNtp = 0;
-        timestamp = (struct timeval){0, 0} ;
+        timestamp = {0, 0} ;
       };
       SrData(uint32_t srNTP, struct timeval theTimestamp){
         this->srNtp = srNTP;
@@ -93,15 +98,16 @@ namespace erizo {
       shouldReset = false;
       nackSeqnum = 0;
       nackBlp = 0;
-      lastRrSent = (struct timeval){0, 0};
-      lastREMBSent = (struct timeval){0, 0};
-      lastSrReception = (struct timeval){0, 0};
-      lastRrWasScheduled = (struct timeval){0, 0};
+      lastRrSent = {0, 0};
+      lastREMBSent = {0, 0};
+      lastSrReception = {0, 0};
+      lastRrWasScheduled = {0, 0};
     }
 
     // lock for any blocking data change
     boost::mutex dataLock;
 };
+typedef boost::shared_ptr<RtcpData> RtcpDataRefPtr;
 
 class RtcpProcessor{
 	DECLARE_LOGGER();
@@ -110,13 +116,13 @@ class RtcpProcessor{
     RtcpProcessor(MediaSink* msink, MediaSource* msource, int defaultBw = 300000);
     virtual ~RtcpProcessor(){
     };
-    void addSourceSsrc(uint32_t ssrc);
+		RtcpDataRefPtr addSourceSsrc(uint32_t ssrc);
     void setVideoBW(uint32_t bandwidth);
     void analyzeSr(RtcpHeader* chead);
     void analyzeFeedback(char* buf, int len);
     void checkRtcpFb();
-    int addREMB(char* buf, int len, uint32_t bitrate);
-    int addNACK(char* buf, int len, uint16_t seqNum, uint16_t blp, uint32_t sourceSsrc, uint32_t sinkSsrc);
+    int addREMB(char* buf, uint32_t bitrate);
+    int addNACK(char* buf, uint16_t seqNum, uint16_t blp, uint32_t sourceSsrc, uint32_t sinkSsrc);
 
   private:
     static const int RR_AUDIO_PERIOD = 2000;
@@ -124,7 +130,7 @@ class RtcpProcessor{
     static const int REMB_TIMEOUT = 5000;
     static const uint64_t NTPTOMSCONV = 4294967296;
 		// ssrc->RtcpData
-    std::map<uint32_t, boost::shared_ptr<RtcpData>> rtcpData_;
+		std::map<uint32_t, RtcpDataRefPtr> rtcpData_;
     boost::mutex mapLock_;
 
     MediaSink* rtcpSink_;  // The sink to send RRs

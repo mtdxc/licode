@@ -2,8 +2,12 @@
 #define MEDIAPROCESSOR_H_
 
 #include <boost/cstdint.hpp>
+#ifdef _WIN32
+#include <winsock.h>
+#else
 #include <sys/time.h>
 #include <arpa/inet.h>
+#endif
 #include <string>
 
 #include "rtp/RtpVP8Parser.h"
@@ -15,7 +19,6 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-
 }
 
 namespace erizo {

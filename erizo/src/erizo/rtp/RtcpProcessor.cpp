@@ -15,7 +15,7 @@ namespace erizo{
     jitter = 0;
     rrsReceivedInPeriod = 0;
     if (reportedBandwidth < bandwidth){
-      reportedBandwidth = reportedBandwidth*2 < bandwidth?reportedBandwidth*2:bandwidth;
+      reportedBandwidth = min(reportedBandwidth*2 , bandwidth);
     }
     lastDelay = lastDelay*0.6;
   }
@@ -25,18 +25,19 @@ namespace erizo{
     ELOG_DEBUG("Starting RtcpProcessor");
   }
 
-  void RtcpProcessor::addSourceSsrc(uint32_t ssrc){
+	RtcpDataRefPtr RtcpProcessor::addSourceSsrc(uint32_t ssrc){
     boost::mutex::scoped_lock mlock(mapLock_);
     if (rtcpData_.find(ssrc) == rtcpData_.end()){
-      this->rtcpData_[ssrc] = boost::shared_ptr<RtcpData>(new RtcpData());
-      if (ssrc == this->rtcpSource_->getAudioSourceSSRC()){
+      rtcpData_[ssrc].reset(new RtcpData());
+      if (ssrc == rtcpSource_->getAudioSourceSSRC()){
         ELOG_DEBUG("It is an audio SSRC %u", ssrc);
-        this->rtcpData_[ssrc]->mediaType = AUDIO_TYPE; 
+        rtcpData_[ssrc]->mediaType = AUDIO_TYPE; 
       }else{
         ELOG_DEBUG("It is a video SSRC %u", ssrc);
-        this->rtcpData_[ssrc]->mediaType = VIDEO_TYPE;
+        rtcpData_[ssrc]->mediaType = VIDEO_TYPE;
       }
     }
+		return rtcpData_[ssrc];
   }
 
   void RtcpProcessor::setVideoBW(uint32_t bandwidth){
@@ -47,16 +48,11 @@ namespace erizo{
   void RtcpProcessor::analyzeSr(RtcpHeader* chead){
     uint32_t recvSSRC = chead->getSSRC();
     // We try to add it just in case it is not there yet (otherwise its noop)
-    this->addSourceSsrc(recvSSRC);
-
-    boost::mutex::scoped_lock mlock(mapLock_);
-    boost::shared_ptr<RtcpData> theData = rtcpData_[recvSSRC];
+		RtcpDataRefPtr theData = addSourceSsrc(recvSSRC);
     boost::mutex::scoped_lock lock(theData->dataLock);
-    struct timeval now;
-    gettimeofday(&now, NULL);
-    uint32_t ntp;
-    uint64_t theNTP = chead->getNtpTimestamp();
-    ntp = (theNTP & (0xFFFFFFFF0000))>>16;
+    struct timeval now; 
+		gettimeofday(&now, NULL);
+    uint32_t ntp = (chead->getNtpTimestamp() & (0xFFFFFFFF0000)) >> 16;
 		// 保留ntp时间戳与本地时间值
     theData->senderReports.push_back(boost::shared_ptr<SrData>(new SrData(ntp, now)));
     // We only store the last 20 sr
@@ -68,28 +64,22 @@ namespace erizo{
   void RtcpProcessor::analyzeFeedback(char *buf, int len) {
 
     RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(buf);
-    if (chead->isFeedback()) {      
+    if (chead->isFeedback()) {
       uint32_t sourceSsrc = chead->getSourceSSRC();
       // We try to add it just in case it is not there yet (otherwise its noop)
-      this->addSourceSsrc(sourceSsrc);
+			RtcpDataRefPtr theData = addSourceSsrc(sourceSsrc);
+			boost::mutex::scoped_lock lock(theData->dataLock);
 
-      boost::mutex::scoped_lock mlock(mapLock_);
-      boost::shared_ptr<RtcpData> theData = rtcpData_[sourceSsrc];
-      boost::mutex::scoped_lock lock(theData->dataLock);
-      struct timeval now;
+			struct timeval now;
       gettimeofday(&now, NULL);
 
-      char* movingBuf = buf;
-      int rtcpLength = 0;
-      int totalLength = 0;
+      int curpos = 0;
       int partNum = 0;
       uint32_t calculatedlsr, delay, calculateLastSr;
 
       do {
-        movingBuf += rtcpLength;
-        chead = reinterpret_cast<RtcpHeader*>(movingBuf);
-        rtcpLength = (ntohs(chead->length)+1) * 4;
-        totalLength += rtcpLength;
+        chead = reinterpret_cast<RtcpHeader*>(buf+curpos);
+        curpos += chead->getPduSize();
         switch(chead->packettype){
           case RTCP_SDES_PT:
             ELOG_DEBUG("SDES");
@@ -115,9 +105,7 @@ namespace erizo{
             for (std::list<boost::shared_ptr<SrData>>::iterator it=theData->senderReports.begin(); 
 							it != theData->senderReports.end(); ++it){
               if ((*it)->srNtp == calculateLastSr){  
-                uint64_t nowms = (now.tv_sec * 1000) + (now.tv_usec / 1000);
-                uint64_t sentts = ((*it)->timestamp.tv_sec * 1000) + ((*it)->timestamp.tv_usec / 1000);
-                delay = nowms - sentts - calculatedlsr;
+								delay = msDelta(now, (*it)->timestamp) - calculatedlsr;
               }
             }
 
@@ -161,7 +149,8 @@ namespace erizo{
                     uint64_t bitrate = chead->getBrMantis() << chead->getBrExp();
                     ELOG_DEBUG("Received REMB %lu", bitrate);
                     if ((bitrate<theData->reportedBandwidth) || theData->reportedBandwidth==0){
-                      ELOG_DEBUG("Should send Packet REMB, before BR %lu, will send with Br %lu", theData->reportedBandwidth, bitrate);
+                      ELOG_DEBUG("Should send Packet REMB, before BR %lu, will send with Br %lu", 
+												theData->reportedBandwidth, bitrate);
                       theData->reportedBandwidth = bitrate;  
                       theData->shouldSendREMB = true;
                     }
@@ -182,7 +171,7 @@ namespace erizo{
         }
 
         partNum++;
-      } while (totalLength < len);
+      } while (curpos < len);
     }
   }
 
@@ -198,11 +187,12 @@ namespace erizo{
       struct timeval now;
       gettimeofday(&now, NULL);
 
-      unsigned int dt = (now.tv_sec - rtcpData->lastRrSent.tv_sec) * 1000 + (now.tv_usec - rtcpData->lastRrSent.tv_usec) / 1000;
-      unsigned int edlsr = (now.tv_sec - rtcpData->lastSrUpdated.tv_sec) * 1000 + (now.tv_usec - rtcpData->lastSrUpdated.tv_usec) / 1000;
-      unsigned int dtScheduled = (now.tv_sec - rtcpData->lastRrWasScheduled.tv_sec) * 1000 + (now.tv_usec - rtcpData->lastRrWasScheduled.tv_usec) / 1000;
+      unsigned int dt = msDelta(now, rtcpData->lastRrSent);
+			unsigned int edlsr = msDelta(now, rtcpData->lastSrUpdated);
+			unsigned int dtScheduled = msDelta(now, rtcpData->lastRrWasScheduled);
 
-      if((rtcpData->requestRr||dt >= rtcpData->nextPacketInMs ||rtcpData->shouldSendREMB) && rtcpData->lastSr > 0){  // Generate Full RTCP Packet
+      if((rtcpData->requestRr||dt >= rtcpData->nextPacketInMs ||rtcpData->shouldSendREMB) && rtcpData->lastSr > 0)
+			{  // Generate Full RTCP Packet
         rtcpData->requestRr = false;
         RtcpHeader rtcpHead;
         rtcpHead.setPacketType(RTCP_Receiver_PT);
@@ -230,28 +220,27 @@ namespace erizo{
         rtcpHead.setDelaySinceLastSr(rtcpData->delaySinceLastSr + ((edlsr*65536)/1000));
         rtcpHead.setLength(7);
         rtcpHead.setBlockCount(1);
-        int length = (rtcpHead.getLength()+1)*4;
+
+        int length = rtcpHead.getPduSize();
         memcpy(packet_, (uint8_t*)&rtcpHead, length);
         if(rtcpData->shouldSendNACK){
           ELOG_DEBUG("SEND NACK, SENDING with Seqno: %u", rtcpData->nackSeqnum);
-          int theLen = this->addNACK((char*)packet_, length, rtcpData->nackSeqnum, rtcpData->nackBlp, sourceSsrc, sinkSsrc);
+					length += addNACK((char*)packet_ + length, rtcpData->nackSeqnum, rtcpData->nackBlp, sourceSsrc, sinkSsrc);
           rtcpData->shouldSendNACK = false;
           rtcpData->nackSeqnum = 0;
           rtcpData->nackBlp = 0;
-          length = theLen;
         }
         if (rtcpData->mediaType == VIDEO_TYPE){
-          unsigned int sincelastREMB = (now.tv_sec - rtcpData->lastREMBSent.tv_sec) * 1000 + (now.tv_usec - rtcpData->lastREMBSent.tv_usec) / 1000;
+          unsigned int sincelastREMB = msDelta(now, rtcpData->lastREMBSent);
           if (sincelastREMB > REMB_TIMEOUT){
             rtcpData->shouldSendREMB = true;
           }
 
           if(rtcpData->shouldSendREMB){
             ELOG_DEBUG("Sending Remb, since last %u ms, sending with BW: %lu", sincelastREMB, rtcpData->reportedBandwidth);
-            int theLen = this->addREMB((char*)packet_, length, rtcpData->reportedBandwidth);
+						length += addREMB((char*)packet_+length, rtcpData->reportedBandwidth);
             rtcpData->shouldSendREMB = false;
             rtcpData->lastREMBSent = now;
-            length = theLen;
           }
         }
         if  (sourceSsrc == rtcpSource_->getVideoSourceSSRC()){
@@ -260,7 +249,7 @@ namespace erizo{
           rtcpSink_->deliverAudioData((char*)packet_, length);
         }
         rtcpData->lastRrSent = now;
-        if (dtScheduled>rtcpData->nextPacketInMs) // Every scheduled packet we reset
+        if (dtScheduled > rtcpData->nextPacketInMs) // Every scheduled packet we reset
           rtcpData->shouldReset = true;
           rtcpData->lastRrWasScheduled = now;
         // schedule next packet
@@ -284,8 +273,7 @@ namespace erizo{
     }
   }
 
-  int RtcpProcessor::addREMB(char* buf, int len, uint32_t bitrate){
-    buf+=len;
+  int RtcpProcessor::addREMB(char* buf, uint32_t bitrate){
     RtcpHeader theREMB;
     theREMB.setPacketType(RTCP_PS_Feedback_PT);
     theREMB.setBlockCount(RTCP_AFB);
@@ -298,13 +286,12 @@ namespace erizo{
     theREMB.setREMBNumSSRC(1);
     theREMB.setREMBFeedSSRC(rtcpSource_->getVideoSourceSSRC());
 
-    int rembLength = (theREMB.getLength()+1)*4;
+		int rembLength = theREMB.getPduSize();
     memcpy(buf, (uint8_t*)&theREMB, rembLength);
-    return (len+rembLength); 
+		return rembLength;
   }
 
-  int RtcpProcessor::addNACK(char* buf, int len, uint16_t seqNum, uint16_t blp, uint32_t sourceSsrc, uint32_t sinkSsrc){
-    buf+=len;
+  int RtcpProcessor::addNACK(char* buf, uint16_t seqNum, uint16_t blp, uint32_t sourceSsrc, uint32_t sinkSsrc){
     ELOG_DEBUG("Setting PID %u, BLP %u", seqNum , blp);
     RtcpHeader theNACK;
     theNACK.setPacketType(RTCP_RTP_Feedback_PT);
@@ -315,9 +302,9 @@ namespace erizo{
     theNACK.setSourceSSRC(sourceSsrc);
     theNACK.setLength(3);
 
-    int nackLength = (theNACK.getLength()+1)*4;
+		int nackLength = theNACK.getPduSize();
     memcpy(buf, (uint8_t*)&theNACK, nackLength);
-    return (len+nackLength); 
+		return nackLength;
   }
 
 

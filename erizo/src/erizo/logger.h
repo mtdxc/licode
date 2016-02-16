@@ -24,6 +24,9 @@
 
 #include <log4cxx/logger.h>
 #include <log4cxx/helpers/exception.h>
+#ifdef WIN32
+#define snprintf sprintf_s
+#endif
 
  #define DECLARE_LOGGER() \
  static log4cxx::LoggerPtr logger;
@@ -33,72 +36,71 @@
 
 #define ELOG_MAX_BUFFER_SIZE 30000
 
-#define SPRINTF_ELOG_MSG(buffer, fmt, args...) \
+#define SPRINTF_ELOG_MSG(buffer, fmt, ...) \
     char buffer[ELOG_MAX_BUFFER_SIZE]; \
-    snprintf( buffer, ELOG_MAX_BUFFER_SIZE, fmt, ##args );
-
+    snprintf( buffer, ELOG_MAX_BUFFER_SIZE, fmt, ##__VA_ARGS__ );
 // older versions of log4cxx don't support tracing
 #ifdef LOG4CXX_TRACE
-#define ELOG_TRACE2(logger, fmt, args...) \
+#define ELOG_TRACE2(logger, fmt, ...) \
     if (logger->isTraceEnabled()) { \
-        SPRINTF_ELOG_MSG( __tmp, fmt, ##args ); \
+        SPRINTF_ELOG_MSG( __tmp, fmt, ##__VA_ARGS__ ); \
         LOG4CXX_TRACE( logger, __tmp ); \
     }
 #else
 #define ELOG_TRACE2(logger, fmt, args...) \
     if (logger->isDebugEnabled()) { \
-        SPRINTF_ELOG_MSG( __tmp, fmt, ##args ); \
+        SPRINTF_ELOG_MSG( __tmp, fmt, ##__VA_ARGS__ ); \
         LOG4CXX_DEBUG( logger, __tmp ); \
     }
 #endif
 
-#define ELOG_DEBUG2(logger, fmt, args...) \
+#define ELOG_DEBUG2(logger, fmt, ...) \
     if (logger->isDebugEnabled()) { \
-        SPRINTF_ELOG_MSG( __tmp, fmt, ##args ); \
+        SPRINTF_ELOG_MSG( __tmp, fmt, ##__VA_ARGS__ ); \
         LOG4CXX_DEBUG( logger, __tmp ); \
     }
 
-#define ELOG_INFO2(logger, fmt, args...) \
+#define ELOG_INFO2(logger, fmt, ...) \
     if (logger->isInfoEnabled()) { \
-        SPRINTF_ELOG_MSG( __tmp, fmt, ##args ); \
+        SPRINTF_ELOG_MSG( __tmp, fmt, ##__VA_ARGS__ ); \
         LOG4CXX_INFO( logger, __tmp ); \
     }
 
-#define ELOG_WARN2(logger, fmt, args...) \
+#define ELOG_WARN2(logger, fmt, ...) \
     if (logger->isWarnEnabled()) { \
-        SPRINTF_ELOG_MSG( __tmp, fmt, ##args ); \
+        SPRINTF_ELOG_MSG( __tmp, fmt, ##__VA_ARGS__ ); \
         LOG4CXX_WARN( logger, __tmp ); \
     }
 
-#define ELOG_ERROR2(logger, fmt, args...) \
+#define ELOG_ERROR2(logger, fmt, ...) \
     if (logger->isErrorEnabled()) { \
-        SPRINTF_ELOG_MSG( __tmp, fmt, ##args ); \
+        SPRINTF_ELOG_MSG( __tmp, fmt, ##__VA_ARGS__ ); \
         LOG4CXX_ERROR( logger, __tmp ); \
     }
 
-#define ELOG_FATAL2(logger, fmt, args...) \
+#define ELOG_FATAL2(logger, fmt, ...) \
     if (logger->isFatalEnabled()) { \
-        SPRINTF_ELOG_MSG( __tmp, fmt, ##args ); \
+        SPRINTF_ELOG_MSG( __tmp, fmt, ##__VA_ARGS__ ); \
         LOG4CXX_FATAL( logger, __tmp ); \
     }
 
 
-#define ELOG_TRACE(fmt, args...) \
-    ELOG_TRACE2( logger, fmt, ##args );
+#define ELOG_TRACE(fmt, ...) \
+    ELOG_TRACE2( logger, fmt, ##__VA_ARGS__ );
 
-#define ELOG_DEBUG(fmt, args...) \
-    ELOG_DEBUG2( logger, fmt, ##args );
+#define ELOG_DEBUG(fmt, ...) \
+    ELOG_DEBUG2( logger, fmt, ##__VA_ARGS__ );
 
-#define ELOG_INFO(fmt, args...) \
-    ELOG_INFO2( logger, fmt, ##args );
+#define ELOG_INFO(fmt, ...) \
+    ELOG_INFO2( logger, fmt, ##__VA_ARGS__ );
 
-#define ELOG_WARN(fmt, args...) \
-    ELOG_WARN2( logger, fmt, ##args );
+#define ELOG_WARN(fmt, ...) \
+    ELOG_WARN2( logger, fmt, ##__VA_ARGS__ );
 
-#define ELOG_ERROR(fmt, args...) \
-    ELOG_ERROR2( logger, fmt, ##args );
+#define ELOG_ERROR(fmt, ...) \
+    ELOG_ERROR2( logger, fmt, ##__VA_ARGS__ );
 
-#define ELOG_FATAL(fmt, args...) \
-    ELOG_FATAL2( logger, fmt, ##args );
+#define ELOG_FATAL(fmt, ...) \
+    ELOG_FATAL2( logger, fmt, ##__VA_ARGS__ );
 
 #endif  /* __ELOG_H__ */

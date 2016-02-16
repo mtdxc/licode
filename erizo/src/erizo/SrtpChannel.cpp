@@ -1,8 +1,11 @@
 /*
  * Srtpchannel.cpp
  */
-
+#ifdef WIN32
+#include <srtp.h>
+#else
 #include <srtp/srtp.h>
+#endif
 #include <nice/nice.h>
 
 #include "SrtpChannel.h"

@@ -22,17 +22,13 @@ namespace erizo {
 
   void Stats::processRtcpPacket(char* buf, int length) {
     boost::recursive_mutex::scoped_lock lock(mapMutex_);
-    char* movingBuf = buf;
-    int rtcpLength = 0;
-    int totalLength = 0;
-    
+    int curPos = 0;
+    // pass through with rtcp packet
     do{
-      movingBuf+=rtcpLength;
-      RtcpHeader *chead= reinterpret_cast<RtcpHeader*>(movingBuf);
-      rtcpLength= (ntohs(chead->length)+1)*4;      
-      totalLength+= rtcpLength;
-      this->processRtcpPacket(chead);
-    } while(totalLength<length);
+			RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(buf + curPos);
+      processRtcpPacket(chead);
+			curPos += chead->getPduSize();
+		} while (curPos<length);
     sendStats();
   }
   
@@ -45,9 +41,9 @@ namespace erizo {
         ELOG_DEBUG("SDES");
         break;
       case RTCP_Receiver_PT:
-        setFractionLost (chead->getFractionLost(), ssrc);
-        setPacketsLost (chead->getLostPackets(), ssrc);
-        setJitter (chead->getJitter(), ssrc);
+        setFractionLost(chead->getFractionLost(), ssrc);
+        setPacketsLost(chead->getLostPackets(), ssrc);
+        setJitter(chead->getJitter(), ssrc);
         setSourceSSRC(chead->getSourceSSRC(), ssrc);
         break;
       case RTCP_Sender_PT:
@@ -79,7 +75,8 @@ namespace erizo {
               char *uniqueId = (char*)&chead->report.rembPacket.uniqueid;
               if (!strncmp(uniqueId,"REMB", 4)){
                 uint64_t bitrate = chead->getBrMantis() << chead->getBrExp();
-                ELOG_DEBUG("REMB Packet numSSRC %u mantissa %u exp %u, tot %lu bps", chead->getREMBNumSSRC(), chead->getBrMantis(), chead->getBrExp(), bitrate);
+                ELOG_DEBUG("REMB Packet numSSRC %u mantissa %u exp %u, tot %lu bps", 
+									chead->getREMBNumSSRC(), chead->getBrMantis(), chead->getBrExp(), bitrate);
                 setBandwidth(bitrate, ssrc);
               }
               else{

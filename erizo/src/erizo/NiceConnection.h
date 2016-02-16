@@ -167,9 +167,9 @@ public:
 
   packetPtr getPacket();
 
+  void close();
 private:
 	void init();
-  void close();
 
 	NiceAgent* agent_;
 	NiceConnectionListener* listener_;

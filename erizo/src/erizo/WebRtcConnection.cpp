@@ -79,7 +79,7 @@ namespace erizo {
 
     bundle_ = false;
     videoEnabled_ = false; 
-    this->localSdp_.createOfferSdp(videoEnabled_, audioEnabled_);
+    localSdp_.createOfferSdp(videoEnabled_, audioEnabled_);
 
     ELOG_DEBUG("Creating sdp offer");
     ELOG_DEBUG("Setting SSRC to localSdp %u", this->getVideoSinkSSRC());
@@ -340,24 +340,20 @@ namespace erizo {
     RtpHeader *head = reinterpret_cast<RtpHeader*> (buf);
     RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (buf);
     //if it is RTCP we check it it is a compound packet
-    if (chead->isRtcp()) {      
-      char* movingBuf = buf;
-      int rtcpLength = 0;
-      int totalLength = 0;
+    if (chead->isRtcp()) {
+			int curpos = 0;
       do{
-        movingBuf+=rtcpLength;
-        RtcpHeader *chead= reinterpret_cast<RtcpHeader*>(movingBuf);
-        rtcpLength= (ntohs(chead->length)+1)*4;      
-        totalLength+= rtcpLength;
-        ELOG_DEBUG("Is RTCP, prev SSRC %u, new %u, len %d ", chead->getSSRC(), ssrc, rtcpLength);
-        chead->ssrc=htonl(ssrc);
+        RtcpHeader *chead= reinterpret_cast<RtcpHeader*>(buf+curpos);
+				ELOG_DEBUG("Is RTCP, prev SSRC %u, new %u, len %d ", chead->getSSRC(), ssrc, chead->getPduSize());
+        curpos += chead->getPduSize();
+        chead->setSSRC(ssrc);
         if (chead->packettype == RTCP_PS_Feedback_PT){
-          FirHeader *thefir = reinterpret_cast<FirHeader*>(movingBuf);
+          FirHeader *thefir = reinterpret_cast<FirHeader*>(buf+curpos);
           if (thefir->fmt == 4){ // It is a FIR Packet, we generate it
             this->sendPLI();
           }
         }
-      } while(totalLength<len);
+			} while (curpos<len);
     } else {
       head->setSSRC(ssrc);
     }
@@ -413,7 +409,7 @@ namespace erizo {
           // Firefox does not send SSRC in SDP
           if (this->getAudioSourceSSRC() == 0) {
             unsigned int recvSSRC;
-            this->setAudioSourceSSRC(head->getSSRC());		
+            // this->setAudioSourceSSRC(head->getSSRC());		
             if (chead->packettype == RTCP_Sender_PT) { // Sender Report
               recvSSRC = chead->getSSRC();
             } else {
@@ -453,8 +449,8 @@ namespace erizo {
     RtcpHeader thePLI;
     thePLI.setPacketType(RTCP_PS_Feedback_PT);
     thePLI.setBlockCount(1);
-    thePLI.setSSRC(this->getVideoSinkSSRC());
-    thePLI.setSourceSSRC(this->getVideoSourceSSRC());
+    thePLI.setSSRC(getVideoSinkSSRC());
+    thePLI.setSourceSSRC(getVideoSourceSSRC());
     thePLI.setLength(2);
     char *buf = reinterpret_cast<char*>(&thePLI);
     int len = (thePLI.getLength()+1)*4;
