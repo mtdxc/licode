@@ -5,6 +5,7 @@
 #include <cassert>
 #include <iostream>
 #include "OpenSSLInit.h"
+#include "DtlsFactory.h"
 
 #include <openssl/e_os2.h>
 #include <openssl/rand.h>
@@ -16,7 +17,6 @@
 #include <openssl/bn.h>
 #include <openssl/srtp.h>
 
-#include "DtlsFactory.h"
 #include "DtlsSocket.h"
 
 using namespace dtls;

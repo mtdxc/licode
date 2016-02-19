@@ -4,7 +4,11 @@
 
 #include <nice/nice.h>
 #include <cstdio>
+#ifdef WIN32
+#define strdup _strdup
+#else
 #include <poll.h>
+#endif
 
 #include "NiceConnection.h"
 #include "SdpInfo.h"
@@ -28,11 +32,11 @@ namespace erizo {
     }
   };
 
-
+#ifndef WIN32
   int timed_poll(GPollFD* fds, guint nfds, gint timeout){
     return poll((pollfd*)fds,nfds,200);
   }
-
+#endif
   void cb_nice_recv(NiceAgent* agent, guint stream_id, guint component_id,
       guint len, gchar* buf, gpointer user_data) {
     if (user_data==NULL||len==0) return;
@@ -84,7 +88,9 @@ namespace erizo {
     
     g_type_init();
     context_ = g_main_context_new();
+#ifndef WIN32
     g_main_context_set_poll_func(context_, timed_poll);
+#endif
     ELOG_DEBUG("Creating Nice Agent");
     nice_debug_enable( FALSE );
     // Create a nice agent

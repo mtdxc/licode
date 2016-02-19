@@ -11,6 +11,12 @@
 #include "DtlsTimer.h"
 #include "bf_dwrap.h"
 
+#ifdef WIN32
+#include <srtp.h>
+#else
+#include <srtp/srtp.h>
+#endif
+
 using namespace std;
 using namespace dtls;
 
@@ -473,6 +479,7 @@ bool dtls::DtlsSocket::InitSSLCtx()
 
   SSL_CTX_set_verify_depth(mContext, 2);
   SSL_CTX_set_read_ahead(mContext, 1);
+  return r == 0;
 }
 
 void dtls::DtlsSocket::ClearSSLCtx()

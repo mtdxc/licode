@@ -5,10 +5,28 @@
 #ifndef RTPHEADERS_H_
 #define RTPHEADERS_H_
 #ifdef WIN32
-#include <winsock.h>
+#include <winsock2.h>
 #include <stdint.h>
+#include <time.h>
+inline int gettimeofday(struct timeval *tv, void * /*tzv*/) {
+  struct  tm tm;
+  SYSTEMTIME wtm;
+  GetLocalTime(&wtm);
+  tm.tm_year = wtm.wYear - 1900;
+  tm.tm_mon = wtm.wMonth - 1;
+  tm.tm_mday = wtm.wDay;
+  tm.tm_hour = wtm.wHour;
+  tm.tm_min = wtm.wMinute;
+  tm.tm_sec = wtm.wSecond;
+  tm.tm_isdst = -1;
+  time_t clock = mktime(&tm);
+  tv->tv_sec  = clock;
+  tv->tv_usec = wtm.wMilliseconds * 1000;
+  return 0;
+}
 #else
 #include <netinet/in.h>
+#include <sys/time.h>
 #endif
 
 namespace erizo{

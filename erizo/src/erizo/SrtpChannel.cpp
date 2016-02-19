@@ -1,14 +1,14 @@
 /*
  * Srtpchannel.cpp
  */
+#include "SrtpChannel.h"
 #ifdef WIN32
 #include <srtp.h>
 #else
 #include <srtp/srtp.h>
 #endif
-#include <nice/nice.h>
-
-#include "SrtpChannel.h"
+#include <glib/gbase64.h>
+#include <glib/gmem.h>
 
 namespace erizo {
 DEFINE_LOGGER(SrtpChannel, "SrtpChannel");

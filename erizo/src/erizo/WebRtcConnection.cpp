@@ -658,10 +658,9 @@ namespace erizo {
             if (p.type == VIDEO_PACKET){
               if (rateControl_ == 1)
                 continue;
+
               gettimeofday(&now_, NULL);
-              uint64_t nowms = (now_.tv_sec * 1000) + (now_.tv_usec / 1000);
-              uint64_t markms = (mark_.tv_sec * 1000) + (mark_.tv_usec/1000);
-              if ((nowms - markms)>=100){
+              if (msDelta(now_, mark_) >= 100){
                 mark_ = now_;
                 lastSecondVideoBytes = sentVideoBytes;
               }

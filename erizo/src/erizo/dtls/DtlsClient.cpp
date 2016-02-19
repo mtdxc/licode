@@ -13,14 +13,8 @@
 #include "DtlsSocket.h"
 #include "DtlsTimer.h"
 #include "bf_dwrap.h"
-
-#include <nice/nice.h>
-
-extern "C"
-{
-#include <srtp/srtp.h>
-#include <srtp/srtp_priv.h>
-}
+#include <glib/gbase64.h>
+#include <glib/gmem.h>
 
 using namespace std;
 using namespace dtls;

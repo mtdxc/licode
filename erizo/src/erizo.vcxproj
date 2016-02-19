@@ -52,9 +52,9 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;HAVE_CONFIG_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>erizo;..\..\third_party;..\..\third_party\srtp\include;..\..\third_party\srtp\crypto\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>erizo;..\..\third_party;..\..\third_party\srtp\include;..\..\third_party\srtp\crypto\include;C:\Google\libnice;C:\Google\libnice\glib\include\glib-2.0</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

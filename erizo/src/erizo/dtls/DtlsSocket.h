@@ -7,14 +7,6 @@
 
 #include <memory>
 #include <string.h>
-extern "C"
-{
-#ifdef WIN32
-#include <srtp.h>
-#else
-#include <srtp/srtp.h>
-#endif
-}
 
 #include <openssl/e_os2.h>
 #include <openssl/rand.h>
@@ -30,6 +22,7 @@ extern "C"
 const int SRTP_MASTER_KEY_KEY_LEN = 16;
 const int SRTP_MASTER_KEY_SALT_LEN = 14;
 
+struct srtp_policy_t;
 namespace dtls
 {
 class DtlsFactory;

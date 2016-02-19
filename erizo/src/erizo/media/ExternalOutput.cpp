@@ -1,5 +1,3 @@
-#include <sys/time.h>
-
 #include "ExternalOutput.h"
 #include "../WebRtcConnection.h"
 #include "../rtp/RtpHeaders.h"

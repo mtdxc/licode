@@ -3,7 +3,11 @@
 #endif
 
 #include "DtlsTimer.h"
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <sys/time.h>
+#endif
 #include <iostream>
 
 using namespace dtls;
@@ -40,10 +44,14 @@ DtlsTimerContext::fire(DtlsTimer *timer)
 }
 
 long long getTimeMS() {
+#ifdef WIN32
+  return GetTickCount();
+#else
   struct timeval start;
   gettimeofday(&start, NULL);
-  long timeMs = ((start.tv_sec) * 1000 + start.tv_usec/1000.0);
+  long timeMs = ((start.tv_sec) * 1000 + start.tv_usec / 1000.0);
   return timeMs;
+#endif
 }
 
 void
@@ -52,7 +60,7 @@ TestTimerContext::addTimer(DtlsTimer *timer, unsigned int lifetime)
    delete mTimer;
 
    mTimer=timer;
-   long timeMs = getTimeMS();
+   long long timeMs = getTimeMS();
    mExpiryTime=timeMs+lifetime;
 }
 
