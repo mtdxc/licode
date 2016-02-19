@@ -136,7 +136,7 @@ DtlsSocket::handlePacketMaybe(const unsigned char* bytes, unsigned int len)
    // Note: we must catch any below exceptions--if there are any
    try {
      doHandshakeIteration();
-   } catch (int e) {
+   } catch (...) {
 		 return false;
    }
    return true;

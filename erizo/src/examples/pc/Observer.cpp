@@ -30,7 +30,11 @@ void Observer::start() {
 	while (true) {
 		pc_->OnHangingGetConnect();
 		pc_->OnHangingGetRead();
+#ifdef WIN32
+		Sleep(1);
+#else
 		sleep(1);
+#endif
 	}
 }
 
@@ -75,7 +79,11 @@ void Observer::processMessage(int peer_id, const std::string& message) {
 void Observer::OnSignedIn() {
 }
 void Observer::OnDisconnected() {
+#ifdef WIN32
+	ExitThread(0);
+#else
 	pthread_exit(0);
+#endif
 }
 void Observer::OnPeerConnected(int id, const std::string& name) {
 

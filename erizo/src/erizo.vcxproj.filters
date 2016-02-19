@@ -162,12 +162,6 @@
     <ClCompile Include="erizo\rtp\webrtc\rtp_utility.cc">
       <Filter>Source Files\erizo\rtp\webrtc</Filter>
     </ClCompile>
-    <ClCompile Include="examples\hsam.cpp">
-      <Filter>Source Files\examples</Filter>
-    </ClCompile>
-    <ClCompile Include="examples\Test.cpp">
-      <Filter>Source Files\examples</Filter>
-    </ClCompile>
     <ClCompile Include="examples\pc\Observer.cpp">
       <Filter>Source Files\examples\pc</Filter>
     </ClCompile>
@@ -313,9 +307,6 @@
     </ClInclude>
     <ClInclude Include="examples\pc\SDPReceiver.h">
       <Filter>Source Files\examples\pc</Filter>
-    </ClInclude>
-    <ClInclude Include="examples\Test.h">
-      <Filter>Source Files\examples</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

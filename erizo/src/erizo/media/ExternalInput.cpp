@@ -3,8 +3,11 @@
 #include <cstdio>
 
 #include <boost/cstdint.hpp>
+#ifndef WIN32
 #include <sys/time.h>
 #include <arpa/inet.h>
+#endif // !WIN32
+
 
 namespace erizo {
   DEFINE_LOGGER(ExternalInput, "media.ExternalInput");
@@ -229,7 +232,11 @@ namespace erizo {
         queueMutex_.unlock();
       } else {
         queueMutex_.unlock();
+#ifdef WIN32
+        Sleep(10);
+#else
         usleep(10000);
+#endif
       }
     }
   }

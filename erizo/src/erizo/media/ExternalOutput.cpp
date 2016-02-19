@@ -22,9 +22,7 @@ ExternalOutput::ExternalOutput(const std::string& outputUrl) : fec_receiver_(thi
     if (context_==NULL){
         ELOG_ERROR("Error allocating memory for IO context");
     } else {
-
-        outputUrl.copy(context_->filename, sizeof(context_->filename),0);
-
+        strncpy(context_->filename, outputUrl.c_str(), sizeof(context_->filename));
         context_->oformat = av_guess_format(NULL,  context_->filename, NULL);
         if (!context_->oformat){
             ELOG_ERROR("Error guessing format %s", context_->filename);
@@ -315,7 +313,7 @@ bool ExternalOutput::initContext() {
         video_stream_->codec->codec_id = context_->oformat->video_codec;
         video_stream_->codec->width = 640;
         video_stream_->codec->height = 480;
-        video_stream_->time_base = (AVRational){1,30};   // A decent guess here suffices; if processing the file with ffmpeg,
+        video_stream_->time_base = AVRational{1,30};   // A decent guess here suffices; if processing the file with ffmpeg,
                                                          // use -vsync 0 to force it not to duplicate frames.
         video_stream_->codec->pix_fmt = PIX_FMT_YUV420P;
         if (context_->oformat->flags & AVFMT_GLOBALHEADER){
@@ -333,7 +331,7 @@ bool ExternalOutput::initContext() {
         audio_stream_->id = 1;
         audio_stream_->codec->codec_id = context_->oformat->audio_codec;
         audio_stream_->codec->sample_rate = context_->oformat->audio_codec == AV_CODEC_ID_PCM_MULAW ? 8000 : 48000; // TODO is it always 48 khz for opus?
-        audio_stream_->time_base = (AVRational) { 1, audio_stream_->codec->sample_rate };
+        audio_stream_->time_base = AVRational{ 1, audio_stream_->codec->sample_rate };
         audio_stream_->codec->channels = context_->oformat->audio_codec == AV_CODEC_ID_PCM_MULAW ? 1 : 2;   // TODO is it always two channels for opus?
         if (context_->oformat->flags & AVFMT_GLOBALHEADER){
             audio_stream_->codec->flags|=CODEC_FLAG_GLOBAL_HEADER;

@@ -54,7 +54,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;HAVE_CONFIG_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>erizo;..\..\third_party;..\..\third_party\srtp\include;..\..\third_party\srtp\crypto\include;C:\Google\libnice;C:\Google\libnice\glib\include\glib-2.0</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>erizo;..\..\third_party;..\..\third_party\srtp\include;..\..\third_party\srtp\crypto\include;C:\Google\libnice;C:\Google\libnice\glib\include\glib-2.0;C:\Google\libnice\agent</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,10 +112,8 @@
     <ClCompile Include="erizo\Stats.cpp" />
     <ClCompile Include="erizo\StringUtil.cpp" />
     <ClCompile Include="erizo\WebRtcConnection.cpp" />
-    <ClCompile Include="examples\hsam.cpp" />
     <ClCompile Include="examples\pc\Observer.cpp" />
     <ClCompile Include="examples\pc\PCSocket.cpp" />
-    <ClCompile Include="examples\Test.cpp" />
     <ClCompile Include="test\main.cpp" />
     <ClCompile Include="test\PacketTest.cpp" />
     <ClCompile Include="test\SdpTest.cpp" />
@@ -164,7 +162,6 @@
     <ClInclude Include="examples\pc\Observer.h" />
     <ClInclude Include="examples\pc\PCSocket.h" />
     <ClInclude Include="examples\pc\SDPReceiver.h" />
-    <ClInclude Include="examples\Test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
