@@ -18,6 +18,10 @@ const int SRTP_MASTER_KEY_BASE64_LEN = SRTP_MASTER_KEY_LEN * 4 / 3;
 
 DEFINE_LOGGER(DtlsSocket, "dtls.DtlsSocket");
 
+
+void SSLInfoCallback(const SSL* s, int where, int ret);
+int SSLVerifyCallback(int ok, X509_STORE_CTX* store);
+
 // Our local timers
 class dtls::DtlsSocketTimer : public DtlsTimer
 {
@@ -38,10 +42,8 @@ int dummy_cb(int d, X509_STORE_CTX *x)
    return 1;
 }
 
-DtlsSocket::DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext, 
-	DtlsFactory* factory, enum SocketType type)
+DtlsSocket::DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext, enum SocketType type)
 	:mSocketContext(socketContext),
-   mFactory(factory),
    mReadTimer(0),
    mSocketType(type),
    mHandshakeCompleted(false)
@@ -49,17 +51,16 @@ DtlsSocket::DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext,
    ELOG_DEBUG("Creating Dtls Socket");
    mSocketContext->setDtlsSocket(this);
 
-   assert(mFactory->mContext);
-   mSsl=SSL_new(mFactory->mContext);
+   InitSSLCtx();
+   mSsl = SSL_new(mContext);
    assert(mSsl!=0);
-   mSsl->ctx = mSsl->session_ctx = mFactory->mContext;
+   mSsl->ctx = mSsl->session_ctx = mContext;
 
    switch(type)
    {
    case Client:
       SSL_set_connect_state(mSsl);
-      //SSL_set_mode(mSsl, SSL_MODE_ENABLE_PARTIAL_WRITE |
-      //         SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+      //SSL_set_mode(mSsl, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
       break;
    case Server:
       SSL_set_accept_state(mSsl);
@@ -68,6 +69,7 @@ DtlsSocket::DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext,
    default:
       assert(0);
    }
+
    BIO* memBIO1 = BIO_new(BIO_s_mem());
    mInBio=BIO_new(BIO_f_dwrap());
    BIO_push(mInBio,memBIO1);
@@ -95,10 +97,7 @@ DtlsSocket::~DtlsSocket()
    }
 
    // Ownership of the factory is basically transferred to DtlsSocket.
-	 if (mFactory){
-		 delete mFactory;
-		 mFactory = NULL;
-	 }
+   ClearSSLCtx();
 }
 
 void
@@ -189,7 +188,7 @@ DtlsSocket::doHandshakeIteration()
       {
          if(mReadTimer) mReadTimer->invalidate();
          mReadTimer = new DtlsSocketTimer(0, this);
-         mFactory->mTimerContext->addTimer(mReadTimer,500);
+         mTimerContext->addTimer(mReadTimer,500);
       }
 
       break;
@@ -240,7 +239,7 @@ DtlsSocket::checkFingerprint(const char* fingerprint, unsigned int len)
 void
 DtlsSocket::getMyCertFingerprint(char *fingerprint)
 {
-   mFactory->getMyCertFingerprint(fingerprint);
+  DtlsSocket::computeFingerprint(DtlsFactory::mCert, fingerprint);
 }
 
 SrtpSessionKeys*
@@ -442,3 +441,54 @@ DtlsSocket::createSrtpSessionPolicies(srtp_policy_t& outboundPolicy, srtp_policy
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  ==================================================================== */
+// The default SrtpProfile used at construction time (default is: SRTP_AES128_CM_SHA1_80:SRTP_AES128_CM_SHA1_32)
+static const char* DefaultSrtpProfile = "SRTP_AES128_CM_SHA1_80";
+bool dtls::DtlsSocket::InitSSLCtx()
+{
+
+  mTimerContext = std::auto_ptr<TestTimerContext>(new TestTimerContext());
+
+  ELOG_DEBUG("Creating Dtls factory");
+
+  mContext = SSL_CTX_new(DTLSv1_method());
+  assert(mContext);
+
+  int r = SSL_CTX_use_certificate(mContext, DtlsFactory::mCert);
+  assert(r == 1);
+
+  r = SSL_CTX_use_PrivateKey(mContext, DtlsFactory::privkey);
+  assert(r == 1);
+
+  SSL_CTX_set_cipher_list(mContext, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+
+  SSL_CTX_set_info_callback(mContext, SSLInfoCallback);
+  SSL_CTX_set_verify(mContext, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+    SSLVerifyCallback);
+
+  //SSL_CTX_set_session_cache_mode(mContext, SSL_SESS_CACHE_OFF);
+  //SSL_CTX_set_options(mContext, SSL_OP_NO_TICKET);
+  // Set SRTP profiles
+  r = SSL_CTX_set_tlsext_use_srtp(mContext, DefaultSrtpProfile);
+  assert(r == 0);
+
+  SSL_CTX_set_verify_depth(mContext, 2);
+  SSL_CTX_set_read_ahead(mContext, 1);
+}
+
+void dtls::DtlsSocket::ClearSSLCtx()
+{
+  SSL_CTX_free(mContext);
+  EVP_MD_CTX_cleanup(ctx_);
+}
+
+void dtls::DtlsSocket::setSrtpProfiles(const char *str)
+{
+  int r = SSL_CTX_set_tlsext_use_srtp(mContext, str);
+  assert(r == 0);
+}
+
+void dtls::DtlsSocket::setCipherSuites(const char *str)
+{
+  int r = SSL_CTX_set_cipher_list(mContext, str);
+  assert(r == 1);
+}

@@ -27,7 +27,7 @@ namespace erizo {
     do{
 			RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(buf + curPos);
       processRtcpPacket(chead);
-			curPos += chead->getPduSize();
+			curPos += chead->getTotalSize();
 		} while (curPos<length);
     sendStats();
   }

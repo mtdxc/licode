@@ -19,7 +19,6 @@
 #include "scoped_refptr.h"
 #include <stdint.h>
 
-
 #define IP_PACKET_SIZE 1500    // we assume ethernet
 
 
@@ -52,7 +51,9 @@ class ForwardErrorCorrection {
   // and receiver_fec.cc to be refactored into the packet classes.
   class Packet {
    public:
-    Packet() : length(0), data(), ref_count_(0) {}
+    Packet() : length(0), ref_count_(0) {
+      memset(data, 0, sizeof data);
+    }
     virtual ~Packet() {}
 
     // Add a reference.

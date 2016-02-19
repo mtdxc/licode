@@ -4,7 +4,6 @@
 #include <string.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/asio/deadline_timer.hpp>
-#include <boost/asio.hpp>
 #include <boost/scoped_ptr.hpp>
 #include "dtls/DtlsSocket.h"
 #include "NiceConnection.h"
@@ -82,7 +81,6 @@ namespace erizo {
     virtual ~Resender();
 
     void start();
-    void run();
     void cancel();
     int getStatus();
     void resend(const boost::system::error_code& ec);
@@ -100,10 +98,6 @@ namespace erizo {
 		*/
     int sent_;
     boost::asio::deadline_timer timer;
-
-		// @todo move all timer to one thread(current every resend has one thread)
-    boost::asio::io_service service;
-    boost::scoped_ptr<boost::thread> thread_;
   };
 }
 #endif

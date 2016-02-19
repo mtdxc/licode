@@ -29,7 +29,7 @@ DEFINE_LOGGER(DtlsSocketContext, "dtls.DtlsSocketContext");
 
 //memory is only valid for duration of callback; must be copied if queueing
 //is required
-DtlsSocketContext::DtlsSocketContext():mSocket(NULL), receiver(NULL), clientFactory(NULL){
+DtlsSocketContext::DtlsSocketContext():mSocket(NULL), receiver(NULL){
   started = false;
 }
 

@@ -143,7 +143,7 @@ namespace erizo{
         extensionlength = htons(extensionLength);
       }
       inline int getHeaderLength() {
-        return MIN_SIZE + cc * 4 + extension * (4 + ntohs(extensionlength) * 4);
+        return MIN_SIZE + cc * 4 + extension * (4 + getExtLength() * 4);
       }
   };
 
@@ -280,7 +280,6 @@ namespace erizo{
           uint32_t numssrc:8;
           uint32_t brLength :24;
           uint32_t ssrcfeedb;
-
         } rembPacket;
         
         struct pli_t{
@@ -299,10 +298,8 @@ namespace erizo{
       inline bool isRtcp(void) {
 				// it should be okay?
 				// return packettype >= RTCP_Sender_PT && packettype <= RTCP_PS_Feedback_PT;
-        return (packettype == RTCP_Sender_PT ||
-            packettype == RTCP_APP ||
-            isFeedback()            
-            );
+        return (packettype == RTCP_Sender_PT || packettype == RTCP_APP ||
+            isFeedback());
       }
       inline uint8_t getPacketType(){
         return packettype;
@@ -434,10 +431,11 @@ namespace erizo{
       inline void setFCI(uint32_t fci){
         report.pli.fci = htonl(fci);
       }
-			inline int getPduSize(){
-				// payload and head length
-				return 4 * getLength() + 4;
-			}
+      // add by caiqm
+      inline int getTotalSize(){
+        // payload and head length
+        return 4 * getLength() + 4;
+      }
   };
 
 
@@ -475,6 +473,7 @@ namespace erizo{
       uint32_t packettype :8;
       uint32_t length :16;
       uint32_t ssrc;
+      // 
       uint32_t ssrcofmediasource;
       uint32_t ssrc_fir;
   };

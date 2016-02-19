@@ -36,6 +36,7 @@ class DtlsFactory;
 class DtlsSocketContext;
 class DtlsTimer;
 class DtlsSocketTimer;
+class DtlsTimerContext;
 
 class SrtpSessionKeys
 {
@@ -82,6 +83,12 @@ class DtlsSocket
       // For client sockets only - causes a client handshake to start (doHandshakeIteration)
       void startClient();
 
+      // Changes the default SRTP profiles supported (default is: SRTP_AES128_CM_SHA1_80:SRTP_AES128_CM_SHA1_32)
+      void setSrtpProfiles(const char *policyStr);
+
+      // Changes the default DTLS Cipher Suites supported
+      void setCipherSuites(const char *cipherSuites);
+
       // Retreives the SRTP session keys from the Dtls session
       SrtpSessionKeys* getSrtpSessionKeys();
 
@@ -104,15 +111,20 @@ class DtlsSocket
       void forceRetransmit();
 
       // Creates an SSL socket, and if client sets state to connect_state and if server sets state to accept_state.  Sets SSL BIO's.
-      DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext, DtlsFactory* factory, enum SocketType);
+      DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext, enum SocketType);
 
       // Give CPU cyces to the handshake process - checks current state and acts appropraitely
       void doHandshakeIteration();
 
       // Internals
       boost::shared_ptr<DtlsSocketContext> mSocketContext;
-      DtlsFactory* mFactory;
       DtlsTimer *mReadTimer;  // Timer used during handshake process
+
+      bool InitSSLCtx();
+      void ClearSSLCtx();
+      SSL_CTX* mContext;
+      EVP_MD_CTX* ctx_;
+      std::auto_ptr<DtlsTimerContext> mTimerContext;
 
       // OpenSSL context data
       SSL *mSsl;
@@ -161,7 +173,6 @@ class DtlsSocketContext
    protected:
       DtlsSocket *mSocket;
       DtlsReceiver *receiver;
-      DtlsFactory *clientFactory;
 };
 
 }

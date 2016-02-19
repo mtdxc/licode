@@ -21,7 +21,6 @@
 
 using namespace dtls;
 using namespace std;
-const char* DtlsFactory::DefaultSrtpProfile = "SRTP_AES128_CM_SHA1_80";
 
 X509 *DtlsFactory::mCert = NULL;
 EVP_PKEY *DtlsFactory::privkey = NULL;
@@ -214,80 +213,38 @@ void DtlsFactory::Init() {
 
     createCert("sip:licode@lynckia.com",365,1024,DtlsFactory::mCert,DtlsFactory::privkey);
   }
+  // 启动定时器线程
+  if (!thread_){
+    thread_.reset(new boost::thread(boost::bind(&boost::asio::io_service::run, &service_)));
+  }
 }
 
-DtlsFactory::DtlsFactory()
+void dtls::DtlsFactory::Destory()
 {
-    DtlsFactory::Init();
-
-    mTimerContext = std::auto_ptr<TestTimerContext>(new TestTimerContext());
-
-    ELOG_DEBUG("Creating Dtls factory");
-
-    mContext = SSL_CTX_new(DTLSv1_method());
-    assert(mContext);
-
-    int r = SSL_CTX_use_certificate(mContext, mCert);
-    assert(r == 1);
-
-    r = SSL_CTX_use_PrivateKey(mContext, privkey);
-    assert(r == 1);
-
-    SSL_CTX_set_cipher_list(mContext, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-
-    SSL_CTX_set_info_callback(mContext, SSLInfoCallback);
-    SSL_CTX_set_verify(mContext, SSL_VERIFY_PEER |SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
-                     SSLVerifyCallback);
-
-    //SSL_CTX_set_session_cache_mode(mContext, SSL_SESS_CACHE_OFF);
-    //SSL_CTX_set_options(mContext, SSL_OP_NO_TICKET);
-    // Set SRTP profiles
-    r=SSL_CTX_set_tlsext_use_srtp(mContext, DefaultSrtpProfile);
-    assert(r==0);
-
-    SSL_CTX_set_verify_depth(mContext, 2);
-    SSL_CTX_set_read_ahead(mContext, 1);
-
-    ELOG_DEBUG("Dtls factory created");
+  if (thread_.get() != NULL) {
+    ELOG_ERROR("Starting Resender, joining thread to terminate");
+    thread_->join();
+    ELOG_ERROR("Thread terminated on start");
+  }
 }
 
-DtlsFactory::~DtlsFactory()
+DtlsFactory* dtls::DtlsFactory::GetInstance()
 {
-   SSL_CTX_free(mContext);
-   EVP_MD_CTX_cleanup(ctx_);
+  static DtlsFactory INSTANCE;
+  DtlsFactory::Init();
+  return &INSTANCE;
 }
-
 
 DtlsSocket*
 DtlsFactory::createClient(boost::shared_ptr<DtlsSocketContext> context)
 {
-   return new DtlsSocket(context,this,DtlsSocket::Client);
+   return new DtlsSocket(context,DtlsSocket::Client);
 }
 
 DtlsSocket*
 DtlsFactory::createServer(boost::shared_ptr<DtlsSocketContext> context)
 {
-   return new DtlsSocket(context,this,DtlsSocket::Server);
-}
-
-void
-DtlsFactory::getMyCertFingerprint(char *fingerprint)
-{
-   DtlsSocket::computeFingerprint(DtlsFactory::mCert,fingerprint);
-}
-
-void
-DtlsFactory::setSrtpProfiles(const char *str)
-{
-   int r = SSL_CTX_set_tlsext_use_srtp(mContext,str);
-   assert(r==0);
-}
-
-void
-DtlsFactory::setCipherSuites(const char *str)
-{
-   int r = SSL_CTX_set_cipher_list(mContext,str);
-   assert(r==1);
+   return new DtlsSocket(context,DtlsSocket::Server);
 }
 
 DtlsFactory::PacketType
@@ -304,7 +261,6 @@ DtlsFactory::demuxPacket(const unsigned char *data, unsigned int len)
 
    return unknown;
 }
-
 
 /* ====================================================================
 

@@ -79,7 +79,7 @@ namespace erizo{
 
       do {
         chead = reinterpret_cast<RtcpHeader*>(buf+curpos);
-        curpos += chead->getPduSize();
+        curpos += chead->getTotalSize();
         switch(chead->packettype){
           case RTCP_SDES_PT:
             ELOG_DEBUG("SDES");
@@ -221,7 +221,7 @@ namespace erizo{
         rtcpHead.setLength(7);
         rtcpHead.setBlockCount(1);
 
-        int length = rtcpHead.getPduSize();
+        int length = rtcpHead.getTotalSize();
         memcpy(packet_, (uint8_t*)&rtcpHead, length);
         if(rtcpData->shouldSendNACK){
           ELOG_DEBUG("SEND NACK, SENDING with Seqno: %u", rtcpData->nackSeqnum);
@@ -286,7 +286,7 @@ namespace erizo{
     theREMB.setREMBNumSSRC(1);
     theREMB.setREMBFeedSSRC(rtcpSource_->getVideoSourceSSRC());
 
-		int rembLength = theREMB.getPduSize();
+		int rembLength = theREMB.getTotalSize();
     memcpy(buf, (uint8_t*)&theREMB, rembLength);
 		return rembLength;
   }
@@ -302,7 +302,7 @@ namespace erizo{
     theNACK.setSourceSSRC(sourceSsrc);
     theNACK.setLength(3);
 
-		int nackLength = theNACK.getPduSize();
+		int nackLength = theNACK.getTotalSize();
     memcpy(buf, (uint8_t*)&theNACK, nackLength);
 		return nackLength;
   }

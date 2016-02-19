@@ -344,8 +344,8 @@ namespace erizo {
 			int curpos = 0;
       do{
         RtcpHeader *chead= reinterpret_cast<RtcpHeader*>(buf+curpos);
-				ELOG_DEBUG("Is RTCP, prev SSRC %u, new %u, len %d ", chead->getSSRC(), ssrc, chead->getPduSize());
-        curpos += chead->getPduSize();
+				ELOG_DEBUG("Is RTCP, prev SSRC %u, new %u, len %d ", chead->getSSRC(), ssrc, chead->getTotalSize());
+        curpos += chead->getTotalSize();
         chead->setSSRC(ssrc);
         if (chead->packettype == RTCP_PS_Feedback_PT){
           FirHeader *thefir = reinterpret_cast<FirHeader*>(buf+curpos);

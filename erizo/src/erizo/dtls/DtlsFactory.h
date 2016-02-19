@@ -7,6 +7,9 @@
 
 #include <memory>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/asio.hpp>
+#include <boost/thread.hpp>
 #include "DtlsTimer.h"
 #include <openssl/evp.h>
 #include "logger.h"
@@ -18,7 +21,6 @@ namespace dtls
 {
 class DtlsSocket;
 class DtlsSocketContext;
-class DtlsTimerContext;
 
 //Not threadsafe. Timers must fire in the same thread as dtls processing.
 class DtlsFactory
@@ -27,52 +29,29 @@ class DtlsFactory
    public:
      enum PacketType { rtp, dtls, stun, unknown};
 
-     DtlsFactory();
-
-     // Note: this orphans any DtlsSockets you were stupid enough
-     // not to free
-     ~DtlsFactory();
-
      // Creates a new DtlsSocket to be used as a client
      DtlsSocket* createClient(boost::shared_ptr<DtlsSocketContext> context);
 
      // Creates a new DtlsSocket to be used as a server
      DtlsSocket* createServer(boost::shared_ptr<DtlsSocketContext> context);
 
-     // Returns the fingerprint of the user cert that was passed into the constructor
-     void getMyCertFingerprint(char *fingerprint);
-
-     // Returns a reference to the timer context that was passed into the constructor
-     DtlsTimerContext& getTimerContext() {return *mTimerContext;}
-
-     // The default SrtpProfile used at construction time (default is: SRTP_AES128_CM_SHA1_80:SRTP_AES128_CM_SHA1_32)
-     static const char* DefaultSrtpProfile;
-
-     // Changes the default SRTP profiles supported (default is: SRTP_AES128_CM_SHA1_80:SRTP_AES128_CM_SHA1_32)
-     void setSrtpProfiles(const char *policyStr);
-
-     // Changes the default DTLS Cipher Suites supported
-     void setCipherSuites(const char *cipherSuites);
-
      // Examines the first few bits of a packet to determine its type: rtp, dtls, stun or unknown
      static PacketType demuxPacket(const unsigned char *buf, unsigned int len);
 
-     static DtlsFactory* GetInstance() {
-        static DtlsFactory INSTANCE;
-        return &INSTANCE;
-     }
+     static DtlsFactory* GetInstance();
 
      static void Init();
-
+     static void Destory();
+     static boost::asio::io_service& service(){ return service_; }
 private:
      friend class DtlsSocket;
      // Creates a DTLS SSL Context and enables srtp extension, also sets the private and public key cert
      static X509 *mCert;
      static EVP_PKEY *privkey;
 
-     SSL_CTX* mContext;
-     EVP_MD_CTX* ctx_;
-     std::auto_ptr<DtlsTimerContext> mTimerContext;
+     // @todo move all timer to one thread(current every resend has one thread)
+     static boost::asio::io_service service_;
+     static boost::scoped_ptr<boost::thread> thread_;
 };
 
 }

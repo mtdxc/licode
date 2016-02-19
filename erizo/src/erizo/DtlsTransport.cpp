@@ -17,18 +17,13 @@ DEFINE_LOGGER(DtlsTransport, "DtlsTransport");
 DEFINE_LOGGER(Resender, "Resender");
 
 Resender::Resender(boost::shared_ptr<NiceConnection> nice, unsigned int comp, const unsigned char* data, unsigned int len) : 
-  nice_(nice), comp_(comp), data_(data),len_(len), timer(service) {
+  nice_(nice), comp_(comp), data_(data),len_(len), timer(DtlsFactory::service()) {
   sent_ = 0;
 }
 
 Resender::~Resender() {
   ELOG_DEBUG("Resender destructor");
   timer.cancel();
-  if (thread_.get()!=NULL) {
-    ELOG_DEBUG("Resender destructor, joining thread");
-    thread_->join();
-    ELOG_DEBUG("Resender thread terminated on destructor");
-  }
 }
 
 void Resender::cancel() {
@@ -39,18 +34,8 @@ void Resender::cancel() {
 void Resender::start() {
   sent_ = 0;
   timer.cancel();
-  if (thread_.get()!=NULL) {
-    ELOG_ERROR("Starting Resender, joining thread to terminate");
-    thread_->join();
-    ELOG_ERROR("Thread terminated on start");
-  }
   timer.expires_from_now(boost::posix_time::seconds(3));
   timer.async_wait(boost::bind(&Resender::resend, this, boost::asio::placeholders::error));
-  thread_.reset(new boost::thread(boost::bind(&Resender::run, this)));
-}
-
-void Resender::run() {
-  service.run();
 }
 
 int Resender::getStatus() {
@@ -94,24 +79,24 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name,
 	// create dtls context for rtp/rtcp, and register self as callback
   if (isServer_){
     ELOG_DEBUG("Creating a DTLS server: passive");
-    (new DtlsFactory())->createServer(dtlsRtp);
+    DtlsFactory::GetInstance()->createServer(dtlsRtp);
     dtlsRtp->setDtlsReceiver(this);
 
     if (!rtcp_mux) {
       comps = 2;
       dtlsRtcp.reset(new DtlsSocketContext());
-      (new DtlsFactory())->createServer(dtlsRtcp);
+      DtlsFactory::GetInstance()->createServer(dtlsRtcp);
       dtlsRtcp->setDtlsReceiver(this);
     }
   }else{
     ELOG_DEBUG("Creating a DTLS client: active");
-    (new DtlsFactory())->createClient(dtlsRtp);
+    DtlsFactory::GetInstance()->createClient(dtlsRtp);
     dtlsRtp->setDtlsReceiver(this);
 
     if (!rtcp_mux) {
       comps = 2;
       dtlsRtcp.reset(new DtlsSocketContext());
-      (new DtlsFactory())->createClient(dtlsRtcp);
+      DtlsFactory::GetInstance()->createClient(dtlsRtcp);
       dtlsRtcp->setDtlsReceiver(this);
     }
   }
