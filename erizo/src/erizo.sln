@@ -7,9 +7,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "erizo", "erizo.vcxproj", "{
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnice", "..\..\..\libnice\win32\vs9\libnice.vcxproj", "{550C7FB8-DBFE-4364-B26A-DAF7158CD878}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "janus", "..\..\..\janus_gateway\janus.vcxproj", "{5D635DBA-7808-4859-9BD7-A89D6BF384E7}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "srtp", "..\..\third_party\srtp\srtp.vcxproj", "{EEF031CB-FED8-451E-A471-91EC8D4F6750}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "janus", "..\..\..\janus_gateway\janus\janus.vcxproj", "{BBA04A85-5F06-4034-A574-17049BB07F76}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,14 +35,6 @@ Global
 		{550C7FB8-DBFE-4364-B26A-DAF7158CD878}.Release Dll|Win32.Build.0 = Release|Win32
 		{550C7FB8-DBFE-4364-B26A-DAF7158CD878}.Release|Win32.ActiveCfg = Release|Win32
 		{550C7FB8-DBFE-4364-B26A-DAF7158CD878}.Release|Win32.Build.0 = Release|Win32
-		{5D635DBA-7808-4859-9BD7-A89D6BF384E7}.Debug Dll|Win32.ActiveCfg = Debug|Win32
-		{5D635DBA-7808-4859-9BD7-A89D6BF384E7}.Debug Dll|Win32.Build.0 = Debug|Win32
-		{5D635DBA-7808-4859-9BD7-A89D6BF384E7}.Debug|Win32.ActiveCfg = Debug|Win32
-		{5D635DBA-7808-4859-9BD7-A89D6BF384E7}.Debug|Win32.Build.0 = Debug|Win32
-		{5D635DBA-7808-4859-9BD7-A89D6BF384E7}.Release Dll|Win32.ActiveCfg = Release|Win32
-		{5D635DBA-7808-4859-9BD7-A89D6BF384E7}.Release Dll|Win32.Build.0 = Release|Win32
-		{5D635DBA-7808-4859-9BD7-A89D6BF384E7}.Release|Win32.ActiveCfg = Release|Win32
-		{5D635DBA-7808-4859-9BD7-A89D6BF384E7}.Release|Win32.Build.0 = Release|Win32
 		{EEF031CB-FED8-451E-A471-91EC8D4F6750}.Debug Dll|Win32.ActiveCfg = Debug Dll|Win32
 		{EEF031CB-FED8-451E-A471-91EC8D4F6750}.Debug Dll|Win32.Build.0 = Debug Dll|Win32
 		{EEF031CB-FED8-451E-A471-91EC8D4F6750}.Debug|Win32.ActiveCfg = Debug|Win32
@@ -51,6 +43,14 @@ Global
 		{EEF031CB-FED8-451E-A471-91EC8D4F6750}.Release Dll|Win32.Build.0 = Release Dll|Win32
 		{EEF031CB-FED8-451E-A471-91EC8D4F6750}.Release|Win32.ActiveCfg = Release|Win32
 		{EEF031CB-FED8-451E-A471-91EC8D4F6750}.Release|Win32.Build.0 = Release|Win32
+		{BBA04A85-5F06-4034-A574-17049BB07F76}.Debug Dll|Win32.ActiveCfg = Debug|Win32
+		{BBA04A85-5F06-4034-A574-17049BB07F76}.Debug Dll|Win32.Build.0 = Debug|Win32
+		{BBA04A85-5F06-4034-A574-17049BB07F76}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BBA04A85-5F06-4034-A574-17049BB07F76}.Debug|Win32.Build.0 = Debug|Win32
+		{BBA04A85-5F06-4034-A574-17049BB07F76}.Release Dll|Win32.ActiveCfg = Release|Win32
+		{BBA04A85-5F06-4034-A574-17049BB07F76}.Release Dll|Win32.Build.0 = Release|Win32
+		{BBA04A85-5F06-4034-A574-17049BB07F76}.Release|Win32.ActiveCfg = Release|Win32
+		{BBA04A85-5F06-4034-A574-17049BB07F76}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

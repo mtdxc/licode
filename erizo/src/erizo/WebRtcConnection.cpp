@@ -8,6 +8,7 @@
 #include "DtlsTransport.h"
 #include "SdpInfo.h"
 #include "rtp/RtpHeaders.h"
+#include "rtp/RtpVP8Parser.h"
 
 namespace erizo {
   DEFINE_LOGGER(WebRtcConnection, "WebRtcConnection");
@@ -17,7 +18,6 @@ namespace erizo {
       : connEventListener_(listener), iceConfig_(iceConfig), fec_receiver_(this){
     ELOG_INFO("WebRtcConnection %p constructor stunserver %s stunPort %d minPort %d maxPort %d\n", 
 			this, iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.maxPort);
-    sequenceNumberFIR_ = 0;
     bundle_ = false;
     this->setVideoSinkSSRC(55543);
     this->setAudioSinkSSRC(44444);
@@ -29,6 +29,7 @@ namespace erizo {
     audioTransport_ = NULL;
 
     shouldSendFeedback_ = true;
+    slideShowMode_ = false;
 
     audioEnabled_ = audioEnabled;
     videoEnabled_ = videoEnabled;
@@ -37,6 +38,8 @@ namespace erizo {
     gettimeofday(&mark_, NULL);
 
     rateControl_ = 0;
+    seqNo_ = 1000;
+    grace_=0;
      
     sending_ = true;
     rtcpProcessor_.reset(new RtcpProcessor((MediaSink*)this, (MediaSource*)this));
@@ -294,7 +297,8 @@ namespace erizo {
 
   // This is called by our fec_ object when it recovers a packet.
   bool WebRtcConnection::OnRecoveredPacket(const uint8_t* rtp_packet, int rtp_packet_length) {
-      this->queueData(0, (const char*) rtp_packet, rtp_packet_length, videoTransport_, VIDEO_PACKET);
+//      this->queueData(0, (const char*) rtp_packet, rtp_packet_length, videoTransport_, VIDEO_PACKET);
+      this->deliverVideoData_((char*)rtp_packet, rtp_packet_length);
       return true;
   }
 
@@ -309,9 +313,8 @@ namespace erizo {
   int WebRtcConnection::deliverVideoData_(char* buf, int len) {
     if (videoTransport_ != NULL) {
       if (videoEnabled_ == true) {
-  
         RtpHeader* h = reinterpret_cast<RtpHeader*>(buf);
-        if (h->getPayloadType() == RED_90000_PT && !remoteSdp_.supportPayloadType(RED_90000_PT)) {
+        if (h->getPayloadType() == RED_90000_PT && (!remoteSdp_.supportPayloadType(RED_90000_PT) || slideShowMode_)) {
           // This is a RED/FEC payload, but our remote endpoint doesn't support that (most likely because it's firefox :/ )
           // Let's go ahead and run this through our fec receiver to convert it to raw VP8
           webrtc::RTPHeader hackyHeader;
@@ -322,7 +325,29 @@ namespace erizo {
             fec_receiver_.ProcessReceivedFec();
           }
         } else {
-          this->queueData(0, buf, len, videoTransport_, VIDEO_PACKET);
+
+          if (slideShowMode_){
+            RtcpHeader* hc = reinterpret_cast<RtcpHeader*>(buf);
+            RtpVP8Parser parser;
+            RTPPayloadVP8* payload = parser.parseVP8(reinterpret_cast<unsigned char*>(buf + h->getHeaderLength()), len - h->getHeaderLength());
+            if (hc->isRtcp()){ // IGNORE SRs?
+              return 0;
+              //this->queueData(0, buf, len, videoTransport_, VIDEO_PACKET);
+            }
+            if (!payload->frameType){ // Its a keyframe
+              grace_=1;
+            }
+            if (grace_){ // We send until marker
+              h->setSeqNumber(seqNo_++);
+              this->queueData(0, buf, len, videoTransport_, VIDEO_PACKET);
+              if (h->getMarker()){
+                grace_=0;
+              }
+            } 
+          } else {
+            seqNo_ = h->getSeqNumber();
+            this->queueData(0, buf, len, videoTransport_, VIDEO_PACKET);
+          }
         }
       }
     }
@@ -375,7 +400,7 @@ namespace erizo {
 
     // DELIVER FEEDBACK (RR, FEEDBACK PACKETS)
     if (chead->isFeedback()){
-      if (fbSink_ != NULL && shouldSendFeedback_) {
+      if (fbSink_ != NULL && shouldSendFeedback_ && !slideShowMode_) {
         fbSink_->deliverFeedback(buf,len);
       }
     } else {
@@ -446,6 +471,7 @@ namespace erizo {
   }
 
   int WebRtcConnection::sendPLI() {
+    ELOG_DEBUG("Sending PLI");
     RtcpHeader thePLI;
     thePLI.setPacketType(RTCP_PS_Feedback_PT);
     thePLI.setBlockCount(1);
@@ -620,6 +646,11 @@ namespace erizo {
     cond_.notify_one();
   }
 
+  void WebRtcConnection::setSlideShowMode (bool state){
+    ELOG_DEBUG("Setting SlideShowMode %u", state);
+    slideShowMode_ = state;
+  }
+
   WebRTCEvent WebRtcConnection::getCurrentState() {
     return globalState_;
   }
@@ -654,11 +685,10 @@ namespace erizo {
         }
 
         if (bundle_ || p.type == VIDEO_PACKET) {
-          if (rateControl_){
+          if (rateControl_ && !slideShowMode_){
             if (p.type == VIDEO_PACKET){
               if (rateControl_ == 1)
                 continue;
-
               gettimeofday(&now_, NULL);
               if (msDelta(now_, mark_) >= 100){
                 mark_ = now_;
@@ -666,7 +696,6 @@ namespace erizo {
               }
               partial_bitrate = ((sentVideoBytes - lastSecondVideoBytes)*8)*10;
               if (partial_bitrate > this->rateControl_){
-								// 这边的continue可是直接丢弃视频包..
                 continue;
               }
               sentVideoBytes+=p.length;
