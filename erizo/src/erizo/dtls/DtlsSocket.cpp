@@ -106,14 +106,12 @@ DtlsSocket::~DtlsSocket()
    ClearSSLCtx();
 }
 
-void
-DtlsSocket::expired(DtlsSocketTimer* timer)
+void DtlsSocket::expired(DtlsSocketTimer* timer)
 {
    forceRetransmit();
 }
 
-void
-DtlsSocket::startClient()
+void DtlsSocket::startClient()
 {
    assert(mSocketType == Client);
    doHandshakeIteration();
@@ -142,8 +140,7 @@ DtlsSocket::handlePacketMaybe(const unsigned char* bytes, unsigned int len)
    return true;
 }
 
-void
-DtlsSocket::forceRetransmit()
+void DtlsSocket::forceRetransmit()
 {
    BIO_reset(mInBio);
    BIO_reset(mOutBio);
@@ -152,8 +149,7 @@ DtlsSocket::forceRetransmit()
    doHandshakeIteration();
 }
 
-void
-DtlsSocket::doHandshakeIteration()
+void DtlsSocket::doHandshakeIteration()
 {
    boost::mutex::scoped_lock lock(handshakeMutex_);
 	 char errbuf[1024] = {0};
@@ -196,7 +192,6 @@ DtlsSocket::doHandshakeIteration()
          mReadTimer = new DtlsSocketTimer(0, this);
          mTimerContext->addTimer(mReadTimer,500);
       }
-
       break;
    default:
       ELOG_ERROR( "SSL error %d", sslerr );
@@ -213,8 +208,7 @@ DtlsSocket::doHandshakeIteration()
    }
 }
 
-bool
-DtlsSocket::getRemoteFingerprint(char *fprint)
+bool DtlsSocket::getRemoteFingerprint(char *fprint)
 {
    X509* x = SSL_get_peer_certificate(mSsl);
    if(!x) // No certificate
@@ -225,8 +219,7 @@ DtlsSocket::getRemoteFingerprint(char *fprint)
    return true;
 }
 
-bool
-DtlsSocket::checkFingerprint(const char* fingerprint, unsigned int len)
+bool DtlsSocket::checkFingerprint(const char* fingerprint, unsigned int len)
 {
    char fprint[100];
 
@@ -242,14 +235,12 @@ DtlsSocket::checkFingerprint(const char* fingerprint, unsigned int len)
    return true;
 }
 
-void
-DtlsSocket::getMyCertFingerprint(char *fingerprint)
+void DtlsSocket::getMyCertFingerprint(char *fingerprint)
 {
   DtlsSocket::computeFingerprint(DtlsFactory::mCert, fingerprint);
 }
 
-SrtpSessionKeys*
-DtlsSocket::getSrtpSessionKeys()
+SrtpSessionKeys* DtlsSocket::getSrtpSessionKeys()
 {
    //TODO: probably an exception candidate
    assert(mHandshakeCompleted);

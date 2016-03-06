@@ -20,9 +20,9 @@ namespace erizo {
     public:
       AudioEncoder();
       virtual ~AudioEncoder();
-      int initEncoder (const AudioCodecInfo& info);
-      int encodeAudio (unsigned char* inBuffer, int nSamples, AVPacket* pkt);
-      int closeEncoder ();
+      int initEncoder(const AudioCodecInfo& info);
+      int encodeAudio(unsigned char* inBuffer, int nSamples, AVPacket* pkt);
+      int closeEncoder();
 
     private:
       AVCodec* aCoder_;
@@ -35,8 +35,8 @@ namespace erizo {
     public:
       AudioDecoder();
       virtual ~AudioDecoder();
-      int initDecoder (const AudioCodecInfo& info);
-      int initDecoder (AVCodecContext* context);
+      int initDecoder(const AudioCodecInfo& info);
+      int initDecoder(AVCodecContext* context);
       int decodeAudio(unsigned char* inBuff, int inBuffLen,
           unsigned char* outBuff, int outBuffLen, int* gotFrame);
       int closeDecoder();

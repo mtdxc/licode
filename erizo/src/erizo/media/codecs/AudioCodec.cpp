@@ -13,8 +13,7 @@ namespace erizo {
   DEFINE_LOGGER(AudioEncoder, "media.codecs.AudioEncoder");
   DEFINE_LOGGER(AudioDecoder, "media.codecs.AudioDecoder");
 
-  inline  AVCodecID
-    AudioCodecID2ffmpegDecoderID(AudioCodecID codec)
+  inline  AVCodecID AudioCodecID2ffmpegDecoderID(AudioCodecID codec)
     {
       switch (codec)
       {
@@ -32,10 +31,10 @@ namespace erizo {
 
   AudioEncoder::~AudioEncoder(){
     ELOG_DEBUG("AudioEncoder Destructor");
-    this->closeEncoder();
+    closeEncoder();
   }
 
-  int AudioEncoder::initEncoder (const AudioCodecInfo& mediaInfo){
+  int AudioEncoder::initEncoder(const AudioCodecInfo& mediaInfo){
 
     ELOG_DEBUG("Init audioEncoder begin");
     aCoder_ = avcodec_find_encoder(AudioCodecID2ffmpegDecoderID(mediaInfo.codec));
@@ -65,7 +64,7 @@ namespace erizo {
     return true;
   }
 
-  int AudioEncoder::encodeAudio (unsigned char* inBuffer, int nSamples, AVPacket* pkt) {
+  int AudioEncoder::encodeAudio(unsigned char* inBuffer, int nSamples, AVPacket* pkt) {
     AVFrame *frame = av_frame_alloc();
     if (!frame) {
       ELOG_ERROR("could not allocate audio frame");
@@ -113,7 +112,7 @@ namespace erizo {
     return ret;
   }
 
-  int AudioEncoder::closeEncoder (){
+  int AudioEncoder::closeEncoder(){
     if (aCoderContext_!=NULL){
       avcodec_close(aCoderContext_);
     }
@@ -135,7 +134,7 @@ namespace erizo {
     this->closeDecoder();
   }
 
-  int AudioDecoder::initDecoder (const AudioCodecInfo& info){
+  int AudioDecoder::initDecoder(const AudioCodecInfo& info){
     aDecoder_ = avcodec_find_decoder(static_cast<AVCodecID>(info.codec));
     if (!aDecoder_) {
       ELOG_DEBUG("Audio decoder not found");
@@ -160,7 +159,7 @@ namespace erizo {
     return true;
   }
 
-  int AudioDecoder::initDecoder (AVCodecContext* context){
+  int AudioDecoder::initDecoder(AVCodecContext* context){
     return 0;
   }
   int AudioDecoder::decodeAudio(unsigned char* inBuff, int inBuffLen,
@@ -190,8 +189,7 @@ namespace erizo {
       //      aDecoderContext->get_buffer = avcodec_default_get_buffer;
       //      aDecoderContext->release_buffer = avcodec_default_release_buffer;
 
-      len = avcodec_decode_audio4(aDecoderContext_, &frame, &got_frame,
-          &avpkt);
+      len = avcodec_decode_audio4(aDecoderContext_, &frame, &got_frame, &avpkt);
       if (len >= 0 && got_frame) {
         int plane_size;
         //int planar = av_sample_fmt_is_planar(aDecoderContext->sample_fmt);
@@ -247,6 +245,7 @@ namespace erizo {
 
     return decSize;
   }
+
   int AudioDecoder::closeDecoder(){
     if (aDecoderContext_!=NULL){
       avcodec_close(aDecoderContext_);

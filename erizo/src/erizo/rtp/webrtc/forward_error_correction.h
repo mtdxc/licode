@@ -132,7 +132,6 @@ class ForwardErrorCorrection {
   typedef std::list<RecoveredPacket*> RecoveredPacketList;
 
   ForwardErrorCorrection();
-
   virtual ~ForwardErrorCorrection();
 
   /**

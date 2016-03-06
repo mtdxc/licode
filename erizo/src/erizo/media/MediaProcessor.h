@@ -27,7 +27,7 @@ namespace erizo {
 struct RTPInfo {
 	enum AVCodecID codec;
 	unsigned int ssrc;
-	unsigned int PT;
+	unsigned int PT; ///< payload type
 };
 
 enum ProcessorType {
@@ -53,7 +53,6 @@ struct MediaInfo {
 	RTPInfo rtpAudioInfo;
 	VideoCodecInfo videoCodec;
 	AudioCodecInfo audioCodec;
-
 };
 
 #define UNPACKAGED_BUFFER_SIZE 150000
@@ -69,17 +68,13 @@ struct MediaInfo {
 class RawDataReceiver {
 public:
 	virtual void receiveRawData(RawDataPacket& packet) = 0;
-	virtual ~RawDataReceiver() {
-	}
-	;
+	virtual ~RawDataReceiver() {}
 };
 
 class RTPDataReceiver {
 public:
 	virtual void receiveRtpData(unsigned char* rtpdata, int len) = 0;
-	virtual ~RTPDataReceiver() {
-	}
-	;
+	virtual ~RTPDataReceiver() {}
 };
 
 class RTPSink;
@@ -91,7 +86,6 @@ public:
 	virtual ~InputProcessor();
 
 	int init(const MediaInfo& info, RawDataReceiver* receiver);
-
 
 	int unpackageVideo(unsigned char* inBuff, int inBuffLen,
             unsigned char* outBuff, int* gotFrame);
@@ -119,7 +113,7 @@ private:
 
 	unsigned char* decodedBuffer_;
 	unsigned char* unpackagedBuffer_;
-    unsigned char* unpackagedBufferPtr_;
+  unsigned char* unpackagedBufferPtr_;
 
 	unsigned char* decodedAudioBuffer_;
 	unsigned char* unpackagedAudioBuffer_;
@@ -127,10 +121,9 @@ private:
 	AVCodec* aDecoder;
 	AVCodecContext* aDecoderContext;
 
-
 	AVFormatContext* aInputFormatContext;
 	AVInputFormat* aInputFormat;
-   VideoDecoder vDecoder;
+  VideoDecoder vDecoder;
 
 	RTPInfo* vRTPInfo;
 
@@ -152,6 +145,7 @@ private:
 			unsigned char* outBuff);
 
 };
+
 class OutputProcessor: public RawDataReceiver {
 	DECLARE_LOGGER();
 public:

@@ -20,10 +20,10 @@ namespace erizo {
     public:
       VideoEncoder();
       virtual ~VideoEncoder();
-      int initEncoder (const VideoCodecInfo& info);
-      int encodeVideo (unsigned char* inBuffer, int length, 
+      int initEncoder(const VideoCodecInfo& info);
+      int encodeVideo(unsigned char* inBuffer, int length, 
           unsigned char* outBuffer, int outLength, int& hasFrame);
-      int closeEncoder ();
+      int closeEncoder();
 
     private:
       AVCodec* vCoder;
@@ -36,8 +36,8 @@ namespace erizo {
     public:
       VideoDecoder();
       virtual ~VideoDecoder();
-      int initDecoder (const VideoCodecInfo& info);
-      int initDecoder (AVCodecContext* context);
+      int initDecoder(const VideoCodecInfo& info);
+      int initDecoder(AVCodecContext* context);
       int decodeVideo(unsigned char* inBuff, int inBuffLen,
           unsigned char* outBuff, int outBuffLen, int* gotFrame);
       int closeDecoder();

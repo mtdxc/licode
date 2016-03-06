@@ -19,17 +19,16 @@ namespace erizo {
   DEFINE_LOGGER(VideoEncoder, "media.codecs.VideoEncoder");
   DEFINE_LOGGER(VideoDecoder, "media.codecs.VideoDecoder");
 
-  inline  AVCodecID
-    VideoCodecID2ffmpegDecoderID(VideoCodecID codec)
+  inline  AVCodecID VideoCodecID2ffmpegDecoderID(VideoCodecID codec)
+  {
+    switch (codec)
     {
-      switch (codec)
-      {
-        case VIDEO_CODEC_H264: return AV_CODEC_ID_H264;
-        case VIDEO_CODEC_VP8: return AV_CODEC_ID_VP8;
-        case VIDEO_CODEC_MPEG4: return AV_CODEC_ID_MPEG4;
-        default: return AV_CODEC_ID_VP8;
-      }
+      case VIDEO_CODEC_H264: return AV_CODEC_ID_H264;
+      case VIDEO_CODEC_VP8: return AV_CODEC_ID_VP8;
+      case VIDEO_CODEC_MPEG4: return AV_CODEC_ID_MPEG4;
+      default: return AV_CODEC_ID_VP8;
     }
+  }
 
   VideoEncoder::VideoEncoder(){
     avcodec_register_all();
@@ -61,12 +60,11 @@ namespace erizo {
     vCoderContext->qmin = 0;
     vCoderContext->qmax = 40; // rc_quantifiers
     vCoderContext->profile = 3;
-    //    vCoderContext->frame_skip_threshold = 30;
+    //vCoderContext->frame_skip_threshold = 30;
     vCoderContext->rc_buffer_aggressivity = 0.95;
     //vCoderContext->rc_buffer_size = vCoderContext->bit_rate;
     //vCoderContext->rc_initial_buffer_occupancy = vCoderContext->bit_rate / 2;
     vCoderContext->rc_initial_buffer_occupancy = 500;
-
     vCoderContext->rc_buffer_size = 1000;
 
     vCoderContext->width = info.width;
@@ -93,10 +91,10 @@ namespace erizo {
     return 0;
   }
 
-  int VideoEncoder::encodeVideo (unsigned char* inBuffer, int inLength, unsigned char* outBuffer, int outLength, int& hasFrame){
+  int VideoEncoder::encodeVideo(unsigned char* inBuffer, int inLength, unsigned char* outBuffer, int outLength, int& hasFrame){
 
     int size = vCoderContext->width * vCoderContext->height;
-    //    ELOG_DEBUG("vCoderContext width %d", vCoderContext->width);
+    // ELOG_DEBUG("vCoderContext width %d", vCoderContext->width);
 
     cPicture->pts = AV_NOPTS_VALUE;
     cPicture->data[0] = inBuffer;
@@ -121,8 +119,7 @@ namespace erizo {
     //        pkt.size, ret, got_packet, pkt.pts, pkt.dts);
     if (!ret && got_packet && vCoderContext->coded_frame) {
       vCoderContext->coded_frame->pts = pkt.pts;
-      vCoderContext->coded_frame->key_frame =
-        !!(pkt.flags & AV_PKT_FLAG_KEY);
+      vCoderContext->coded_frame->key_frame = (pkt.flags & AV_PKT_FLAG_KEY);
     }
     return ret ? ret : pkt.size;
   }
@@ -149,7 +146,7 @@ namespace erizo {
     this->closeDecoder();
   }
 
-  int VideoDecoder::initDecoder (const VideoCodecInfo& info){
+  int VideoDecoder::initDecoder(const VideoCodecInfo& info){
     ELOG_DEBUG("Init Decoder");
     vDecoder = avcodec_find_decoder(VideoCodecID2ffmpegDecoderID(info.codec));
     if (!vDecoder) {
@@ -180,7 +177,7 @@ namespace erizo {
     return 0;
   }
 
-  int VideoDecoder::initDecoder (AVCodecContext* context){    
+  int VideoDecoder::initDecoder(AVCodecContext* context){    
     ELOG_DEBUG("Init Decoder with context");
     initWithContext_=true;
     vDecoder = avcodec_find_decoder(context->codec_id);
@@ -224,9 +221,7 @@ namespace erizo {
 
     while (avpkt.size > 0) {
 
-      len = avcodec_decode_video2(vDecoderContext, dPicture, &got_picture,
-          &avpkt);
-
+      len = avcodec_decode_video2(vDecoderContext, dPicture, &got_picture, &avpkt);
       if (len < 0) {
         ELOG_DEBUG("Error decoding video frame");
         return -1;
