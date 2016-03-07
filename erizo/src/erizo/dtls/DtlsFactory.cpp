@@ -209,7 +209,7 @@ void DtlsFactory::Init() {
     SSL_library_init();
     SSL_load_error_strings();
     ERR_load_crypto_strings();
-    //  srtp_init();
+    //srtp_init();
 
     createCert("sip:licode@lynckia.com",365,1024,DtlsFactory::mCert,DtlsFactory::privkey);
   }

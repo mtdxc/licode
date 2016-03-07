@@ -14,7 +14,8 @@
 #include "SdpInfo.h"
 
 
-// If true (and configured properly below) erizo will generate relay candidates for itself MOSTLY USEFUL WHEN ERIZO ITSELF IS BEHIND A NAT
+// If true (and configured properly below) erizo will generate relay candidates for itself 
+// MOSTLY USEFUL WHEN ERIZO ITSELF IS BEHIND A NAT
 #define SERVER_SIDE_TURN 0
 
 namespace erizo {
@@ -75,13 +76,16 @@ namespace erizo {
     conn->updateComponentState(component_id, NICE_READY);
   }
 
-  NiceConnection::NiceConnection(MediaType med, const std::string &transport_name, NiceConnectionListener* listener, 
-      unsigned int iceComponents, const IceConfig& iceConfig, std::string username, std::string password)
+  NiceConnection::NiceConnection(MediaType med, 
+		const std::string &transport_name, 
+		NiceConnectionListener* listener, 
+    unsigned int iceComponents, 
+		const IceConfig& iceConfig, 
+		std::string username, std::string password)
      : mediaType(med), agent_(NULL), listener_(listener), candsDelivered_(0), context_(NULL), 
 		 iceState_(NICE_INITIAL), iceComponents_(iceComponents), transportName(transport_name)
 	{
 
-    localCandidates.reset(new std::vector<CandidateInfo>());
     for (unsigned int i = 1; i<=iceComponents_; i++) {
       comp_state_list_[i] = NICE_INITIAL;
     }
@@ -142,7 +146,7 @@ namespace erizo {
     // Set our remote credentials.  This must be done *after* we add a stream.
     if (username.compare("")!=0 && password.compare("")!=0){
       ELOG_DEBUG("Setting remote credentials in constructor");
-      this->setRemoteCredentials(username, password);
+      setRemoteCredentials(username, password);
     }
     // Set Port Range ----> If this doesn't work when linking the file libnice.sym has to be modified to include this call
     if (iceConfig.minPort!=0 && iceConfig.maxPort!=0){
@@ -186,40 +190,41 @@ namespace erizo {
   }
   
   packetPtr NiceConnection::getPacket(){
-      if(this->checkIceState()==NICE_FINISHED || !running_) {
-          packetPtr p (new dataPacket());
-          p->length = -1;
-          return p;
-      }
-      boost::unique_lock<boost::mutex> lock(queueMutex_);
-      boost::system_time timeout = boost::get_system_time() + boost::posix_time::milliseconds(300);
-      if(!cond_.timed_wait(lock, timeout, queue_not_empty(niceQueue_))){
-        packetPtr p(new dataPacket());
-        p->length=0;
+    if(getIceState()==NICE_FINISHED || !running_) {
+        packetPtr p (new dataPacket());
+        p->length = -1;
         return p;
-      }
-      if(this->checkIceState()==NICE_FINISHED || !running_) {
-          packetPtr p (new dataPacket());
-          p->length = -1;
-          return p;
-      }
-      if(!niceQueue_.empty()){
-        packetPtr p(niceQueue_.front());
-        niceQueue_.pop();
-        return p;
-      }
+    }
+    boost::unique_lock<boost::mutex> lock(queueMutex_);
+    boost::system_time timeout = boost::get_system_time() + boost::posix_time::milliseconds(300);
+    if(!cond_.timed_wait(lock, timeout, queue_not_empty(niceQueue_))){
       packetPtr p(new dataPacket());
       p->length=0;
       return p;
+    }
+		// double checked in lock
+    if(getIceState()==NICE_FINISHED || !running_) {
+        packetPtr p (new dataPacket());
+        p->length = -1;
+        return p;
+    }
+    if(!niceQueue_.empty()){
+      packetPtr p(niceQueue_.front());
+      niceQueue_.pop();
+      return p;
+    }
+    packetPtr p(new dataPacket());
+    p->length=0;
+    return p;
   }
 
   void NiceConnection::close() {
-    if(this->checkIceState()==NICE_FINISHED){
+    if(getIceState()==NICE_FINISHED){
       return;
     }
     running_ = false;
     ELOG_DEBUG("Closing nice  %p", this);
-    this->updateIceState(NICE_FINISHED);
+    updateIceState(NICE_FINISHED);
     cond_.notify_one();
     listener_ = NULL;
     boost::system_time timeout=boost::get_system_time() + boost::posix_time::milliseconds(500);
@@ -242,7 +247,7 @@ namespace erizo {
   }
 
   void NiceConnection::queueData(unsigned int component_id, char* buf, int len){
-    if (this->checkIceState() == NICE_READY && running_){
+    if (getIceState() == NICE_READY && running_){
       boost::mutex::scoped_lock(queueMutex_);
       if (niceQueue_.size() < 1000 ) {
         packetPtr p_ (new dataPacket());
@@ -257,7 +262,7 @@ namespace erizo {
 
   int NiceConnection::sendData(unsigned int compId, const void* buf, int len) {
     int val = -1;
-    if (this->checkIceState() == NICE_READY && running_) {
+    if (getIceState() == NICE_READY && running_) {
       val = nice_agent_send(agent_, 1, compId, len, reinterpret_cast<const gchar*>(buf));
     }
     if (val != len) {
@@ -272,7 +277,7 @@ namespace erizo {
     nice_agent_gather_candidates(agent_, 1);   
     // Attach to the component to receive the data
     while(running_){
-      if(this->checkIceState()>=NICE_FINISHED || !running_)
+      if(getIceState()>=NICE_FINISHED || !running_)
         break;
       g_main_context_iteration(context_, true);
     }
@@ -285,13 +290,13 @@ namespace erizo {
       return false;
     }
     GSList* candList = NULL;
-    ELOG_DEBUG("Setting remote candidates %lu, mediatype %d", candidates.size(), this->mediaType);
+    ELOG_DEBUG("Setting remote candidates %lu, mediatype %d", candidates.size(), mediaType);
 
     for (unsigned int it = 0; it < candidates.size(); it++) {
       NiceCandidateType nice_cand_type;
       CandidateInfo cinfo = candidates[it];
       //If bundle we will add the candidates regardless the mediaType
-      if (cinfo.componentId !=1 || (!isBundle && cinfo.mediaType!=this->mediaType ))
+      if (cinfo.componentId !=1 || (!isBundle && cinfo.mediaType!=mediaType ))
         continue;
 
       switch (cinfo.hostType) {
@@ -349,7 +354,7 @@ namespace erizo {
 
   void NiceConnection::gatheringDone(uint stream_id){
     ELOG_DEBUG("Gathering done for stream %u", stream_id);
-    this->updateIceState(NICE_CANDIDATES_RECEIVED);
+    updateIceState(NICE_CANDIDATES_RECEIVED);
   }
 
   void NiceConnection::gotCandidate(uint stream_id, uint component_id, const std::string &foundation) {
@@ -418,8 +423,8 @@ namespace erizo {
       cand_info.transProtocol = transportName;
       cand_info.username = ufrag_;
       cand_info.password = upass_;
-      //localCandidates->push_back(cand_info);
-      this->getNiceListener()->onCandidate(cand_info, this);
+      //localCandidates.push_back(cand_info);
+      getNiceListener()->onCandidate(cand_info, this);
     }
     // for nice_agent_get_local_candidates,  the caller owns the returned GSList as well as the candidates contained within it.
     // let's free everything in the list, as well as the list.
@@ -438,11 +443,11 @@ namespace erizo {
   }
 
   void NiceConnection::setNiceListener(NiceConnectionListener *listener) {
-    this->listener_ = listener;
+    listener_ = listener;
   }
 
   NiceConnectionListener* NiceConnection::getNiceListener() {
-    return this->listener_;
+    return listener_;
   }
 
   void NiceConnection::updateComponentState(unsigned int compId, IceState state) {
@@ -464,10 +469,10 @@ namespace erizo {
         }
       }
     }
-    this->updateIceState(state);
+    updateIceState(state);
   }
 
-  IceState NiceConnection::checkIceState(){
+  IceState NiceConnection::getIceState(){
     return iceState_;
   }
 
@@ -476,14 +481,14 @@ namespace erizo {
     if(iceState_==state)
       return;
 
-    ELOG_INFO("%s - NICE State Changing from %u to %u %p", transportName.c_str(), this->iceState_, state, this);
-    this->iceState_ = state;
+    ELOG_INFO("%s - NICE State Changing from %u to %u %p", transportName.c_str(), iceState_, state, this);
+    iceState_ = state;
     switch( iceState_) {
       case NICE_FINISHED:
         return;
       case NICE_FAILED:
         ELOG_ERROR("Nice Failed, stopping ICE");
-        this->running_=false;
+        running_=false;
         break;
 
       case NICE_READY:
@@ -494,8 +499,8 @@ namespace erizo {
     }
 
     // Important: send this outside our state lock.  Otherwise, serious risk of deadlock.
-    if (this->listener_ != NULL)
-      this->listener_->updateIceState(state, this);
+    if (listener_ != NULL)
+      listener_->updateIceState(state, this);
   }
 
   CandidatePair NiceConnection::getSelectedPair(){

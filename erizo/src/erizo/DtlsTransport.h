@@ -19,10 +19,10 @@ namespace erizo {
  - ice连接处理(NiceConnection)：收集地址，交换候选地址，打洞连接建立 
  - ssl证书交换和密钥协商(DtlsSocketContext),这里的包需要重传
  - srtp再利用协商好的密钥进行加解密(SrtpChannel)
- @todo 单连接使用太多线程，当前线程有：
- - ice 流程处理线程
+ 当前使用的线程有：
+ - ice 流程处理线程(NiceConnction::init)
  - ice 数据处理线程(getNiceDataLoop)
- - dtls重传定时器线程(Resender 可能有两!)
+ - ice 发送线程(WebRtcConnection::sendLoop)，负责流控
  */
   class DtlsTransport : dtls::DtlsReceiver, public Transport {
     DECLARE_LOGGER();
@@ -61,10 +61,11 @@ namespace erizo {
     boost::mutex writeMutex_,sessionMutex_;
 		// 证书交换和密钥协商上下文(rtp和rtcp各一个，如rtcp_mux则没有rtcp)
     boost::shared_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
-    boost::scoped_ptr<Resender> rtcpResender, rtpResender;
+		boost::scoped_ptr<Resender> rtpResender, rtcpResender;
 		// 加解密上下文(rtp和rtcp各一个，如果rtcp_mux则没有rtcp)
     boost::scoped_ptr<SrtpChannel> srtp_, srtcp_;
     bool readyRtp, readyRtcp;
+
     bool running_, isServer_;
 		// 数据接收线程
     boost::thread getNice_Thread_;

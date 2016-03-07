@@ -50,7 +50,7 @@ public:
 };
 
 /*
- * A MediaSink 应该对应于某客户端
+ * A MediaSink
  */
 class MediaSink: public virtual Monitor{
 protected:

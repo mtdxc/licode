@@ -57,7 +57,7 @@ DtlsSocket::DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext, enum 
    ELOG_DEBUG("Creating Dtls Socket");
    mSocketContext->setDtlsSocket(this);
 
-   InitSSLCtx();
+   InitSslCtx();
    mSsl = SSL_new(mContext);
    assert(mSsl!=0);
    mSsl->ctx = mSsl->session_ctx = mContext;
@@ -103,7 +103,7 @@ DtlsSocket::~DtlsSocket()
    }
 
    // Ownership of the factory is basically transferred to DtlsSocket.
-   ClearSSLCtx();
+   ClearSslCtx();
 }
 
 void DtlsSocket::expired(DtlsSocketTimer* timer)
@@ -152,21 +152,19 @@ void DtlsSocket::forceRetransmit()
 void DtlsSocket::doHandshakeIteration()
 {
    boost::mutex::scoped_lock lock(handshakeMutex_);
-	 char errbuf[1024] = {0};
-   int sslerr;
 
    if(mHandshakeCompleted)
       return;
 
    int r=SSL_do_handshake(mSsl);
-   ERR_error_string_n(ERR_peek_error(),errbuf,sizeof(errbuf));
 
    // See what was written
    unsigned char *outBioData;
    int outBioLen = BIO_get_mem_data(mOutBio,&outBioData);
 
    // Now handle handshake errors */
-   switch(sslerr=SSL_get_error(mSsl,r))
+	 int sslerr = SSL_get_error(mSsl, r);
+   switch(sslerr)
    {
    case SSL_ERROR_NONE:
       mHandshakeCompleted = true;
@@ -188,14 +186,22 @@ void DtlsSocket::doHandshakeIteration()
       // something or a retransmit so we need to reset the timer
       if(outBioLen)
       {
+				 // 这个定时器没用，因为mTimerContext的updateTimer方法没被调用 
          if(mReadTimer) mReadTimer->invalidate();
          mReadTimer = new DtlsSocketTimer(0, this);
+				 if (!mTimerContext.get()){
+					 mTimerContext.reset(new TestTimerContext());
+				 }
          mTimerContext->addTimer(mReadTimer,500);
       }
       break;
-   default:
-      ELOG_ERROR( "SSL error %d", sslerr );
-      mSocketContext->handshakeFailed(errbuf);
+	 default:
+		  {
+			  char errbuf[1024] = { 0 };
+			  ERR_error_string_n(sslerr, errbuf, sizeof(errbuf));
+			  ELOG_ERROR("SSL error %d", sslerr);
+			  mSocketContext->handshakeFailed(errbuf);
+		  }
       // Note: need to fall through to propagate alerts, if any
       break;
    }
@@ -222,8 +228,7 @@ bool DtlsSocket::getRemoteFingerprint(char *fprint)
 bool DtlsSocket::checkFingerprint(const char* fingerprint, unsigned int len)
 {
    char fprint[100];
-
-   if(getRemoteFingerprint(fprint)==false)
+   if(!getRemoteFingerprint(fprint))
       return false;
 
    // used to be strncasecmp
@@ -248,10 +253,8 @@ SrtpSessionKeys* DtlsSocket::getSrtpSessionKeys()
    SrtpSessionKeys* keys = new SrtpSessionKeys();
 
    unsigned char material[SRTP_MASTER_KEY_LEN << 1];
-   if (!SSL_export_keying_material(
-      mSsl,
-      material,
-      sizeof(material),
+   if (!SSL_export_keying_material( mSsl,
+      material, sizeof(material),
       "EXTRACTOR-dtls_srtp", 19, NULL, 0, 0))
    {
       return keys;
@@ -290,9 +293,12 @@ DtlsSocket::computeFingerprint(X509 *cert, char *fingerprint)
    unsigned char md[EVP_MAX_MD_SIZE];
    int r;
    unsigned int i,n;
-
+	 /* 
+	 !slg! TODO - is sha1 vs sha256 supposed to come from DTLS handshake? 
+	 fixing to to SHA-256 for compatibility with current web-rtc implementations
+	 */
    //r=X509_digest(cert,EVP_sha1(),md,&n);
-   r=X509_digest(cert,EVP_sha256(),md,&n);  // !slg! TODO - is sha1 vs sha256 supposed to come from DTLS handshake? fixing to to SHA-256 for compatibility with current web-rtc implementations
+   r=X509_digest(cert,EVP_sha256(),md,&n);  
    assert(r==1);
 
    for(i=0;i<n;i++)
@@ -438,12 +444,10 @@ DtlsSocket::createSrtpSessionPolicies(srtp_policy_t& outboundPolicy, srtp_policy
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  ==================================================================== */
-// The default SrtpProfile used at construction time (default is: SRTP_AES128_CM_SHA1_80:SRTP_AES128_CM_SHA1_32)
-static const char* DefaultSrtpProfile = "SRTP_AES128_CM_SHA1_80";
-bool dtls::DtlsSocket::InitSSLCtx()
+bool dtls::DtlsSocket::InitSslCtx()
 {
-
-  mTimerContext = std::auto_ptr<TestTimerContext>(new TestTimerContext());
+	// The default SrtpProfile used at construction time (default is: SRTP_AES128_CM_SHA1_80:SRTP_AES128_CM_SHA1_32)
+	static const char* DefaultSrtpProfile = "SRTP_AES128_CM_SHA1_80";
 
   ELOG_DEBUG("Creating Dtls factory");
 
@@ -473,7 +477,7 @@ bool dtls::DtlsSocket::InitSSLCtx()
   return r == 0;
 }
 
-void dtls::DtlsSocket::ClearSSLCtx()
+void dtls::DtlsSocket::ClearSslCtx()
 {
   SSL_CTX_free(mContext);
   EVP_MD_CTX_cleanup(ctx_);

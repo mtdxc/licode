@@ -19,7 +19,7 @@
 
 struct CRYPTO_dynlock_value
 {
-      boost::mutex* mutex;
+  boost::mutex* mutex;
 };
 
 extern "C"

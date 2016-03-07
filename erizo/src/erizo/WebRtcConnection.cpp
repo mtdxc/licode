@@ -19,8 +19,8 @@ namespace erizo {
     ELOG_INFO("WebRtcConnection %p constructor stunserver %s stunPort %d minPort %d maxPort %d\n", 
 			this, iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.maxPort);
     bundle_ = false;
-    this->setVideoSinkSSRC(55543);
-    this->setAudioSinkSSRC(44444);
+    setVideoSinkSSRC(55543);
+    setAudioSinkSSRC(44444);
     fbSink_ = NULL;
     sourcefbSink_ = this;
     sinkfbSource_ = this;
@@ -78,7 +78,7 @@ namespace erizo {
   }
 
   //TODO: Erizo Should accept hints to create the Offer
-  bool WebRtcConnection::createOffer (){
+  bool WebRtcConnection::createOffer(){
 
     bundle_ = false;
     videoEnabled_ = false; 
@@ -87,9 +87,9 @@ namespace erizo {
     ELOG_DEBUG("Creating sdp offer");
     ELOG_DEBUG("Setting SSRC to localSdp %u", this->getVideoSinkSSRC());
     if (videoEnabled_)
-      localSdp_.videoSsrc = this->getVideoSinkSSRC();
+      localSdp_.videoSsrc = getVideoSinkSSRC();
     if (audioEnabled_)
-      localSdp_.audioSsrc = this->getAudioSinkSSRC();
+      localSdp_.audioSsrc = getAudioSinkSSRC();
 
     if (bundle_){
       ELOG_DEBUG("Creating Bundle Offer");
@@ -106,7 +106,7 @@ namespace erizo {
     }
     if (connEventListener_ != NULL) {
 			// 根据transport创建sdp
-      std::string msg = this->getLocalSdp();
+      std::string msg = getLocalSdp();
       connEventListener_->notifyEvent(globalState_, msg);
     }
     return true;
@@ -128,11 +128,11 @@ namespace erizo {
     localSdp_.audioSsrc = this->getAudioSinkSSRC();
 
     this->setVideoSourceSSRC(remoteSdp_.videoSsrc);
-    thisStats_.setVideoSourceSSRC(this->getVideoSourceSSRC());
+    thisStats_.setVideoSourceSSRC(getVideoSourceSSRC());
     this->setAudioSourceSSRC(remoteSdp_.audioSsrc);
-    thisStats_.setAudioSourceSSRC(this->getAudioSourceSSRC());
-    rtcpProcessor_->addSourceSsrc(this->getAudioSourceSSRC());
-    rtcpProcessor_->addSourceSsrc(this->getVideoSourceSSRC());
+    thisStats_.setAudioSourceSSRC(getAudioSourceSSRC());
+    rtcpProcessor_->addSourceSsrc(getAudioSourceSSRC());
+    rtcpProcessor_->addSourceSsrc(getVideoSourceSSRC());
 
     if (remoteSdp_.profile == SAVPF) {
       if (remoteSdp_.isFingerprint) {
@@ -165,7 +165,7 @@ namespace erizo {
 
     
     if(trickleEnabled_){
-      std::string object = this->getLocalSdp();
+      std::string object = getLocalSdp();
       if (connEventListener_){
         connEventListener_->notifyEvent(CONN_SDP, object);
       }
@@ -241,7 +241,8 @@ namespace erizo {
     object["sdpMid"] = mid;
     object["candidate"] = sdp;
     char lineIndex[1];
-    sprintf(lineIndex,"%d",(mid.compare("video")?localSdp_.audioSdpMLine:localSdp_.videoSdpMLine));
+    snprintf(lineIndex,sizeof(lineIndex),
+			"%d", (mid.compare("video")?localSdp_.audioSdpMLine:localSdp_.videoSdpMLine));
     object["sdpMLineIndex"] = std::string(lineIndex);
 
     std::ostringstream theString;
@@ -263,15 +264,15 @@ namespace erizo {
     if(trickleEnabled_){
       if (connEventListener_ != NULL) {
         if (!bundle_) {
-          std::string object = this->getJSONCandidate(transport->transport_name, sdp);
+          std::string object = getJSONCandidate(transport->transport_name, sdp);
           connEventListener_->notifyEvent(CONN_CANDIDATE, object);
         } else {
           if (remoteSdp_.hasAudio){
-            std::string object = this->getJSONCandidate("audio", sdp);
+            std::string object = getJSONCandidate("audio", sdp);
             connEventListener_->notifyEvent(CONN_CANDIDATE, object);
           }
           if (remoteSdp_.hasVideo){
-            std::string object2 = this->getJSONCandidate("video", sdp);
+            std::string object2 = getJSONCandidate("video", sdp);
             connEventListener_->notifyEvent(CONN_CANDIDATE, object2);
           }
         }

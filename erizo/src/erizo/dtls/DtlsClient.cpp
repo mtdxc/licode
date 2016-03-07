@@ -68,11 +68,15 @@ void DtlsSocketContext::handshakeCompleted()
 
   if(mSocket->getRemoteFingerprint(fprint)){
     ELOG_TRACE("Remote fingerprint == %s", fprint);
-
+		/* remove unused code
     bool check = mSocket->checkFingerprint(fprint,strlen(fprint));
     ELOG_DEBUG("Fingerprint check == %d", check);
-
+		*/
     SrtpSessionKeys* keys = mSocket->getSrtpSessionKeys();
+		if (!keys){
+			ELOG_WARN("handshakeCompleted without SrtpSessionKeys");
+			return;
+		}
 
     unsigned char* cKey = (unsigned char*)malloc(keys->clientMasterKeyLen + keys->clientMasterSaltLen);
     unsigned char* sKey = (unsigned char*)malloc(keys->serverMasterKeyLen + keys->serverMasterSaltLen);
@@ -101,7 +105,6 @@ void DtlsSocketContext::handshakeCompleted()
     delete keys;
 
     srtp_profile = mSocket->getSrtpProfile();
-
     if(srtp_profile){
       ELOG_DEBUG("SRTP Extension negotiated profile=%s", srtp_profile->name);
     }

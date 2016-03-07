@@ -112,12 +112,12 @@ class DtlsSocket
       // Internals
       boost::shared_ptr<DtlsSocketContext> mSocketContext;
       DtlsTimer *mReadTimer;  // Timer used during handshake process
+      std::auto_ptr<DtlsTimerContext> mTimerContext;
 
-      bool InitSSLCtx();
-      void ClearSSLCtx();
+      bool InitSslCtx();
+      void ClearSslCtx();
       SSL_CTX* mContext;
       EVP_MD_CTX* ctx_;
-      std::auto_ptr<DtlsTimerContext> mTimerContext;
 
       // OpenSSL context data
       SSL *mSsl;

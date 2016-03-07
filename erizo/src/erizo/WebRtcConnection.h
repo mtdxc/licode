@@ -47,8 +47,10 @@ public:
  * This class represents a WebRTC Connection that can be established with other peers via a SDP negotiation
  * it comprises all the necessary Transport components.
  */
-class WebRtcConnection: public MediaSink, public MediaSource, public FeedbackSink, public FeedbackSource, 
-	public TransportListener, public webrtc::RtpData {
+class WebRtcConnection : public TransportListener,
+	public MediaSink, public MediaSource, 
+	public FeedbackSink, public FeedbackSource, 
+	public webrtc::RtpData {
 	DECLARE_LOGGER();
 public:
     /**
@@ -136,7 +138,7 @@ public:
       rateControl_ = rateControl;
     };
 
-    void setSlideShowMode (bool state);
+    void setSlideShowMode(bool state);
 
 
     // webrtc::RtpHeader overrides.

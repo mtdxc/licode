@@ -63,7 +63,7 @@ class NiceConnectionListener {
 public:
 	// call on data recv
 	virtual void onNiceData(unsigned int component_id, char* data, int len, NiceConnection* conn)=0;
-	// call when got local candidate on conn(candidate maybe repeat)
+	// call when got local candidate on conn
 	virtual void onCandidate(const CandidateInfo &candidate, NiceConnection *conn) = 0;
 	// call on ice state change
 	virtual void updateIceState(IceState state, NiceConnection *conn)=0;
@@ -90,12 +90,13 @@ public:
 	 * The Obtained local candidates.
 	 * no used now.
 	 */
-  boost::shared_ptr<std::vector<CandidateInfo> > localCandidates;
+  std::vector<CandidateInfo> localCandidates;
 
 	/**
 	 * Constructs a new NiceConnection.
 	 * @param med The MediaType of the connection.
-	 * @param transportName The name of the transport protocol. Was used when WebRTC used video_rtp instead of just rtp.
+	 * @param transportName The name of the transport protocol. 
+	 * Was used when WebRTC used video_rtp instead of just rtp.
    * @param iceComponents Number of ice components pero connection. Default is 1 (rtcp-mux).
 	 */
 	NiceConnection(MediaType med, 
@@ -159,7 +160,7 @@ public:
 
 	void updateIceState(IceState state);
 	void updateComponentState(unsigned int compId, IceState state);
-  IceState checkIceState();
+  IceState getIceState();
 
   void queueData(unsigned int component_id, char* buf, int len);
   
@@ -173,6 +174,7 @@ private:
 
 	NiceAgent* agent_;
 	NiceConnectionListener* listener_;
+	// cands index has Delivered on callback onCandidate
 	unsigned int candsDelivered_;
 
 	GMainContext* context_;
