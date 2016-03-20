@@ -46,7 +46,8 @@ namespace erizo {
 
     void write(char* data, int len);
 		// implement DtlsReceiver method
-    void writeDtls(dtls::DtlsSocketContext *ctx, const unsigned char* data, unsigned int len);
+    void writeDtls(dtls::DtlsSocketContext *ctx, 
+			const unsigned char* data, unsigned int len);
     void onHandshakeCompleted(dtls::DtlsSocketContext *ctx, 
 			std::string clientKey, std::string serverKey, 
 			std::string srtp_profile);

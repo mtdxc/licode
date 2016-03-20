@@ -21,12 +21,25 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-
-#include <log4cxx/logger.h>
-#include <log4cxx/helpers/exception.h>
 #ifdef WIN32
 #define snprintf sprintf_s
 #endif
+
+#if 1
+#define DECLARE_LOGGER() 
+#define DEFINE_LOGGER(namespace, logName) 
+#define ELOG_TRACE(fmt, ...) ;
+#define ELOG_DEBUG(fmt, ...) ;
+#define ELOG_INFO(fmt, ...) ;
+#define ELOG_WARN(fmt, ...) ;
+#define ELOG_ERROR(fmt, ...) ;
+#define ELOG_FATAL(fmt, ...) ;
+#define ELOG_DEBUG2(logger, fmt, ...) ;
+#define ELOG_WARN2(logger, fmt, ...) ;
+#else
+
+#include <log4cxx/logger.h>
+#include <log4cxx/helpers/exception.h>
 
  #define DECLARE_LOGGER() \
  static log4cxx::LoggerPtr logger;
@@ -102,5 +115,5 @@
 
 #define ELOG_FATAL(fmt, ...) \
     ELOG_FATAL2( logger, fmt, ##__VA_ARGS__ );
-
+#endif
 #endif  /* __ELOG_H__ */

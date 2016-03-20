@@ -130,7 +130,7 @@ public:
 		// implement for TransportListener method
     void onTransportData(char* buf, int len, Transport *transport);
     void updateState(TransportState state, Transport * transport);
-    void queueData(int comp, const char* data, int len, Transport *transport, packetType type);
+    void queueData(int comp, const char* data, int len, Transport *transport, packetType type, uint16_t seqNum=0);
     void onCandidate(const CandidateInfo& cand, Transport *transport);
 
     void setFeedbackReports(bool shouldSendFb, uint32_t rateControl=0){
@@ -158,7 +158,7 @@ private:
 	// current stat
 	WebRTCEvent globalState_;
 
-  boost::mutex receiveVideoMutex_, updateStateMutex_, feedbackMutex_;
+  boost::mutex receiveVideoMutex_, updateStateMutex_;
   boost::thread send_Thread_;
 	std::queue<dataPacket> sendQueue_;
 	WebRtcConnectionEventListener* connEventListener_;
@@ -182,7 +182,7 @@ private:
   bool shouldSendFeedback_;
   bool slideShowMode_;
   uint32_t rateControl_; //Target bitrate for hacky rate control in BPS 
-  uint16_t seqNo_, grace_;
+  uint16_t seqNo_, grace_, sendSeqNo_, seqNoOffset_;
   
   IceConfig iceConfig_;
   int stunPort_, minPort_, maxPort_;

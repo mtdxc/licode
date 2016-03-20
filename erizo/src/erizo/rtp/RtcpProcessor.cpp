@@ -96,10 +96,11 @@ namespace erizo{
               ELOG_DEBUG("Analyzing Audio RR: PacketLost %u, Ratio %u, partNum %d, blocks %d, sourceSSRC %u", 
 								chead->getLostPackets(), chead->getFractionLost(), partNum, chead->getBlockCount(), chead->getSourceSSRC());
             }
-            theData->ratioLost = max(theData->ratioLost, chead->getFractionLost());  
-            theData->totalPacketsLost = max(theData->totalPacketsLost ,chead->getLostPackets());
-            theData->highestSeqNumReceived = max(theData->highestSeqNumReceived, chead->getHighestSeqnum());
-            theData->jitter = max(theData->jitter, chead->getJitter());
+            theData->ratioLost = theData->ratioLost > chead->getFractionLost()? theData->ratioLost: chead->getFractionLost();  
+            theData->totalPacketsLost = theData->totalPacketsLost > chead->getLostPackets()? theData->totalPacketsLost : chead->getLostPackets();
+            theData->highestSeqNumReceived = theData->highestSeqNumReceived > chead->getHighestSeqnum()? theData->highestSeqNumReceived : chead->getHighestSeqnum();
+            theData->seqNumCycles = theData->seqNumCycles > chead->getSeqnumCycles()? theData->seqNumCycles : chead->getSeqnumCycles();
+            theData->jitter = theData->jitter > chead->getJitter()? theData->jitter: chead->getJitter();
             calculateLastSr = chead->getLastSr();
             calculatedlsr = (chead->getDelaySinceLastSr()*1000)/65536;
             for (std::list<boost::shared_ptr<SrData>>::iterator it=theData->senderReports.begin(); 
@@ -214,6 +215,7 @@ namespace erizo{
         }
         rtcpHead.setFractionLost(rtcpData->ratioLost);
         rtcpHead.setHighestSeqnum(rtcpData->highestSeqNumReceived);      
+        rtcpHead.setSeqnumCycles(rtcpData->seqNumCycles);
         rtcpHead.setLostPackets(rtcpData->totalPacketsLost);
         rtcpHead.setJitter(rtcpData->jitter);
         rtcpHead.setLastSr(rtcpData->lastSr);

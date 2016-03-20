@@ -162,9 +162,6 @@
     <ClCompile Include="erizo\rtp\webrtc\rtp_utility.cc">
       <Filter>Source Files\erizo\rtp\webrtc</Filter>
     </ClCompile>
-    <ClCompile Include="examples\pc\Observer.cpp">
-      <Filter>Source Files\examples\pc</Filter>
-    </ClCompile>
     <ClCompile Include="examples\pc\PCSocket.cpp">
       <Filter>Source Files\examples\pc</Filter>
     </ClCompile>

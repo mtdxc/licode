@@ -24,9 +24,10 @@ using namespace std;
 
 X509 *DtlsFactory::mCert = NULL;
 EVP_PKEY *DtlsFactory::privkey = NULL;
-
+#if 0
 DEFINE_LOGGER(DtlsFactory, "dtls.DtlsFactory");
 log4cxx::LoggerPtr sslLogger(log4cxx::Logger::getLogger("dtls.SSL"));
+#endif
 
 void
 SSLInfoCallback(const SSL* s, int where, int ret) {
@@ -227,6 +228,9 @@ void dtls::DtlsFactory::Destory()
     ELOG_ERROR("Thread terminated on start");
   }
 }
+
+boost::asio::io_service dtls::DtlsFactory::service_;
+boost::scoped_ptr<boost::thread> dtls::DtlsFactory::thread_;
 
 DtlsFactory* dtls::DtlsFactory::GetInstance()
 {

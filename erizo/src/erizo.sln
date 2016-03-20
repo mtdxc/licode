@@ -4,6 +4,10 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "erizo", "erizo.vcxproj", "{A45F204C-A7A6-4C93-8E92-AE0FFBCB9A38}"
+	ProjectSection(ProjectDependencies) = postProject
+		{550C7FB8-DBFE-4364-B26A-DAF7158CD878} = {550C7FB8-DBFE-4364-B26A-DAF7158CD878}
+		{EEF031CB-FED8-451E-A471-91EC8D4F6750} = {EEF031CB-FED8-451E-A471-91EC8D4F6750}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnice", "..\..\..\libnice\win32\vs9\libnice.vcxproj", "{550C7FB8-DBFE-4364-B26A-DAF7158CD878}"
 EndProject
