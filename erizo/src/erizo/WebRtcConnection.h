@@ -158,7 +158,7 @@ private:
 	// current stat
 	WebRTCEvent globalState_;
 
-  boost::mutex receiveVideoMutex_, updateStateMutex_;
+  boost::mutex receiveVideoMutex_, updateStateMutex_; //, slideShowMutex_;
   boost::thread send_Thread_;
 	std::queue<dataPacket> sendQueue_;
 	WebRtcConnectionEventListener* connEventListener_;
@@ -176,6 +176,9 @@ private:
 
   std::string getJSONCandidate(const std::string& mid, const std::string& sdp);
 
+  uint32_t stripRtpHeaders(char* buf, int len);
+
+  
   bool audioEnabled_;
   bool videoEnabled_;
   bool trickleEnabled_;
