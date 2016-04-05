@@ -50,7 +50,7 @@ void Resender::resend(const boost::system::error_code& ec) {
   }
   
   if (nice_ != NULL) {
-    ELOG_WARN("%s - Resending DTLS message to %d", nice_->transportName.c_str(), comp_);
+    ELOG_DEBUG("%s - Resending DTLS message to %d", nice_->transportName->c_str(), comp_);
     int val = nice_->sendData(comp_, data_, len_);
     if (val < 0) {
        sent_ = -1;
