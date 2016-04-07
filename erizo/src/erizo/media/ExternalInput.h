@@ -26,10 +26,10 @@ namespace erizo{
     public:
       ExternalInput (const std::string& inputUrl);
       virtual ~ExternalInput();
+
       int init();
       void receiveRtpData(unsigned char* rtpdata, int len);
       int sendPLI();
-
 
     private:
       boost::scoped_ptr<OutputProcessor> op_;

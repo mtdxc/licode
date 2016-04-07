@@ -14,14 +14,14 @@ namespace erizo {
   DEFINE_LOGGER(AudioDecoder, "media.codecs.AudioDecoder");
 
   inline  AVCodecID AudioCodecID2ffmpegDecoderID(AudioCodecID codec)
+  {
+    switch (codec)
     {
-      switch (codec)
-      {
-        case AUDIO_CODEC_PCM_U8: return AV_CODEC_ID_PCM_U8;
-        case AUDIO_CODEC_VORBIS: return AV_CODEC_ID_VORBIS;
-        default: return AV_CODEC_ID_PCM_U8;
-      }
+      case AUDIO_CODEC_PCM_U8: return AV_CODEC_ID_PCM_U8;
+      case AUDIO_CODEC_VORBIS: return AV_CODEC_ID_VORBIS;
+      default: return AV_CODEC_ID_PCM_U8;
     }
+  }
 
   AudioEncoder::AudioEncoder(){
     aCoder_ = NULL;
@@ -53,9 +53,9 @@ namespace erizo {
     //aCoderContext_->bit_rate = mediaInfo.bitRate;
     aCoderContext_->sample_rate = 8 /*mediaInfo.sampleRate*/;
     aCoderContext_->channels = 1;
-    char errbuff[500];
     int res = avcodec_open2(aCoderContext_, aCoder_, NULL);
     if(res != 0){
+      char errbuff[500];
       av_strerror(res, (char*)(&errbuff), 500);
       ELOG_DEBUG("fail when opening input %s", errbuff);
       return -1;
@@ -165,20 +165,17 @@ namespace erizo {
   int AudioDecoder::decodeAudio(unsigned char* inBuff, int inBuffLen,
       unsigned char* outBuff, int outBuffLen, int* gotFrame){
 
-
-    AVPacket avpkt;
     int outSize;
     int decSize = 0;
     int len = -1;
-    uint8_t *decBuff = (uint8_t*) malloc(16000);
+    uint8_t decBuff[16000];
 
+    AVPacket avpkt;
     av_init_packet(&avpkt);
     avpkt.data = (unsigned char*) inBuff;
     avpkt.size = inBuffLen;
 
     while (avpkt.size > 0) {
-
-      outSize = 16000;
 
       //Puede fallar. Cogido de libavcodec/utils.c del paso de avcodec_decode_audio3 a avcodec_decode_audio4
       //avcodec_decode_audio3(aDecoderContext, (short*)decBuff, &outSize, &avpkt);
@@ -196,9 +193,8 @@ namespace erizo {
         int data_size = av_samples_get_buffer_size(&plane_size,
             aDecoderContext_->channels, frame.nb_samples,
             aDecoderContext_->sample_fmt, 1);
-        if (outSize < data_size) {
+        if (sizeof decBuff < data_size) {
           ELOG_DEBUG("output buffer size is too small for the current frame");
-          free(decBuff);
           return AVERROR(EINVAL);
         }
 
@@ -220,7 +216,6 @@ namespace erizo {
 
       if (len < 0) {
         ELOG_DEBUG("Error al decodificar audio");
-        free(decBuff);
         return -1;
       }
 
@@ -235,8 +230,6 @@ namespace erizo {
       outBuff += outSize;
       decSize += outSize;
     }
-
-    free(decBuff);
 
     if (outSize <= 0) {
       ELOG_DEBUG("Error de decodificación de audio debido a tamaño incorrecto");

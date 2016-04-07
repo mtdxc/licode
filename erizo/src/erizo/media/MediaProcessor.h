@@ -37,11 +37,11 @@ enum ProcessorType {
 enum DataType {
 	VIDEO, AUDIO
 };
-
+/// 原始音视频数据
 struct RawDataPacket {
-	unsigned char* data;
-	int length;
-	DataType type;
+	unsigned char* data; ///< 对于视频就是YUV，音频是PCM 16
+	int length; ///< 原始数据长度
+	DataType type; ///< 数据类型(音频/视频)
 };
 
 struct MediaInfo {
@@ -78,7 +78,12 @@ public:
 };
 
 class RTPSink;
-
+/*
+媒体流输入处理.
+将MediaSink来的数据流解包，并利用ffmpeg解码后，
+传给RawDataReceiver回调
+@note 当前视频只支持VP8解码.
+*/
 class InputProcessor: public MediaSink {
 	DECLARE_LOGGER();
 public:
@@ -86,12 +91,11 @@ public:
 	virtual ~InputProcessor();
 
 	int init(const MediaInfo& info, RawDataReceiver* receiver);
-
+	/// 解包
 	int unpackageVideo(unsigned char* inBuff, int inBuffLen,
-            unsigned char* outBuff, int* gotFrame);
-
+		unsigned char* outBuff, int* gotFrame);
 	int unpackageAudio(unsigned char* inBuff, int inBuffLen,
-			unsigned char* outBuff);
+		unsigned char* outBuff);
 
   void closeSink();
   void close();
@@ -120,16 +124,17 @@ private:
 
 	AVCodec* aDecoder;
 	AVCodecContext* aDecoderContext;
-
+	/*
 	AVFormatContext* aInputFormatContext;
 	AVInputFormat* aInputFormat;
-  VideoDecoder vDecoder;
+	*/
+	VideoDecoder vDecoder;
 
 	RTPInfo* vRTPInfo;
-
+	/*
 	AVFormatContext* vInputFormatContext;
 	AVInputFormat* vInputFormat;
-
+	*/
 	RawDataReceiver* rawReceiver_;
 
 	erizo::RtpVP8Parser pars;
@@ -145,22 +150,28 @@ private:
 			unsigned char* outBuff);
 
 };
-
+/*
+输出处理类（与上类相反）
+接受原始音视频流，编码，分包，然后形成RTP包回调RTPDataReceiver
+@note 当前视频也只支持VP8, 且音频处理仍有问题
+*/
 class OutputProcessor: public RawDataReceiver {
 	DECLARE_LOGGER();
 public:
-
 	OutputProcessor();
 	virtual ~OutputProcessor();
+
 	int init(const MediaInfo& info, RTPDataReceiver* rtpReceiver);
   void close();
+
+	// implement for RawDataReceiver
 	void receiveRawData(RawDataPacket& packet);
 
   int packageAudio(unsigned char* inBuff, int inBuffLen,
 			unsigned char* outBuff, long int pts = 0);
 
-	int packageVideo(unsigned char* inBuff, int buffSize, unsigned char* outBuff,
-      long int pts = 0);
+	int packageVideo(unsigned char* inBuff, int buffSize, 
+		unsigned char* outBuff, long int pts = 0);
 
 private:
 
@@ -170,7 +181,7 @@ private:
 	int audioPackager;
 	int videoPackager;
 
-	unsigned int seqnum_;
+	unsigned int videoSeqnum_;
   unsigned int audioSeqnum_;
 
 	unsigned long timestamp_;
@@ -191,16 +202,16 @@ private:
 
   VideoEncoder vCoder;
 
-
+	/*
 	AVFormatContext* aOutputFormatContext;
 	AVOutputFormat* aOutputFormat;
-
+	*/
 	RTPInfo* vRTPInfo_;
 	RTPSink* sink_;
-
+	/*
 	AVFormatContext* vOutputFormatContext;
 	AVOutputFormat* vOutputFormat;
-
+	*/
 	RtpVP8Parser pars;
 
 	bool initAudioCoder();
