@@ -34,14 +34,15 @@ namespace erizo {
   }
 
   int ExternalInput::init(){
-    context_ = avformat_alloc_context();
     av_register_all();
     avcodec_register_all();
     avformat_network_init();
-    //open rtsp
+
     av_init_packet(&avpacket_);
     avpacket_.data = NULL;
+    //open rtsp
     ELOG_DEBUG("Trying to open input from url %s", url_.c_str());
+    context_ = avformat_alloc_context();
     int res = avformat_open_input(&context_, url_.c_str(),NULL,NULL);
     char errbuff[500];
     printf ("RES %d\n", res);
@@ -78,7 +79,7 @@ namespace erizo {
       ELOG_DEBUG("Has video, audio stream number %d. time base = %d / %d ", 
         video_stream_index_, video_st->time_base.num, video_st->time_base.den);
       //return streamNo;
-    }else{
+    } else {
       om.hasAudio = true;
       audio_stream_index_ = audioStreamNo;
       audio_st = context_->streams[audio_stream_index_];
@@ -91,7 +92,7 @@ namespace erizo {
         om.audioCodec.sampleRate=8000;
         om.audioCodec.codec = AUDIO_CODEC_PCM_U8;
         om.rtpAudioInfo.PT = PCMU_8000_PT; 
-      }else if (audio_st->codec->codec_id == AV_CODEC_ID_OPUS){
+      } else if (audio_st->codec->codec_id == AV_CODEC_ID_OPUS) {
         ELOG_DEBUG("OPUS");
         om.audioCodec.sampleRate=48000;
         om.audioCodec.codec = AUDIO_CODEC_OPUS;
@@ -132,8 +133,8 @@ namespace erizo {
       om.processorType = RTP_ONLY;
       om.videoCodec.codec = VIDEO_CODEC_VP8;
       om.videoCodec.bitRate = 1000000;
-      om.videoCodec.width = 640;
-      om.videoCodec.height = 480;
+      om.videoCodec.width = 640; // video_st->codec->width
+      om.videoCodec.height = 480; // video_st->codec->height
       om.videoCodec.frameRate = 20;
       om.hasVideo = true;
 

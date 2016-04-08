@@ -20,11 +20,14 @@ extern "C" {
 
 namespace erizo{
   class WebRtcConnection;
-
+  /*
+  从URL外部源中读取文件，必要时经过转码（非支持格式VP8 OPUS PCM）和封包，
+  并传给MediaSink
+  */
   class ExternalInput : public MediaSource, public RTPDataReceiver {
       DECLARE_LOGGER();
     public:
-      ExternalInput (const std::string& inputUrl);
+      ExternalInput(const std::string& inputUrl);
       virtual ~ExternalInput();
 
       int init();

@@ -8,10 +8,12 @@ namespace erizo{
 DEFINE_LOGGER(RtpPacketQueue, "rtp.RtpPacketQueue");
 
 RtpPacketQueue::RtpPacketQueue(double depthInSeconds, double maxDepthInSeconds) :
-    lastSequenceNumberGiven_(-1), timebase_(0), depthInSeconds_(depthInSeconds), maxDepthInSeconds_(maxDepthInSeconds)
+    lastSequenceNumberGiven_(-1), timebase_(0), depthInSeconds_(depthInSeconds), 
+    maxDepthInSeconds_(maxDepthInSeconds)
 {
     if(depthInSeconds_ >= maxDepthInSeconds_) {
-        ELOG_WARN("invalid configuration, depth_: %d, max_: %d; reset to defaults", depthInSeconds_, maxDepthInSeconds_);
+        ELOG_WARN("invalid configuration, depth_: %d, max_: %d; reset to defaults", 
+          depthInSeconds_, maxDepthInSeconds_);
         depthInSeconds_ = erizo::DEFAULT_DEPTH;
         maxDepthInSeconds_ = erizo::DEFAULT_MAX;
     }
@@ -27,10 +29,13 @@ void RtpPacketQueue::pushPacket(const char *data, int length)
     const RtpHeader *currentHeader = reinterpret_cast<const RtpHeader*>(data);
     uint16_t currentSequenceNumber = currentHeader->getSeqNumber();
 
-    if(lastSequenceNumberGiven_ >= 0 && (rtpSequenceLessThan(currentSequenceNumber, (uint16_t)lastSequenceNumberGiven_) || currentSequenceNumber == lastSequenceNumberGiven_)) {
+    if(lastSequenceNumberGiven_ >= 0 && 
+      (rtpSequenceLessThan(currentSequenceNumber, (uint16_t)lastSequenceNumberGiven_) 
+       || currentSequenceNumber == lastSequenceNumberGiven_)) {
         // this sequence number is less than the stuff we've already handed out, which means it's too late to be of any value.
         ELOG_WARN("SSRC:%u, Payload: %u, discarding very late sample %d that is <= %d",
-					currentHeader->getSSRC(), currentHeader->getPayloadType(), currentSequenceNumber, lastSequenceNumberGiven_);
+					currentHeader->getSSRC(), currentHeader->getPayloadType(), 
+          currentSequenceNumber, lastSequenceNumberGiven_);
         return;
     }
 

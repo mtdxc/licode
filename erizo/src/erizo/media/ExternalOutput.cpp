@@ -6,8 +6,10 @@
 namespace erizo {
 
 DEFINE_LOGGER(ExternalOutput, "media.ExternalOutput");
-ExternalOutput::ExternalOutput(const std::string& outputUrl) : fec_receiver_(this), audioQueue_(5.0, 10.0), videoQueue_(5.0, 10.0), inited_(false), video_stream_(NULL), audio_stream_(NULL),
-    firstVideoTimestamp_(-1), firstAudioTimestamp_(-1), firstDataReceived_(-1), videoOffsetMsec_(-1), audioOffsetMsec_(-1), vp8SearchState_(lookingForStart), needToSendFir_(true)
+ExternalOutput::ExternalOutput(const std::string& outputUrl) : fec_receiver_(this), 
+  audioQueue_(5.0, 10.0), videoQueue_(5.0, 10.0), inited_(false), video_stream_(NULL), audio_stream_(NULL),
+  firstVideoTimestamp_(-1), firstAudioTimestamp_(-1), firstDataReceived_(-1), 
+  videoOffsetMsec_(-1), audioOffsetMsec_(-1), vp8SearchState_(lookingForStart), needToSendFir_(true)
 {
     ELOG_DEBUG("Creating output to %s", outputUrl.c_str());
 
@@ -89,7 +91,8 @@ bool ExternalOutput::OnRecoveredPacket(const uint8_t* rtp_packet, int rtp_packet
     return true;
 }
 
-int32_t ExternalOutput::OnReceivedPayloadData(const uint8_t* payload_data, const uint16_t payload_size, const webrtc::WebRtcRTPHeader* rtp_header) {
+int32_t ExternalOutput::OnReceivedPayloadData(const uint8_t* payload_data, 
+  const uint16_t payload_size, const webrtc::WebRtcRTPHeader* rtp_header) {
     // Unused by WebRTC's FEC implementation; just something we have to implement.
     return 0;
 }
@@ -100,7 +103,8 @@ void ExternalOutput::writeAudioData(char* buf, int len){
     uint16_t currentAudioSequenceNumber = head->getSeqNumber();
     if (firstAudioTimestamp_ != -1 && currentAudioSequenceNumber != lastAudioSequenceNumber_ + 1) {
         // Something screwy.  We should always see sequence numbers incrementing monotonically.
-        ELOG_DEBUG("Unexpected audio sequence number; current %d, previous %d", currentAudioSequenceNumber, lastAudioSequenceNumber_);
+        ELOG_DEBUG("Unexpected audio sequence number; current %d, previous %d", 
+          currentAudioSequenceNumber, lastAudioSequenceNumber_);
     }
 
     lastAudioSequenceNumber_ = currentAudioSequenceNumber;
@@ -134,9 +138,11 @@ void ExternalOutput::writeAudioData(char* buf, int len){
         currentTimestamp += 0xFFFFFFFF;
     }
 
-    long long timestampToWrite = (currentTimestamp - firstAudioTimestamp_) / (audio_stream_->codec->sample_rate / audio_stream_->time_base.den);    // generally 48000 / 1000 for the denominator portion, at least for opus
+    // generally 48000 / 1000 for the denominator portion, at least for opus
+    long long timestampToWrite = (currentTimestamp - firstAudioTimestamp_) / (audio_stream_->codec->sample_rate / audio_stream_->time_base.den);    
     // Adjust for our start time offset
-    timestampToWrite += audioOffsetMsec_ / (1000 / audio_stream_->time_base.den);   // in practice, our timebase den is 1000, so this operation is a no-op.
+    // in practice, our timebase den is 1000, so this operation is a no-op.
+    timestampToWrite += audioOffsetMsec_ / (1000 / audio_stream_->time_base.den);   
 
 //     ELOG_INFO("Writing audio frame %d with timestamp %u, normalized timestamp %u, audio offset msec %u, length %d, input timebase: %d/%d, target timebase: %d/%d",
 //                head->getSeqNumber(), head->getTimestamp(), timestampToWrite, audioOffsetMsec_, len - head->getHeaderLength(),
@@ -258,11 +264,12 @@ void ExternalOutput::writeVideoData(char* buf, int len){
             // we wrapped.  add 2^32 to correct this.  We only handle a single wrap around since that's ~13 hours of recording, minimum.
             currentTimestamp += 0xFFFFFFFF;
         }
-
-        long long timestampToWrite = (currentTimestamp - firstVideoTimestamp_) / (90000 / video_stream_->time_base.den);  // All of our video offerings are using a 90khz clock.
+        // All of our video offerings are using a 90khz clock.
+        long long timestampToWrite = (currentTimestamp - firstVideoTimestamp_) / (90000 / video_stream_->time_base.den);  
 
         // Adjust for our start time offset
-        timestampToWrite += videoOffsetMsec_ / (1000 / video_stream_->time_base.den);   // in practice, our timebase den is 1000, so this operation is a no-op.
+        // in practice, our timebase den is 1000, so this operation is a no-op.
+        timestampToWrite += videoOffsetMsec_ / (1000 / video_stream_->time_base.den);   
 
         /* ELOG_DEBUG("Writing video frame %d with timestamp %u, normalized timestamp %u, video offset msec %u, length %d, input timebase: %d/%d, target timebase: %d/%d", */
         /*            head->getSeqNumber(), head->getTimestamp(), timestampToWrite, videoOffsetMsec_, unpackagedSize_, */
