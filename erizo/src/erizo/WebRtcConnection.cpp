@@ -16,8 +16,8 @@ namespace erizo {
   WebRtcConnection::WebRtcConnection(bool audioEnabled, bool videoEnabled, 
       const IceConfig& iceConfig, bool trickleEnabled, WebRtcConnectionEventListener* listener)
       : connEventListener_(listener), iceConfig_(iceConfig), fec_receiver_(this){
-    ELOG_INFO("WebRtcConnection %p constructor stunserver %s stunPort %d minPort %d maxPort %d\n", 
-			this, iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.maxPort);
+    ELOG_INFO("WebRtcConnection constructor stunserver %s stunPort %d minPort %d maxPort %d\n", 
+iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.maxPort);
     bundle_ = false;
     setVideoSinkSSRC(55543);
     setAudioSinkSSRC(44444);
@@ -119,7 +119,6 @@ namespace erizo {
     remoteSdp_.initWithSdp(sdp, "");
 
     bundle_ = remoteSdp_.isBundle;
-    ELOG_DEBUG("Is bundle? %d", bundle_);
     localSdp_.setOfferSdp(remoteSdp_);
         
     ELOG_DEBUG("Video %d videossrc %u Audio %d audio ssrc %u Bundle %d", 
@@ -373,30 +372,6 @@ namespace erizo {
     return len;
   }
 
-  void WebRtcConnection::writeSsrc(char* buf, int len, unsigned int ssrc) {
-    ELOG_DEBUG("LEN %d", len);
-    RtpHeader *head = reinterpret_cast<RtpHeader*> (buf);
-    RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (buf);
-    //if it is RTCP we check it it is a compound packet
-    if (chead->isRtcp()) {
-			int curpos = 0;
-      do{
-        RtcpHeader *chead= reinterpret_cast<RtcpHeader*>(buf+curpos);
-				ELOG_DEBUG("Is RTCP, prev SSRC %u, new %u, len %d ", chead->getSSRC(), ssrc, chead->getTotalSize());
-        curpos += chead->getTotalSize();
-        chead->setSSRC(ssrc);
-        if (chead->packettype == RTCP_PS_Feedback_PT){
-          FirHeader *thefir = reinterpret_cast<FirHeader*>(buf+curpos);
-          if (thefir->fmt == 4){ // It is a FIR Packet, we generate it
-            this->sendPLI();
-          }
-        }
-			} while (curpos<len);
-    } else {
-      head->setSSRC(ssrc);
-    }
-  }
-
   void WebRtcConnection::onTransportData(char* buf, int len, Transport *transport) {
     if (audioSink_ == NULL && videoSink_ == NULL && fbSink_==NULL){
       return;
@@ -488,8 +463,7 @@ namespace erizo {
           parseIncomingPayloadType(buf, len, AUDIO_PACKET);
           audioSink_->deliverAudioData(buf, len);
         } else {
-          ELOG_ERROR("Unknown SSRC %u, localVideo %u, remoteVideo %u, ignoring", 
-						recvSSRC, this->getVideoSourceSSRC(), this->getVideoSinkSSRC());
+          ELOG_WARN("Unknown SSRC %u, localVideo %u, remoteVideo %u, ignoring", recvSSRC, this->getVideoSourceSSRC(), this->getVideoSinkSSRC());
         }
       } else if (transport->mediaType == AUDIO_TYPE) {
         if (audioSink_ != NULL) {
@@ -566,7 +540,7 @@ namespace erizo {
     return len; 
     
   }
-
+     
   void WebRtcConnection::updateState(TransportState state, Transport * transport) {
     boost::mutex::scoped_lock lock(updateStateMutex_);
     WebRTCEvent temp = globalState_;
@@ -576,12 +550,10 @@ namespace erizo {
       ELOG_ERROR("Update Transport State with Transport NULL, this should not happen!");
       return;
     }
-    
     if (globalState_ == CONN_FAILED) {
       // if current state is failed -> noop
       return;
     }
-
     switch (state){
       case TRANSPORT_STARTED:
         if (bundle_){
@@ -627,7 +599,7 @@ namespace erizo {
         temp = CONN_FAILED;
         sending_ = false;
         msg = remoteSdp_.getSdp();
-        ELOG_INFO("WebRtcConnection failed, stopping sending");
+        ELOG_ERROR("WebRtcConnection failed, stopping sending. Possibly ICE Connection Failure");
         cond_.notify_one();
         break;
       default:
@@ -765,48 +737,53 @@ namespace erizo {
     uint32_t partial_bitrate = 0;
     uint64_t sentVideoBytes = 0;
     uint64_t lastSecondVideoBytes = 0;
-    while (sending_) {
-        dataPacket p;
-        {
-            boost::unique_lock<boost::mutex> lock(receiveVideoMutex_);
-            while (sendQueue_.size() == 0) {
-                cond_.wait(lock);
-                if (!sending_) {
-                    return;
-                }
-            }
-            if(sendQueue_.front().comp ==-1){
-                sending_ =  false;
-                ELOG_DEBUG("Finishing send Thread, packet -1");
-                sendQueue_.pop();
-                return;
-            }
-
-            p = sendQueue_.front();
-            sendQueue_.pop();
-        }
-
-        if (bundle_ || p.type == VIDEO_PACKET) {
-          if (rateControl_ && !slideShowMode_){
-            if (p.type == VIDEO_PACKET){
-              if (rateControl_ == 1)
-                continue;
-              gettimeofday(&now_, NULL);
-              if (msDelta(now_, mark_) >= 100){
-                mark_ = now_;
-                lastSecondVideoBytes = sentVideoBytes;
+      while (sending_) {
+          dataPacket p;
+          {
+              boost::unique_lock<boost::mutex> lock(receiveVideoMutex_);
+              while (sendQueue_.size() == 0) {
+                  cond_.wait(lock);
+                  if (!sending_) {
+                      return;
+                  }
               }
-              partial_bitrate = ((sentVideoBytes - lastSecondVideoBytes)*8)*10;
-              if (partial_bitrate > this->rateControl_){
-                continue;
+              if(sendQueue_.front().comp ==-1){
+                  sending_ =  false;
+                  ELOG_DEBUG("Finishing send Thread, packet -1");
+                  sendQueue_.pop();
+                  return;
               }
-              sentVideoBytes+=p.length;
-            }
+
+              p = sendQueue_.front();
+              sendQueue_.pop();
           }
-          videoTransport_->write(p.data, p.length);
-        } else {
-          audioTransport_->write(p.data, p.length);
-        }
+
+          if (bundle_ || p.type == VIDEO_PACKET) {
+//            slideShowMutex_.lock();
+            if (rateControl_ && !slideShowMode_){
+              if (p.type == VIDEO_PACKET){
+                if (rateControl_ == 1)
+                  continue;
+                gettimeofday(&now_, NULL);
+                uint64_t nowms = (now_.tv_sec * 1000) + (now_.tv_usec / 1000);
+                uint64_t markms = (mark_.tv_sec * 1000) + (mark_.tv_usec/1000);
+                if ((nowms - markms)>=100){
+                  mark_ = now_;
+                  lastSecondVideoBytes = sentVideoBytes;
+                }
+                partial_bitrate = ((sentVideoBytes - lastSecondVideoBytes)*8)*10;
+                if (partial_bitrate > this->rateControl_){
+                  continue;
+                }
+                sentVideoBytes+=p.length;
+              }
+            }
+//            slideShowMutex_.unlock();
+
+              videoTransport_->write(p.data, p.length);
+          } else {
+              audioTransport_->write(p.data, p.length);
+          }
       }
   }
 }

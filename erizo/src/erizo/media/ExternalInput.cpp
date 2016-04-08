@@ -34,14 +34,15 @@ namespace erizo {
   }
 
   int ExternalInput::init(){
-    context_ = avformat_alloc_context();
     av_register_all();
     avcodec_register_all();
     avformat_network_init();
-    //open rtsp
+
     av_init_packet(&avpacket_);
     avpacket_.data = NULL;
+    //open rtsp
     ELOG_DEBUG("Trying to open input from url %s", url_.c_str());
+    context_ = avformat_alloc_context();
     int res = avformat_open_input(&context_, url_.c_str(),NULL,NULL);
     char errbuff[500];
     printf ("RES %d\n", res);
@@ -60,8 +61,7 @@ namespace erizo {
     //VideoCodecInfo info;
 
     MediaInfo om;
-    AVStream *st, *audio_st;
-    
+    AVStream *video_st, *audio_st;
     
     int streamNo = av_find_best_stream(context_, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
     if (streamNo < 0){
@@ -70,19 +70,21 @@ namespace erizo {
     }else{
       om.hasVideo = true;
       video_stream_index_ = streamNo;
-      st = context_->streams[streamNo]; 
+      video_st = context_->streams[streamNo]; 
     }
 
     int audioStreamNo = av_find_best_stream(context_, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
     if (audioStreamNo < 0){
       ELOG_WARN("No Audio stream found");
-      ELOG_DEBUG("Has video, audio stream number %d. time base = %d / %d ", video_stream_index_, st->time_base.num, st->time_base.den);
+      ELOG_DEBUG("Has video, audio stream number %d. time base = %d / %d ", 
+        video_stream_index_, video_st->time_base.num, video_st->time_base.den);
       //return streamNo;
-    }else{
+    } else {
       om.hasAudio = true;
       audio_stream_index_ = audioStreamNo;
       audio_st = context_->streams[audio_stream_index_];
-      ELOG_DEBUG("Has Audio, audio stream number %d. time base = %d / %d ", audio_stream_index_, audio_st->time_base.num, audio_st->time_base.den);
+      ELOG_DEBUG("Has Audio, audio stream number %d. time base = %d / %d ", 
+        audio_stream_index_, audio_st->time_base.num, audio_st->time_base.den);
       audio_time_base_ = audio_st->time_base.den;
       ELOG_DEBUG("Audio Time base %d", audio_time_base_);
       if (audio_st->codec->codec_id==AV_CODEC_ID_PCM_MULAW){
@@ -90,20 +92,20 @@ namespace erizo {
         om.audioCodec.sampleRate=8000;
         om.audioCodec.codec = AUDIO_CODEC_PCM_U8;
         om.rtpAudioInfo.PT = PCMU_8000_PT; 
-      }else if (audio_st->codec->codec_id == AV_CODEC_ID_OPUS){
+      } else if (audio_st->codec->codec_id == AV_CODEC_ID_OPUS) {
         ELOG_DEBUG("OPUS");
         om.audioCodec.sampleRate=48000;
         om.audioCodec.codec = AUDIO_CODEC_OPUS;
         om.rtpAudioInfo.PT = OPUS_48000_PT; 
       }
       if (!om.hasVideo)
-        st = audio_st;
+        video_st = audio_st;
     }
 
      
-    if (st->codec->codec_id==AV_CODEC_ID_VP8 || !om.hasVideo){
+    if (video_st->codec->codec_id==AV_CODEC_ID_VP8 || !om.hasVideo){
       ELOG_DEBUG("No need for video transcoding, already VP8");      
-      video_time_base_ = st->time_base.den;
+      video_time_base_ = video_st->time_base.den;
       needTranscoding_=false;
       decodedBuffer_.reset((unsigned char*) malloc(100000));
       MediaInfo om;
@@ -123,17 +125,16 @@ namespace erizo {
       op_->init(om,this);
     }else{
       needTranscoding_=true;
-      inCodec_.initDecoder(st->codec);
+      inCodec_.initDecoder(video_st->codec);
 
-      bufflen_ = st->codec->width*st->codec->height*3/2;
+      bufflen_ = video_st->codec->width*video_st->codec->height*3/2;
       decodedBuffer_.reset((unsigned char*) malloc(bufflen_));
-
 
       om.processorType = RTP_ONLY;
       om.videoCodec.codec = VIDEO_CODEC_VP8;
       om.videoCodec.bitRate = 1000000;
-      om.videoCodec.width = 640;
-      om.videoCodec.height = 480;
+      om.videoCodec.width = 640; // video_st->codec->width
+      om.videoCodec.height = 480; // video_st->codec->height
       om.videoCodec.frameRate = 20;
       om.hasVideo = true;
 
@@ -167,7 +168,6 @@ namespace erizo {
       memcpy(sendVideoBuffer_, rtpdata, len);
       videoSink_->deliverVideoData(sendVideoBuffer_, len);
     }
-
   }
 
   void ExternalInput::receiveLoop(){
@@ -182,7 +182,8 @@ namespace erizo {
       AVPacket orig_pkt = avpacket_;
       if (needTranscoding_){
         if(avpacket_.stream_index == video_stream_index_){//packet is video               
-          inCodec_.decodeVideo(avpacket_.data, avpacket_.size, decodedBuffer_.get(), bufflen_, &gotDecodedFrame);
+          inCodec_.decodeVideo(avpacket_.data, avpacket_.size, 
+            decodedBuffer_.get(), bufflen_, &gotDecodedFrame);
           RawDataPacket packetR;
           if (gotDecodedFrame){
             packetR.data = decodedBuffer_.get();

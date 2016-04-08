@@ -2,8 +2,8 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <BOOST_DIR>D:\sdks\boost_1_60_0</BOOST_DIR>
-    <SSL_DIR>D:\sdks\OpenSSL-Win32</SSL_DIR>
+    <BOOST_DIR>C:\sdk\boost_1_60_0</BOOST_DIR>
+    <SSL_DIR>C:\sdk\OpenSSL-Win32</SSL_DIR>
   </PropertyGroup>
   <PropertyGroup>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(BOOST_DIR);$(SSL_DIR)\include</IncludePath>

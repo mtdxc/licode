@@ -24,11 +24,15 @@ enum vp8SearchState {
     lookingForEnd
 };
 
-class ExternalOutput : public MediaSink, public RawDataReceiver, public FeedbackSource, public webrtc::RtpData {
+class ExternalOutput : public MediaSink, 
+  public RawDataReceiver, 
+  public FeedbackSource, 
+  public webrtc::RtpData {
     DECLARE_LOGGER();
 public:
     ExternalOutput(const std::string& outputUrl);
     virtual ~ExternalOutput();
+
     bool init();
     void receiveRawData(RawDataPacket& packet);
 
