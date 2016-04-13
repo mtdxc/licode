@@ -24,8 +24,12 @@ enum vp8SearchState {
     lookingForEnd
 };
 
+/*
+此类从MediaSink中接受RTP数据，经过Fec解包和简单RTP队列缓存后，写入到outputUrl(FFmpeg)
+该类主要方法都是在处理时间戳，并能动态判断文件容器类型
+*/
 class ExternalOutput : public MediaSink, 
-  public RawDataReceiver, 
+  public RawDataReceiver, ///< no used 
   public FeedbackSource, 
   public webrtc::RtpData {
     DECLARE_LOGGER();
@@ -49,6 +53,7 @@ private:
     boost::mutex mtx_;  // a mutex we use to signal our writer thread that data is waiting.
     boost::thread thread_;
     boost::condition_variable cond_;
+    // output context
     AVStream *video_stream_, *audio_stream_;
     AVFormatContext *context_;
 

@@ -24,7 +24,7 @@ class OneToManyProcessor : public MediaSink, public FeedbackSink {
 	DECLARE_LOGGER();
 
 public:
-    std::map<std::string, boost::shared_ptr<MediaSink> > subscribers;
+  std::map<std::string, boost::shared_ptr<MediaSink> > subscribers;
   boost::shared_ptr<MediaSource> publisher;
 
 	OneToManyProcessor();

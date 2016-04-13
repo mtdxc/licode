@@ -21,8 +21,9 @@ extern "C" {
 namespace erizo{
   class WebRtcConnection;
   /*
-  从URL外部源中读取文件，必要时经过转码（非支持格式VP8 OPUS PCM）和封包，
-  并传给MediaSink
+  inputUrl->MediaSource
+  采用FFmpeg从外部URL源inputUrl中读取文件，必要时经过转码（非支持格式VP8 OPUS PCM）和封包，
+  并传给附着在MediaSource上的MediaSink
   */
   class ExternalInput : public MediaSource, public RTPDataReceiver {
       DECLARE_LOGGER();

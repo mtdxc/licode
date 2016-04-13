@@ -57,13 +57,34 @@ struct MediaInfo {
 
 #define UNPACKAGED_BUFFER_SIZE 150000
 #define PACKAGED_BUFFER_SIZE 2000
-//class MediaProcessor{
-//	MediaProcessor();
-//	virtual ~Mediaprocessor();
-//private:
-//	InputProcessor* input;
-//	OutputProcessor* output;
-//};
+/* Usage example
+class MediaProcessor{
+  MediaProcessor(){
+    input = new InputProcessor();
+    output = new OutputProcessor();
+    MediaInfo mi;
+    // init with mi;
+    input->init(mi, output);
+    RTPDataReceiver* rtpRecv = NULL;
+    // set mi;
+    output->init(mi, rtpRecv);
+  }
+  void FillData(){
+    // fill rtp data
+    input->deliverAudioData(char* buf, int len);
+    input->deliverVideoData(char* buf, int len);
+    //got rtcp data from 
+    RTPDataReceiver::receiveRtpData(unsigned char* rtpdata, int len);
+  }
+  virtual ~Mediaprocessor(){
+    delete input; input = NULL;
+    delete output; output = NULL;
+  }
+private:
+	InputProcessor* input;
+	OutputProcessor* output;
+};
+*/
 
 class RawDataReceiver {
 public:
@@ -80,8 +101,8 @@ public:
 class RTPSink;
 /*
 媒体流输入处理.
-将MediaSink来的数据流解包，并利用ffmpeg解码后，
-传给RawDataReceiver回调
+从MediaSink中接受RTP数据流，并进行解包，
+最用用ffmpeg解码成原始帧后，在传给RawDataReceiver回调
 @note 当前视频只支持VP8解码.
 */
 class InputProcessor: public MediaSink {
@@ -90,25 +111,49 @@ public:
 	InputProcessor();
 	virtual ~InputProcessor();
 
+	/**
+	@brief 初始化.
+	
+	@param info MeidiaSink的媒体格式（用于解码）
+	@param receiver 原始数据输出回调
+	@return 
+	@retval 
+	*/
 	int init(const MediaInfo& info, RawDataReceiver* receiver);
-	/// 解包
+	/**
+	@brief 视频解包(RTP->VideoFrame).
+	
+	@param inBuff RTP缓冲区
+	@param inBuffLen RTP长度
+	@param outBuff 输出视频帧缓冲区
+	@param gotFrame [out] 是否获取到一帧，置Mark标记为则为true
+	@return 
+	*/
 	int unpackageVideo(unsigned char* inBuff, int inBuffLen,
 		unsigned char* outBuff, int* gotFrame);
-	int unpackageAudio(unsigned char* inBuff, int inBuffLen,
+	/**
+	@brief 音频解包(RTP->AudioFrame).
+	
+	@param inBuff RTP缓冲区
+	@param inBuffLen RTP长度
+	@param outBuff 输出视频帧缓冲区
+	@return 成功则返回1，否则0
+	*/
+  int unpackageAudio(unsigned char* inBuff, int inBuffLen,
 		unsigned char* outBuff);
 
   void closeSink();
   void close();
 
 private:
-
+  // 是否初始化
 	int audioDecoder;
 	int videoDecoder;
 
   double lastVideoTs_;
 
 	MediaInfo mediaInfo;
-
+  // 是否初始化
 	int audioUnpackager;
 	int videoUnpackager;
 
@@ -124,17 +169,10 @@ private:
 
 	AVCodec* aDecoder;
 	AVCodecContext* aDecoderContext;
-	/*
-	AVFormatContext* aInputFormatContext;
-	AVInputFormat* aInputFormat;
-	*/
-	VideoDecoder vDecoder;
+
+  VideoDecoder vDecoder;
 
 	RTPInfo* vRTPInfo;
-	/*
-	AVFormatContext* vInputFormatContext;
-	AVInputFormat* vInputFormat;
-	*/
 	RawDataReceiver* rawReceiver_;
 
 	erizo::RtpVP8Parser pars;
@@ -152,7 +190,7 @@ private:
 };
 /*
 输出处理类（与上类相反）
-接受原始音视频流，编码，分包，然后形成RTP包回调RTPDataReceiver
+接受原始音视频流，编码，分包，然后形成RTP包回调 RTPDataReceiver
 @note 当前视频也只支持VP8, 且音频处理仍有问题
 */
 class OutputProcessor: public RawDataReceiver {
@@ -161,12 +199,28 @@ public:
 	OutputProcessor();
 	virtual ~OutputProcessor();
 
+	/**
+	@brief 初始化.
+	
+	@param info 编码媒体信息
+	@param rtpReceiver RTP数据回调
+	@return 
+	*/
 	int init(const MediaInfo& info, RTPDataReceiver* rtpReceiver);
   void close();
 
-	// implement for RawDataReceiver
+	// implement for RawDataReceiver(for data input)
 	void receiveRawData(RawDataPacket& packet);
-
+  
+  /**
+  @brief RTP音频封包.
+  增加RTP头部.
+  @param inBuff 编码后的音频抱 
+  @param inBuffLen 音频包长度
+  @param outBuff [out] RTP缓冲区 
+  @param pts [in] 时间戳，可以为0
+  @return RTP包长度(包含头部)
+  */
   int packageAudio(unsigned char* inBuff, int inBuffLen,
 			unsigned char* outBuff, long int pts = 0);
 
@@ -202,23 +256,16 @@ private:
 
   VideoEncoder vCoder;
 
-	/*
-	AVFormatContext* aOutputFormatContext;
-	AVOutputFormat* aOutputFormat;
-	*/
 	RTPInfo* vRTPInfo_;
 	RTPSink* sink_;
-	/*
-	AVFormatContext* vOutputFormatContext;
-	AVOutputFormat* vOutputFormat;
-	*/
-	RtpVP8Parser pars;
+
+  RtpVP8Parser pars;
 
 	bool initAudioCoder();
 
 	bool initAudioPackager();
 	bool initVideoPackager();
-
+  // @todo 此函数写得不对.
 	int encodeAudio(unsigned char* inBuff, int nSamples,
 			AVPacket* pkt);
 

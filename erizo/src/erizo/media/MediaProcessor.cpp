@@ -18,10 +18,10 @@ namespace erizo {
 
     audioDecoder = 0;
     videoDecoder = 0;
-    lastVideoTs_ = 0;
-
     audioUnpackager = 1;
     videoUnpackager = 1;
+
+    lastVideoTs_ = 0;
     gotUnpackagedFrame_ = false;
     upackagedSize_ = 0;
     decodedBuffer_ = NULL;
@@ -34,53 +34,62 @@ namespace erizo {
   }
 
   InputProcessor::~InputProcessor() {
-    this->close();
+    close();
   }
 
   int InputProcessor::init(const MediaInfo& info, RawDataReceiver* receiver) {
-    this->mediaInfo = info;
-    this->rawReceiver_ = receiver;
+    mediaInfo = info;
+    rawReceiver_ = receiver;
     if (mediaInfo.hasVideo) {
+      // why?
       mediaInfo.videoCodec.codec = VIDEO_CODEC_VP8;
       decodedBuffer_ = (unsigned char*) malloc(
           info.videoCodec.width * info.videoCodec.height * 3 / 2);
       unpackagedBufferPtr_ = unpackagedBuffer_ = (unsigned char*) malloc(UNPACKAGED_BUFFER_SIZE);
-      if(!vDecoder.initDecoder(mediaInfo.videoCodec));
+      if (!vDecoder.initDecoder(mediaInfo.videoCodec)){
+        ELOG_WARN("initDecoder %d %dx%d error", mediaInfo.videoCodec.codec, 
+          mediaInfo.videoCodec.width, mediaInfo.videoCodec.height);
+      }
       videoDecoder = 1; 
-      if(!this->initVideoUnpackager());
+      initVideoUnpackager();
     }
     if (mediaInfo.hasAudio) {
       ELOG_DEBUG("Init AUDIO processor");
+      // why?
       mediaInfo.audioCodec.codec = AUDIO_CODEC_PCM_U8;
       decodedAudioBuffer_ = (unsigned char*) malloc(UNPACKAGED_BUFFER_SIZE);
       unpackagedAudioBuffer_ = (unsigned char*) malloc(UNPACKAGED_BUFFER_SIZE);
-      this->initAudioDecoder();
-      this->initAudioUnpackager();
+      initAudioDecoder();
+      initAudioUnpackager();
     }
     return 0;
   }
 
   int InputProcessor::deliverAudioData_(char* buf, int len) {
     if (audioDecoder && audioUnpackager) {
-      ELOG_DEBUG("Decoding audio");
       // 先进行RTP解包
       int unp = unpackageAudio((unsigned char*) buf, len, unpackagedAudioBuffer_);
       // 解包后再进行解压
       int a = decodeAudio(unpackagedAudioBuffer_, unp, decodedAudioBuffer_);
-      ELOG_DEBUG("DECODED AUDIO a %d", a);
-      // 通知原始数据
-      RawDataPacket p;
-      p.data = decodedAudioBuffer_;
-      p.type = AUDIO;
-      p.length = a;
-      rawReceiver_->receiveRawData(p);
+      if (a >= 0){
+        // 通知原始数据
+        RawDataPacket p;
+        p.data = decodedAudioBuffer_;
+        p.type = AUDIO;
+        p.length = a;
+        rawReceiver_->receiveRawData(p);
+      }
+      else{
+        ELOG_DEBUG("DECODED AUDIO error %d", a);
+      }
       return a;
     }
     return 0;
   }
   int InputProcessor::deliverVideoData_(char* buf, int len) {
     if (videoUnpackager && videoDecoder) {
-      int ret = unpackageVideo(reinterpret_cast<unsigned char*>(buf), len, 
+      // decode video
+      int ret = unpackageVideo((unsigned char*)buf, len, 
         unpackagedBufferPtr_, &gotUnpackagedFrame_);
       if (ret < 0)
         return 0;
@@ -89,11 +98,10 @@ namespace erizo {
       unpackagedBufferPtr_ += ret;
       if (gotUnpackagedFrame_) {
         unpackagedBufferPtr_ -= upackagedSize_;
-        ELOG_DEBUG("Tengo un frame desempaquetado!! Size = %d", upackagedSize_);
-        int c;
+        ELOG_DEBUG("Got a Frame Size = %d", upackagedSize_);
         int gotDecodedFrame = 0;
         // decode video frame
-        c = vDecoder.decodeVideo(unpackagedBufferPtr_, upackagedSize_,
+        int c = vDecoder.decodeVideo(unpackagedBufferPtr_, upackagedSize_,
                                  decodedBuffer_,
                                  mediaInfo.videoCodec.width * mediaInfo.videoCodec.height * 3 / 2,
                                  &gotDecodedFrame);
@@ -102,7 +110,7 @@ namespace erizo {
         gotUnpackagedFrame_ = 0;
         ELOG_DEBUG("Bytes dec = %d", c);
         if (gotDecodedFrame && c > 0) {
-          ELOG_DEBUG("Tengo un frame decodificado!!");
+          ELOG_DEBUG("Decode a frame %d,%d", mediaInfo.videoCodec.width, mediaInfo.videoCodec.height);
           gotDecodedFrame = 0;
           // notitfy raw video packet
           RawDataPacket p;
@@ -111,7 +119,6 @@ namespace erizo {
           p.type = VIDEO;
           rawReceiver_->receiveRawData(p);
         }
-
         return c;
       }
     }
@@ -122,13 +129,13 @@ namespace erizo {
 
     aDecoder = avcodec_find_decoder(static_cast<AVCodecID>(mediaInfo.audioCodec.codec));
     if (!aDecoder) {
-      ELOG_DEBUG("Decoder de audio no encontrado");
+      ELOG_WARN("avcodec_find_decoder %d error", mediaInfo.audioCodec.codec);
       return false;
     }
 
     aDecoderContext = avcodec_alloc_context3(aDecoder);
     if (!aDecoderContext) {
-      ELOG_DEBUG("Error de memoria en decoder de audio");
+      ELOG_WARN("avcodec_alloc_context3 %d error", mediaInfo.audioCodec.codec);
       return false;
     }
     // PCM 16
@@ -138,7 +145,7 @@ namespace erizo {
     aDecoderContext->channels = 1;
 
     if (avcodec_open2(aDecoderContext, aDecoder, NULL) < 0) {
-      ELOG_DEBUG("Error al abrir el decoder de audio");
+      ELOG_WARN("avcodec_open2 Error");
       return false;
     }
     audioDecoder = 1;
@@ -161,48 +168,41 @@ namespace erizo {
       unsigned char* outBuff) {
 
     if (audioDecoder == 0) {
-      ELOG_DEBUG("No se han inicializado los parámetros del audioDecoder");
+      ELOG_DEBUG("decodeAudio without audioDecoder");
       return -1;
     }
 
     AVPacket avpkt;
-    int outSize;
     int decSize = 0;
     int len = -1;
-    uint8_t *decBuff = (uint8_t*) malloc(16000);
-
     av_init_packet(&avpkt);
     avpkt.data = (unsigned char*) inBuff;
     avpkt.size = inBuffLen;
 
     while (avpkt.size > 0) {
-
-      outSize = 16000;
-
       //Puede fallar. Cogido de libavcodec/utils.c del paso de avcodec_decode_audio3 a avcodec_decode_audio4
       //avcodec_decode_audio3(aDecoderContext, (short*)decBuff, &outSize, &avpkt);
-
       AVFrame frame;
       int got_frame = 0;
 
-      //      aDecoderContext->get_buffer = avcodec_default_get_buffer;
-      //      aDecoderContext->release_buffer = avcodec_default_release_buffer;
+      // aDecoderContext->get_buffer = avcodec_default_get_buffer;
+      // aDecoderContext->release_buffer = avcodec_default_release_buffer;
 
-      len = avcodec_decode_audio4(aDecoderContext, &frame, &got_frame,
-          &avpkt);
-      if (len >= 0 && got_frame) {
+      len = avcodec_decode_audio4(aDecoderContext, &frame, &got_frame, &avpkt);
+      if (len < 0) {
+        ELOG_DEBUG("Error al decodificar audio");
+        return -1;
+      }
+      else if (got_frame) {
         int plane_size;
         //int planar = av_sample_fmt_is_planar(aDecoderContext->sample_fmt);
         int data_size = av_samples_get_buffer_size(&plane_size,
             aDecoderContext->channels, frame.nb_samples,
             aDecoderContext->sample_fmt, 1);
-        if (outSize < data_size) {
+        if (16000 < data_size) {
           ELOG_DEBUG("output buffer size is too small for the current frame");
-          free(decBuff);
           return AVERROR(EINVAL);
         }
-
-        memcpy(decBuff, frame.extended_data[0], plane_size);
 
         /* Si hay más de un canal
            if (planar && aDecoderContext->channels > 1) {
@@ -213,35 +213,20 @@ namespace erizo {
            }
            }
            */
-        outSize = data_size;
-      } else {
-        outSize = 0;
+        avpkt.size -= len;
+        avpkt.data += len;
+
+        memcpy(outBuff, frame.extended_data[0], plane_size);
+        outBuff += data_size;
+        decSize += data_size;
+
       }
-
-      if (len < 0) {
-        ELOG_DEBUG("Error al decodificar audio");
-        free(decBuff);
-        return -1;
-      }
-
-      avpkt.size -= len;
-      avpkt.data += len;
-
-      if (outSize <= 0) {
-        continue;
-      }
-
-      memcpy(outBuff, decBuff, outSize);
-      outBuff += outSize;
-      decSize += outSize;
     }
-
-    free(decBuff);
-
+    /*
     if (outSize <= 0) {
       ELOG_DEBUG("Error de decodificación de audio debido a tamaño incorrecto");
       return -1;
-    }
+    }*/
 
     return decSize;
 
@@ -255,7 +240,6 @@ namespace erizo {
     }
     // 不处理RTP丢包重传等问题...
     memcpy(outBuff, &inBuff[RtpHeader::MIN_SIZE], l);
-
     return l;
   }
 
@@ -274,26 +258,23 @@ namespace erizo {
       return -1;
     }
 
-    int l = inBuffLen - head->getHeaderLength();
     int inBuffOffset = head->getHeaderLength();
     // 仍不处理RTP丢包情况
-    erizo::RTPPayloadVP8* parsed = pars.parseVP8(&inBuff[inBuffOffset], l);
+    std::auto_ptr<erizo::RTPPayloadVP8> parsed(
+      pars.parseVP8(&inBuff[inBuffOffset], inBuffLen - head->getHeaderLength()));
     memcpy(outBuff, parsed->data, parsed->dataLength);
     // mark is the last frame
     if (head->getMarker()) {
       *gotFrame = 1;
     }
-    int ret = parsed->dataLength;
-    delete parsed;
-    return ret;
+    return parsed->dataLength;
   }
 
   void InputProcessor::closeSink(){
-    this->close();
+    close();
   }
 
   void InputProcessor::close(){
-
     if (audioDecoder == 1) {
       avcodec_close(aDecoderContext);
       av_free(aDecoderContext);
@@ -313,9 +294,9 @@ namespace erizo {
   OutputProcessor::OutputProcessor() {
     audioCoder = 0;
     videoCoder = 0;
-
     audioPackager = 0;
     videoPackager = 0;
+
     timestamp_ = 0;
 
     encodedBuffer_ = NULL;
@@ -329,46 +310,42 @@ namespace erizo {
   }
 
   OutputProcessor::~OutputProcessor() {
-    this->close();
+    close();
   }
 
   int OutputProcessor::init(const MediaInfo& info, RTPDataReceiver* rtpReceiver) {
-    this->mediaInfo = info;
-    this->rtpReceiver_ = rtpReceiver;
+    mediaInfo = info;
+    rtpReceiver_ = rtpReceiver;
 
     encodedBuffer_ = (unsigned char*) malloc(UNPACKAGED_BUFFER_SIZE);
     packagedBuffer_ = (unsigned char*) malloc(PACKAGED_BUFFER_SIZE);
     rtpBuffer_ = (unsigned char*) malloc(PACKAGED_BUFFER_SIZE);
     if(info.processorType == PACKAGE_ONLY){
-      this->initVideoPackager();
-      this->initAudioPackager();
+      initVideoPackager();
+      initAudioPackager();
       return 0;
     }
     if (mediaInfo.hasVideo) {
-      this->mediaInfo.videoCodec.codec = VIDEO_CODEC_VP8;
+      mediaInfo.videoCodec.codec = VIDEO_CODEC_VP8;
       if (vCoder.initEncoder(mediaInfo.videoCodec)) {
-        ELOG_DEBUG("Error initing encoder");
+        ELOG_WARN("Error initing encoder");
       }
-      this->initVideoPackager();
+      initVideoPackager();
     }
     if (mediaInfo.hasAudio) {
-
       ELOG_DEBUG("Init AUDIO processor");
       mediaInfo.audioCodec.codec = AUDIO_CODEC_PCM_U8;
       mediaInfo.audioCodec.sampleRate= 44100;
       mediaInfo.audioCodec.bitRate = 64000;
       encodedAudioBuffer_ = (unsigned char*) malloc(UNPACKAGED_BUFFER_SIZE);
       packagedAudioBuffer_ = (unsigned char*) malloc(UNPACKAGED_BUFFER_SIZE);
-      this->initAudioCoder();
-      this->initAudioPackager();
-
+      initAudioCoder();
+      initAudioPackager();
     }
-
     return 0;
   }
 
   void OutputProcessor::close(){
-
     if (audioCoder == 1) {
       avcodec_close(aCoderContext);
       av_free(aCoderContext);
@@ -391,15 +368,16 @@ namespace erizo {
   void OutputProcessor::receiveRawData(RawDataPacket& packet) {
     int hasFrame = 0;
     if (packet.type == VIDEO) {
-//      ELOG_DEBUG("Encoding video: size %d", packet.length);
+//    ELOG_DEBUG("Encoding video: size %d", packet.length);
       int a = vCoder.encodeVideo(packet.data, packet.length, 
         encodedBuffer_, UNPACKAGED_BUFFER_SIZE, hasFrame);
       if (a > 0)
         packageVideo(encodedBuffer_, a, packagedBuffer_);
     } else {
-//      int a = this->encodeAudio(packet.data, packet.length, &pkt);
+//      int a = encodeAudio(packet.data, packet.length, &pkt);
 //      if (a > 0) {
 //        ELOG_DEBUG("GUAY a %d", a);
+//        packageAudio(pkt.data,pkg.length);
 //      }
     }
 //    av_free_packet(&pkt);
@@ -409,13 +387,13 @@ namespace erizo {
 
     aCoder = avcodec_find_encoder(static_cast<AVCodecID>(mediaInfo.audioCodec.codec));
     if (!aCoder) {
-      ELOG_DEBUG("Encoder de audio no encontrado");
+      ELOG_WARN("avcodec_find_encoder %d error", mediaInfo.audioCodec.codec);
       return false;
     }
 
     aCoderContext = avcodec_alloc_context3(aCoder);
     if (!aCoderContext) {
-      ELOG_DEBUG("Error de memoria en coder de audio");
+      ELOG_WARN("avcodec_alloc_context3 error");
       return false;
     }
 
@@ -425,7 +403,7 @@ namespace erizo {
     aCoderContext->channels = 1;
 
     if (avcodec_open2(aCoderContext, aCoder, NULL) < 0) {
-      ELOG_DEBUG("Error al abrir el coder de audio");
+      ELOG_DEBUG("avcodec_open2 error");
       return false;
     }
 
@@ -440,8 +418,8 @@ namespace erizo {
   }
 
   bool OutputProcessor::initVideoPackager() {
-    videoSeqnum_ = 0;
     videoPackager = 1;
+    videoSeqnum_ = 0;
     return true;
   }
 
@@ -472,8 +450,6 @@ namespace erizo {
     head.setSSRC(44444);
     head.setPayloadType(mediaInfo.rtpAudioInfo.PT);
 
-//    memcpy (rtpAudioBuffer_, &head, head.getHeaderLength());
-//    memcpy(&rtpAudioBuffer_[head.getHeaderLength()], inBuff, inBuffLen);
     memcpy (outBuff, &head, head.getHeaderLength());
     memcpy (outBuff + head.getHeaderLength(), inBuff, inBuffLen);
 //  sink_->sendData(rtpBuffer_, l);
@@ -499,25 +475,25 @@ namespace erizo {
     long millis = (time.tv_sec * 1000) + (time.tv_usec / 1000);
 //	timestamp_ += 90000 / mediaInfo.videoCodec.frameRate;
 //  int64_t pts = av_rescale(lastPts_, 1000000, (long int)video_time_base_);
+    RtpHeader rtpHeader;
+    if (pts==0){
+      rtpHeader.setTimestamp(av_rescale(millis, 90000, 1000)); 
+    }else{
+      rtpHeader.setTimestamp(av_rescale(pts, 90000, 1000)); 
+    }
+    rtpHeader.setSSRC(55543);
+    rtpHeader.setPayloadType(100);
     do {
       outlen = 0;
       frag.getPacket(outBuff, &outlen, &lastFrame);
-      RtpHeader rtpHeader;
       rtpHeader.setMarker(lastFrame?1:0);
       rtpHeader.setSeqNumber(videoSeqnum_++);
-      if (pts==0){
-          rtpHeader.setTimestamp(av_rescale(millis, 90000, 1000)); 
-      }else{
-          rtpHeader.setTimestamp(av_rescale(pts, 90000, 1000)); 
-      }
-      rtpHeader.setSSRC(55543);
-      rtpHeader.setPayloadType(100);
-      memcpy(rtpBuffer_, &rtpHeader, rtpHeader.getHeaderLength());
-      memcpy(&rtpBuffer_[rtpHeader.getHeaderLength()],outBuff, outlen);
 
-      int l = outlen + rtpHeader.getHeaderLength();
+      memcpy(rtpBuffer_, &rtpHeader, rtpHeader.getHeaderLength());
+      memcpy(rtpBuffer_ + rtpHeader.getHeaderLength(), outBuff, outlen);
+
 //			sink_->sendData(rtpBuffer_, l);
-      rtpReceiver_->receiveRtpData(rtpBuffer_, l);
+      rtpReceiver_->receiveRtpData(rtpBuffer_, outlen + rtpHeader.getHeaderLength());
     } while (!lastFrame);
 
     return 0;
@@ -535,9 +511,7 @@ namespace erizo {
       ELOG_ERROR("could not allocate audio frame");
       return -1;
     }
-    int ret, got_output, buffer_size;
-    //float t, tincr;
-
+    int ret, got_output;
     frame->nb_samples = aCoderContext->frame_size;
     frame->format = aCoderContext->sample_fmt;
     //	frame->channel_layout = aCoderContext->channel_layout;
@@ -547,12 +521,11 @@ namespace erizo {
     ELOG_DEBUG("channels %d, frame_size %d, sample_fmt %d",
         aCoderContext->channels, aCoderContext->frame_size,
         aCoderContext->sample_fmt);
-    buffer_size = av_samples_get_buffer_size(NULL, aCoderContext->channels,
+    int buffer_size = av_samples_get_buffer_size(NULL, aCoderContext->channels,
         aCoderContext->frame_size, aCoderContext->sample_fmt, 0);
     uint16_t* samples = (uint16_t*) av_malloc(buffer_size);
     if (!samples) {
-      ELOG_ERROR("could not allocate %d bytes for samples buffer",
-          buffer_size);
+      ELOG_ERROR("could not allocate %d bytes for samples buffer", buffer_size);
       return -1;
     }
     /* setup the data pointers in the AVFrame */
