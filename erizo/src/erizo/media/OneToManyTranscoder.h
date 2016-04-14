@@ -45,6 +45,7 @@ public:
 	 * @param peerId the peerId
 	 */
 	void removeSubscriber(const std::string& peerId);
+
 	void receiveRawData(RawDataPacket& packet);
 	void receiveRtpData(unsigned char*rtpdata, int len);
 

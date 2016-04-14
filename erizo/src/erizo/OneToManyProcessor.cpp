@@ -15,7 +15,7 @@ namespace erizo {
 
   OneToManyProcessor::~OneToManyProcessor() {
     ELOG_DEBUG ("OneToManyProcessor destructor");
-    this->closeAll();
+    closeAll();
   }
 
   int OneToManyProcessor::deliverAudioData_(char* buf, int len) {
@@ -61,7 +61,7 @@ namespace erizo {
 
   void OneToManyProcessor::setPublisher(MediaSource* webRtcConn) {
     boost::mutex::scoped_lock lock(myMonitor_);
-    this->publisher.reset(webRtcConn);
+    publisher.reset(webRtcConn);
     feedbackSink_ = publisher->getFeedbackSink();
   }
 
@@ -76,29 +76,39 @@ namespace erizo {
   void OneToManyProcessor::addSubscriber(MediaSink* webRtcConn,
       const std::string& peerId) {
     ELOG_DEBUG("Adding subscriber");
+    if (NULL == publisher){
+      ELOG_WARN("addSubscriber %s without publisher, skip it!", peerId.c_str());
+      return;
+    }
+    if (NULL == webRtcConn){
+      ELOG_WARN("addSubscriber %s args error!", peerId.c_str());
+      return;
+    }
     boost::mutex::scoped_lock lock(myMonitor_);
     ELOG_DEBUG("From %u, %u ", publisher->getAudioSourceSSRC() , publisher->getVideoSourceSSRC());
-    webRtcConn->setAudioSinkSSRC(this->publisher->getAudioSourceSSRC());
-    webRtcConn->setVideoSinkSSRC(this->publisher->getVideoSourceSSRC());
-    ELOG_DEBUG("Subscribers ssrcs: Audio %u, video, %u from %u, %u ", webRtcConn->getAudioSinkSSRC(), webRtcConn->getVideoSinkSSRC(), this->publisher->getAudioSourceSSRC() , this->publisher->getVideoSourceSSRC());
+    webRtcConn->setAudioSinkSSRC(publisher->getAudioSourceSSRC());
+    webRtcConn->setVideoSinkSSRC(publisher->getVideoSourceSSRC());
+    ELOG_DEBUG("Subscribers ssrcs: Audio %u, video, %u from %u, %u ", 
+      webRtcConn->getAudioSinkSSRC(), webRtcConn->getVideoSinkSSRC(), 
+      publisher->getAudioSourceSSRC() , publisher->getVideoSourceSSRC());
+    
     FeedbackSource* fbsource = webRtcConn->getFeedbackSource();
-
     if (fbsource!=NULL){
       ELOG_DEBUG("adding fbsource");
       fbsource->setFeedbackSink(this);
     }
-    if (this->subscribers.find(peerId) != subscribers.end()) { 
+    if (subscribers.find(peerId) != subscribers.end()) { 
         ELOG_WARN("This OTM already has a subscriber with peerId %s, substituting it", peerId.c_str());
-        this->subscribers.erase(peerId);
+        subscribers.erase(peerId);
     }
-    this->subscribers[peerId] = sink_ptr(webRtcConn);
+    subscribers[peerId] = sink_ptr(webRtcConn);
   }
 
   void OneToManyProcessor::removeSubscriber(const std::string& peerId) {
     ELOG_DEBUG("Remove subscriber %s", peerId.c_str());
     boost::mutex::scoped_lock lock(myMonitor_);
-    if (this->subscribers.find(peerId) != subscribers.end()) {
-      this->subscribers.erase(peerId);
+    if (subscribers.find(peerId) != subscribers.end()) {
+      subscribers.erase(peerId);
     }
   }
 

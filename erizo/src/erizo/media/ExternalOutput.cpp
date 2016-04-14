@@ -7,9 +7,11 @@ namespace erizo {
 
 DEFINE_LOGGER(ExternalOutput, "media.ExternalOutput");
 ExternalOutput::ExternalOutput(const std::string& outputUrl) : fec_receiver_(this), 
-  audioQueue_(5.0, 10.0), videoQueue_(5.0, 10.0), inited_(false), video_stream_(NULL), audio_stream_(NULL),
+  audioQueue_(5.0, 10.0), videoQueue_(5.0, 10.0), inited_(false), 
+  video_stream_(NULL), audio_stream_(NULL),
   firstVideoTimestamp_(-1), firstAudioTimestamp_(-1), firstDataReceived_(-1), 
-  videoOffsetMsec_(-1), audioOffsetMsec_(-1), vp8SearchState_(lookingForStart), needToSendFir_(true)
+  videoOffsetMsec_(-1), audioOffsetMsec_(-1), 
+  vp8SearchState_(lookingForStart), needToSendFir_(true)
 {
     ELOG_DEBUG("Creating output to %s", outputUrl.c_str());
 
@@ -18,7 +20,6 @@ ExternalOutput::ExternalOutput(const std::string& outputUrl) : fec_receiver_(thi
     avcodec_register_all();
 
     videoQueue_.setTimebase(90000); // our video timebase is easy: always 90 khz.  We'll set audio once we receive a packet and can inspect its header.
-
 
     context_ = avformat_alloc_context();
     if (context_==NULL){
@@ -177,10 +178,12 @@ void ExternalOutput::writeVideoData(char* buf, int len){
         firstVideoTimestamp_ = head->getTimestamp();
     }
 
-    // TODO we should be tearing off RTP padding here, if it exists.  But WebRTC currently does not use padding.
+    // TODO we should be tearing off RTP padding here, if it exists.  
+    // But WebRTC currently does not use padding.
 
     RtpVP8Parser parser;
-    erizo::RTPPayloadVP8* payload = parser.parseVP8(reinterpret_cast<unsigned char*>(buf + head->getHeaderLength()), len - head->getHeaderLength());
+    erizo::RTPPayloadVP8* payload = parser.parseVP8(
+      (unsigned char*)(buf + head->getHeaderLength()), len - head->getHeaderLength());
 
     bool endOfFrame = (head->getMarker() > 0);
     bool startOfFrame = payload->beginningOfPartition;
@@ -289,7 +292,7 @@ void ExternalOutput::writeVideoData(char* buf, int len){
 }
 
 int ExternalOutput::deliverAudioData_(char* buf, int len) {
-    this->queueData(buf,len,AUDIO_PACKET);
+    queueData(buf,len,AUDIO_PACKET);
     return 0;
 }
 
@@ -298,7 +301,7 @@ int ExternalOutput::deliverVideoData_(char* buf, int len) {
       RtpHeader* h = reinterpret_cast<RtpHeader*>(buf);
       videoSourceSsrc_ = h->getSSRC();
     }
-    this->queueData(buf,len,VIDEO_PACKET);
+    queueData(buf,len,VIDEO_PACKET);
     return 0;
 }
 
@@ -306,9 +309,9 @@ int ExternalOutput::deliverVideoData_(char* buf, int len) {
 bool ExternalOutput::initContext() {
     
   if (context_->oformat->video_codec != AV_CODEC_ID_NONE &&
-            context_->oformat->audio_codec != AV_CODEC_ID_NONE &&
-            video_stream_ == NULL &&
-            audio_stream_ == NULL) {
+      context_->oformat->audio_codec != AV_CODEC_ID_NONE &&
+      video_stream_ == NULL &&
+      audio_stream_ == NULL) {
 
       AVCodec* videoCodec = avcodec_find_encoder(context_->oformat->video_codec);
         if (videoCodec==NULL){
@@ -318,8 +321,8 @@ bool ExternalOutput::initContext() {
         video_stream_ = avformat_new_stream (context_, videoCodec);
         video_stream_->id = 0;
         video_stream_->codec->codec_id = context_->oformat->video_codec;
-        video_stream_->codec->width = 640;
-        video_stream_->codec->height = 480;
+        video_stream_->codec->width = 640; //?
+        video_stream_->codec->height = 480; //?
         video_stream_->time_base = AVRational{1,30};   // A decent guess here suffices; if processing the file with ffmpeg,
                                                          // use -vsync 0 to force it not to duplicate frames.
         video_stream_->codec->pix_fmt = PIX_FMT_YUV420P;
@@ -350,7 +353,7 @@ bool ExternalOutput::initContext() {
             ELOG_ERROR("Error opening output file");
             return false;
         }
-
+        // write file header
         if (avformat_write_header(context_, NULL) < 0){
             ELOG_ERROR("Error writing header");
             return false;
@@ -374,18 +377,18 @@ void ExternalOutput::queueData(char* buffer, int length, packetType type){
         timeval time;
         gettimeofday(&time, NULL);
         firstDataReceived_ = (time.tv_sec * 1000) + (time.tv_usec / 1000);
-        if (this->getAudioSinkSSRC() == 0){
+        if (getAudioSinkSSRC() == 0){
           ELOG_DEBUG("No audio detected");
           context_->oformat->audio_codec = AV_CODEC_ID_PCM_MULAW;
         }
     }
     if (needToSendFir_ && videoSourceSsrc_) {
-        this->sendFirPacket();
+        sendFirPacket();
         needToSendFir_ = false;
     }
 
     if (type == VIDEO_PACKET){
-        if(this->videoOffsetMsec_ == -1) {
+        if(videoOffsetMsec_ == -1) {
             timeval time;
             gettimeofday(&time, NULL);
             videoOffsetMsec_ = ((time.tv_sec * 1000) + (time.tv_usec / 1000)) - firstDataReceived_;
@@ -410,7 +413,7 @@ void ExternalOutput::queueData(char* buffer, int length, packetType type){
         } else {
             videoQueue_.pushPacket(buffer, length);
         }
-    }else{
+    } else {
         if(this->audioOffsetMsec_ == -1) {
             timeval time;
             gettimeofday(&time, NULL);
@@ -456,11 +459,11 @@ void ExternalOutput::sendLoop() {
     cond_.wait(lock);
     while (audioQueue_.hasData()) {
       boost::shared_ptr<dataPacket> audioP = audioQueue_.popPacket();
-      this->writeAudioData(audioP->data, audioP->length);
+      writeAudioData(audioP->data, audioP->length);
     }
     while (videoQueue_.hasData()) {
       boost::shared_ptr<dataPacket> videoP = videoQueue_.popPacket();
-      this->writeVideoData(videoP->data, videoP->length);
+      writeVideoData(videoP->data, videoP->length);
     }
     if (!inited_ && firstDataReceived_!=-1){
       inited_ = true;
@@ -470,11 +473,11 @@ void ExternalOutput::sendLoop() {
   // Since we're bailing, let's completely drain our queues of all data.
   while (audioQueue_.getSize() > 0) {
     boost::shared_ptr<dataPacket> audioP = audioQueue_.popPacket(true); // ignore our minimum depth check
-    this->writeAudioData(audioP->data, audioP->length);
+    writeAudioData(audioP->data, audioP->length);
   }
   while (videoQueue_.getSize() > 0) {
     boost::shared_ptr<dataPacket> videoP = videoQueue_.popPacket(true); // ignore our minimum depth check
-    this->writeVideoData(videoP->data, videoP->length);
+    writeVideoData(videoP->data, videoP->length);
   }
 }
 }

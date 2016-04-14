@@ -9,11 +9,9 @@
 namespace erizo {
 DEFINE_LOGGER(OneToManyTranscoder, "media.OneToManyTranscoder");
 OneToManyTranscoder::OneToManyTranscoder() {
-
-
 	publisher = NULL;
 	sentPackets_ = 0;
-    ip_ = new InputProcessor();
+
 	MediaInfo m;
 	m.processorType = RTP_ONLY;
 //	m.videoCodec.bitRate = 2000000;
@@ -24,7 +22,8 @@ OneToManyTranscoder::OneToManyTranscoder() {
 	m.hasAudio = false;
 
   ELOG_DEBUG("init ip");
-    ip_->init(m, this);
+  ip_ = new InputProcessor();
+  ip_->init(m, this);
 
 	MediaInfo om;
 	om.processorType = RTP_ONLY;
@@ -37,15 +36,15 @@ OneToManyTranscoder::OneToManyTranscoder() {
 
 	om.hasAudio = false;
 
-    op_ = new OutputProcessor();
-    op_->init(om, this);
+  op_ = new OutputProcessor();
+  op_->init(om, this);
 
 }
 
 OneToManyTranscoder::~OneToManyTranscoder() {
-	this->closeAll();
-    delete ip_; ip_ = NULL;
-    delete op_; op_ = NULL;
+	closeAll();
+  delete ip_; ip_ = NULL;
+  delete op_; op_ = NULL;
 }
 
 int OneToManyTranscoder::deliverAudioData_(char* buf, int len) {
@@ -68,10 +67,11 @@ int OneToManyTranscoder::deliverVideoData_(char* buf, int len) {
 //	ELOG_DEBUG("extension %d pt %u", theHead->getExtension(),
 //			theHead->getPayloadType());
 
-	if (theHead->getPayloadType() == 100) {
-        ip_->deliverVideoData(sendVideoBuffer_, len);
+  if (theHead->getPayloadType() == VP8_90000_PT) {
+    // wait for receiveRawData
+    ip_->deliverVideoData(sendVideoBuffer_, len);
 	} else {
-		this->receiveRtpData((unsigned char*) buf, len);
+		receiveRtpData((unsigned char*) buf, len);
 	}
 
 	sentPackets_++;
@@ -80,7 +80,8 @@ int OneToManyTranscoder::deliverVideoData_(char* buf, int len) {
 
 void OneToManyTranscoder::receiveRawData(RawDataPacket& pkt) {
 //	ELOG_DEBUG("Received %d", pkt.length);
-    op_->receiveRawData(pkt);
+  // wait for receiveRtpData
+  op_->receiveRawData(pkt);
 }
 
 void OneToManyTranscoder::receiveRtpData(unsigned char*rtpdata, int len) {
@@ -97,30 +98,30 @@ void OneToManyTranscoder::receiveRtpData(unsigned char*rtpdata, int len) {
 }
 
 void OneToManyTranscoder::setPublisher(MediaSource* webRtcConn) {
-	this->publisher = webRtcConn;
+	publisher = webRtcConn;
 }
 
 void OneToManyTranscoder::addSubscriber(MediaSink* webRtcConn,
 		const std::string& peerId) {
-	this->subscribers[peerId] = webRtcConn;
+	subscribers[peerId] = webRtcConn;
 }
 
-  void OneToManyTranscoder::removeSubscriber(const std::string& peerId) {
-    if (this->subscribers.find(peerId) != subscribers.end()) {
-      delete this->subscribers[peerId];      
-      this->subscribers.erase(peerId);
-    }
+void OneToManyTranscoder::removeSubscriber(const std::string& peerId) {
+  if (subscribers.find(peerId) != subscribers.end()) {
+    delete subscribers[peerId];
+    subscribers.erase(peerId);
   }
+}
 
-  void OneToManyTranscoder::closeAll() {
-      ELOG_WARN ("OneToManyTranscoder closeAll");
-      std::map<std::string, MediaSink*>::iterator it = subscribers.begin();
-      while( it != subscribers.end()) {
-        delete (*it).second;
-        subscribers.erase(it++);
-      }
-    delete this->publisher;
+void OneToManyTranscoder::closeAll() {
+  ELOG_WARN("OneToManyTranscoder closeAll");
+  std::map<std::string, MediaSink*>::iterator it = subscribers.begin();
+  while (it != subscribers.end()) {
+    delete (*it).second;
+    subscribers.erase(it++);
   }
+  delete publisher;
+}
 
 }/* namespace erizo */
 

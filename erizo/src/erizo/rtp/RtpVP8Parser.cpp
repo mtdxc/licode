@@ -198,7 +198,6 @@ namespace erizo {
       //parsedPacket.frameType = (*dataPtr & 0x01) ? kPFrame : kIFrame;
       vp8->frameType = (*dataPtr & 0x01) ? kPFrame : kIFrame;
     } else {
-
       vp8->frameType = kPFrame;
     }
     if (0 == ParseVP8FrameSize(vp8, dataPtr, dataLength)) {

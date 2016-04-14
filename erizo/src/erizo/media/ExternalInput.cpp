@@ -67,7 +67,7 @@ namespace erizo {
     if (streamNo < 0){
       ELOG_WARN("No Video stream found");
       //return streamNo;
-    }else{
+    } else {
       om.hasVideo = true;
       video_stream_index_ = streamNo;
       video_st = context_->streams[streamNo]; 
@@ -123,10 +123,10 @@ namespace erizo {
       }
       op_.reset(new OutputProcessor());
       op_->init(om,this);
-    }else{
+    } else {
       needTranscoding_=true;
       inCodec_.initDecoder(video_st->codec);
-
+      // alloc decode buffer
       bufflen_ = video_st->codec->width*video_st->codec->height*3/2;
       decodedBuffer_.reset((unsigned char*) malloc(bufflen_));
 
@@ -137,7 +137,7 @@ namespace erizo {
       om.videoCodec.height = 480; // video_st->codec->height
       om.videoCodec.frameRate = 20;
       om.hasVideo = true;
-
+      // why?
       om.hasAudio = false;
       if (om.hasAudio) {
         om.audioCodec.sampleRate = 8000;
@@ -173,17 +173,18 @@ namespace erizo {
   void ExternalInput::receiveLoop(){
 
     av_read_play(context_);//play RTSP
-    int gotDecodedFrame = 0;
-    int length;
     startTime_ = av_gettime();
 
     ELOG_DEBUG("Start playing external input %s", url_.c_str() );
     while(av_read_frame(context_,&avpacket_)>=0&& running_==true){
       AVPacket orig_pkt = avpacket_;
       if (needTranscoding_){
-        if(avpacket_.stream_index == video_stream_index_){//packet is video               
+        if(avpacket_.stream_index == video_stream_index_){//packet is video
+          int gotDecodedFrame = 0;
+          // decode to yuv
           inCodec_.decodeVideo(avpacket_.data, avpacket_.size, 
             decodedBuffer_.get(), bufflen_, &gotDecodedFrame);
+          // push yuv to queue wait for encodeLoop
           RawDataPacket packetR;
           if (gotDecodedFrame){
             packetR.data = decodedBuffer_.get();
@@ -192,11 +193,10 @@ namespace erizo {
             queueMutex_.lock();
             packetQueue_.push(packetR);
             queueMutex_.unlock();
-            gotDecodedFrame=0;
           }
         }
-      }else{
-        if(avpacket_.stream_index == video_stream_index_){//packet is video               
+      } else {
+        if(avpacket_.stream_index == video_stream_index_){//packet is video
           // av_rescale(input, new_scale, old_scale)          
           int64_t pts = av_rescale(lastPts_, 1000000, (long int)video_time_base_);
           int64_t now = av_gettime() - startTime_;         
@@ -204,15 +204,16 @@ namespace erizo {
             av_usleep(pts - now);
           }
           lastPts_ = avpacket_.pts;
+          // repack packet and wait receiveRtpData
           op_->packageVideo(avpacket_.data, avpacket_.size, decodedBuffer_.get(), avpacket_.pts);
-        }else if(avpacket_.stream_index == audio_stream_index_){//packet is audio
+        } else if(avpacket_.stream_index == audio_stream_index_) {//packet is audio
           int64_t pts = av_rescale(lastAudioPts_, 1000000, (long int)audio_time_base_);
           int64_t now = av_gettime() - startTime_;
           if (pts > now){
             av_usleep(pts - now);
           }
           lastAudioPts_ = avpacket_.pts;
-          length = op_->packageAudio(avpacket_.data, avpacket_.size, decodedBuffer_.get(), avpacket_.pts);
+          int length = op_->packageAudio(avpacket_.data, avpacket_.size, decodedBuffer_.get(), avpacket_.pts);
           if (length>0){
             audioSink_->deliverAudioData(reinterpret_cast<char*>(decodedBuffer_.get()),length);
           }
@@ -228,6 +229,7 @@ namespace erizo {
     while (running_ == true) {
       queueMutex_.lock();
       if (packetQueue_.size() > 0) {
+        // push yuv to op
         op_->receiveRawData(packetQueue_.front());
         packetQueue_.pop();
         queueMutex_.unlock();

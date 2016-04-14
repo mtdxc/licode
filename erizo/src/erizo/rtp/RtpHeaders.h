@@ -181,7 +181,7 @@ namespace erizo{
         extension.absSendTime.abssendtime = htonl(aTime);
       }
       inline int getHeaderLength() {
-        return MIN_SIZE + cc * 4 + hasextension * (4 + ntohs(extensionlength) * 4);
+        return MIN_SIZE + cc * 4 + hasextension * (4 + getExtLength() * 4);
       }
   };
 
