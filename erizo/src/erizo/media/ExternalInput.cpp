@@ -45,7 +45,7 @@ namespace erizo {
     context_ = avformat_alloc_context();
     int res = avformat_open_input(&context_, url_.c_str(),NULL,NULL);
     char errbuff[500];
-    printf ("RES %d\n", res);
+    ELOG_DEBUG("Opening input result %d", res);
     if(res != 0){
       av_strerror(res, (char*)(&errbuff), 500);
       ELOG_ERROR("Error opening input %s", errbuff);

@@ -82,8 +82,9 @@ iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.m
   //TODO: Erizo Should accept hints to create the Offer
   bool WebRtcConnection::createOffer(){
 
-    bundle_ = false;
-    videoEnabled_ = false; 
+    bundle_ = true;
+    videoEnabled_ = true;
+    audioEnabled_ = true;
     localSdp_.createOfferSdp(videoEnabled_, audioEnabled_);
 
     ELOG_DEBUG("Creating sdp offer");
@@ -165,7 +166,17 @@ iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.m
         }
       }
     }
-
+    if (this->getCurrentState()>=CONN_GATHERED){
+      if (!remoteSdp_.getCandidateInfos().empty()){
+        ELOG_DEBUG("There are candidate in the remote SDP and we are GATHERED: Setting Remote Candidates");
+        if (remoteSdp_.hasVideo) {
+          videoTransport_->setRemoteCandidates(remoteSdp_.getCandidateInfos(), bundle_);
+        }
+        if (!bundle_ && remoteSdp_.hasAudio) {
+          audioTransport_->setRemoteCandidates(remoteSdp_.getCandidateInfos(), bundle_);
+        }
+      }
+    }
     
     if(trickleEnabled_){
       std::string object = getLocalSdp();
@@ -174,15 +185,6 @@ iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.m
       }
     }
 
-    if (!remoteSdp_.getCandidateInfos().empty()){
-      ELOG_DEBUG("There are candidate in the SDP: Setting Remote Candidates");
-      if (remoteSdp_.hasVideo) {
-        videoTransport_->setRemoteCandidates(remoteSdp_.getCandidateInfos(), bundle_);
-      }
-      if (!bundle_ && remoteSdp_.hasAudio) {
-        audioTransport_->setRemoteCandidates(remoteSdp_.getCandidateInfos(), bundle_);
-      }
-    }
 
     if (remoteSdp_.videoBandwidth !=0){
       ELOG_DEBUG("Setting remote bandwidth %u", remoteSdp_.videoBandwidth);
@@ -568,6 +570,15 @@ iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.m
         break;
       case TRANSPORT_GATHERED:
         if (bundle_){
+          if (!remoteSdp_.getCandidateInfos().empty()){
+            ELOG_DEBUG("There are candidates in the SDP that could not be passed before, passing them now");
+            if (remoteSdp_.hasVideo) {
+              videoTransport_->setRemoteCandidates(remoteSdp_.getCandidateInfos(), bundle_);
+            }
+            if (!bundle_ && remoteSdp_.hasAudio) {
+              audioTransport_->setRemoteCandidates(remoteSdp_.getCandidateInfos(), bundle_);
+            }
+          }
           if(!trickleEnabled_){
             temp = CONN_GATHERED;
             msg = this->getLocalSdp();
@@ -693,7 +704,6 @@ iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.m
 //      p_.type = (transport->mediaType == VIDEO_TYPE) ? VIDEO_PACKET : AUDIO_PACKET;
       p_.type = type;
       p_.length = length;
-
       changeDeliverPayloadType(&p_, type);
       if (seqNum){
         RtpHeader* h = reinterpret_cast<RtpHeader*>(&p_.data);

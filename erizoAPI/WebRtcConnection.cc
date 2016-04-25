@@ -83,6 +83,7 @@ Handle<Value> WebRtcConnection::New(const Arguments& args) {
 
   WebRtcConnection* obj = new WebRtcConnection();
   obj->me = new erizo::WebRtcConnection(a, v, iceConfig,t, obj);
+  obj->msink = obj->me;
   obj->Wrap(args.This());
   uv_async_init(uv_default_loop(), &obj->async_, &WebRtcConnection::eventsCallback); 
   uv_async_init(uv_default_loop(), &obj->asyncStats_, &WebRtcConnection::statsCallback); 
@@ -95,10 +96,6 @@ Handle<Value> WebRtcConnection::close(const Arguments& args) {
   WebRtcConnection* obj = ObjectWrap::Unwrap<WebRtcConnection>(args.This());
   obj->me = NULL;
   obj->hasCallback_ = false;
-  
-  uv_close((uv_handle_t*)&obj->async_, NULL);
-  uv_close((uv_handle_t*)&obj->asyncStats_, NULL);
-
 
   if(!uv_is_closing((uv_handle_t*)&obj->async_)) {
     uv_close((uv_handle_t*)&obj->async_, NULL);

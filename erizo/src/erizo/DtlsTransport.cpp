@@ -74,7 +74,6 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name,
   // which is in charge of nuking it.  All of the session state is tracked in the DtlsSocketContext.
   //
   // A much more sane architecture would be simply having the client _be_ the context.
-  isServer_ = false; // No way to change from active to passive, for now always active
   int comps = 1;
 
 	// create dtls context for rtp/rtcp, and register self as callback
