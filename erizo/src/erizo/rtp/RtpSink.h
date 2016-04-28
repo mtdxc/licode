@@ -18,7 +18,7 @@
 #include "../logger.h"
 
 namespace erizo {
-
+// Rtp目的地，将从MediaSink收到的数据缓存下发送到URL的RTP地址
 class RtpSink: public MediaSink, public FeedbackSource {
   DECLARE_LOGGER();
 public:

@@ -337,7 +337,6 @@ iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.m
             fec_receiver_.ProcessReceivedFec();
           }
         } else {
-//          slideShowMutex_.lock();
           if (slideShowMode_){
             RtpVP8Parser parser;
             RTPPayloadVP8* payload = parser.parseVP8(reinterpret_cast<unsigned char*>(buf + h->getHeaderLength()), len - h->getHeaderLength());
@@ -352,9 +351,7 @@ iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.m
                 grace_=0;
               }              
             }
-//            slideShowMutex_.unlock();
           } else {
-//            slideShowMutex_.unlock();
             if (seqNoOffset_>0){
               //ELOG_DEBUG("Requesting rEwrite from %u with offset %u", sendSeqNo_, seqNoOffset_);
               this->queueData(0, buf, len, videoTransport_, VIDEO_PACKET, (sendSeqNo_ - seqNoOffset_));
@@ -376,6 +373,7 @@ iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.m
 
   void WebRtcConnection::onTransportData(char* buf, int len, Transport *transport) {
     if (audioSink_ == NULL && videoSink_ == NULL && fbSink_==NULL){
+      ELOG_WARN("%p onTransportData ignore %s data without sink", transport, len);
       return;
     }
     
@@ -390,18 +388,13 @@ iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.m
 
     // DELIVER FEEDBACK (RR, FEEDBACK PACKETS)
     if (chead->isFeedback()){
-//      slideShowMutex_.lock();
       if (fbSink_ != NULL && shouldSendFeedback_ && !slideShowMode_) {
         if (seqNoOffset_>0){
-          char* movingBuf = buf;
-          int rtcpLength = 0;
           int partNum = 0;
           int totalLength = 0;
           do {
-            movingBuf+=rtcpLength;
-            chead = reinterpret_cast<RtcpHeader*>(movingBuf);
-            rtcpLength = (ntohs(chead->length)+1) * 4;
-            totalLength += rtcpLength;
+            chead = reinterpret_cast<RtcpHeader*>(buf+totalLength);
+            totalLength += chead->getTotalSize();
             switch(chead->packettype){
               case RTCP_SDES_PT:
                 break;
@@ -413,7 +406,6 @@ iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.m
                   chead->setSeqnumCycles(chead->getSeqnumCycles()+1);
                 }
                 chead->setHighestSeqnum(chead->getHighestSeqnum()+seqNoOffset_);
-               
                 break;
               case RTCP_RTP_Feedback_PT:
 //                ELOG_DEBUG("Rewriting seqNum in NACK, from %u to %u, partNum %u", chead->getNackPid(), chead->getNackPid()+seqNoOffset_, partNum);
@@ -440,10 +432,7 @@ iceConfig.stunServer.c_str(), iceConfig.stunPort, iceConfig.minPort, iceConfig.m
             partNum++;
           } while (totalLength < len);
         }
-//        slideShowMutex_.unlock();
         fbSink_->deliverFeedback(buf,len);
-      } else {
-//        slideShowMutex_.unlock();
       }
     } else {
       // RTP or RTCP Sender Report

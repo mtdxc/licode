@@ -21,6 +21,7 @@ class RtpSource: public MediaSource, public FeedbackSink {
 	DECLARE_LOGGER();
 
 public:
+  
   RtpSource(const int mediaPort, const std::string& feedbackDir, 
       const std::string& feedbackPort);
 	virtual ~RtpSource();

@@ -50,8 +50,8 @@ public:
 	void receiveRtpData(unsigned char*rtpdata, int len);
 
 //	MediaProcessor *mp;
-    InputProcessor* ip_;
-    OutputProcessor* op_;
+	InputProcessor* ip_;
+	OutputProcessor* op_;
 
 private:
 	char sendVideoBuffer_[2000];

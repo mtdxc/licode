@@ -15,8 +15,7 @@ namespace erizo {
   RtpSource::RtpSource(const int mediaPort, 
 			const std::string& feedbackDir, 
       const std::string& feedbackPort){
-    socket_.reset(new udp::socket(io_service_, 
-          udp::endpoint(udp::v4(), mediaPort)));
+    socket_.reset(new udp::socket(io_service_, udp::endpoint(udp::v4(), mediaPort)));
     resolver_.reset(new udp::resolver(io_service_));
     fbSocket_.reset(new udp::socket(io_service_, udp::endpoint(udp::v4(), 0)));
     query_.reset(new udp::resolver::query(udp::v4(), feedbackDir.c_str(), feedbackPort.c_str()));

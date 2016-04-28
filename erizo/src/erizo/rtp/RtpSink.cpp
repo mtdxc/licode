@@ -17,7 +17,8 @@ namespace erizo {
     fbSocket_.reset(new udp::socket(io_service_, udp::endpoint(udp::v4(), feedbackPort)));
     query_.reset(new udp::resolver::query(udp::v4(), url.c_str(), port.c_str()));
     iterator_ = resolver_->resolve(*query_);
-    sending_ =true;
+    sending_ = true;
+    // receive first rtcp packet
     boost::asio::ip::udp::endpoint sender_endpoint;
     fbSocket_->async_receive_from(boost::asio::buffer(buffer_, LENGTH), sender_endpoint, 
         boost::bind(&RtpSink::handleReceive, this, boost::asio::placeholders::error,
@@ -84,8 +85,8 @@ namespace erizo {
 
   void RtpSink::handleReceive(const::boost::system::error_code& error, 
       size_t bytes_recvd) {
-    if (bytes_recvd>0&&this->fbSink_){
-      this->fbSink_->deliverFeedback((char*)buffer_, (int)bytes_recvd);
+    if (bytes_recvd>0 && fbSink_){
+      fbSink_->deliverFeedback((char*)buffer_, (int)bytes_recvd);
     }
 		// no do async recv from again? only recv a packet?
   }

@@ -1,4 +1,4 @@
-#ifndef RTCPPROCESSOR_H_
+﻿#ifndef RTCPPROCESSOR_H_
 #define RTCPPROCESSOR_H_
 
 #include <map>
@@ -33,7 +33,7 @@ namespace erizo {
         this->timestamp = theTimestamp;
       }
   };
-  
+  /// 对应一个ssrc一个结构
   class RtcpData {
   // lost packets - list and length
   public:
@@ -74,7 +74,7 @@ namespace erizo {
     bool shouldReset;
 
     MediaType mediaType;
-		// �������20��sr
+		// 保留最后20个sr
     std::list<boost::shared_ptr<SrData>> senderReports;
 
     void reset(uint32_t bandwidth);
@@ -120,9 +120,14 @@ class RtcpProcessor{
     };
 		RtcpDataRefPtr addSourceSsrc(uint32_t ssrc);
     void setVideoBW(uint32_t bandwidth);
+    // 分析RR包
     void analyzeSr(RtcpHeader* chead);
     void analyzeFeedback(char* buf, int len);
+
+    // 根据定时器和条件，触发RTCP包的生成和发送
     void checkRtcpFb();
+
+    // append REMB to the buf and return fill size
     int addREMB(char* buf, uint32_t bitrate);
     int addNACK(char* buf, uint16_t seqNum, uint16_t blp, uint32_t sourceSsrc, uint32_t sinkSsrc);
 

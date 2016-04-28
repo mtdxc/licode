@@ -57,6 +57,7 @@ private:
 
     boost::mutex queueMutex_;
     std::list<boost::shared_ptr<dataPacket> > queue_;
+    // last popPacket sequence
     int lastSequenceNumberGiven_;
     bool rtpSequenceLessThan(uint16_t x, uint16_t y);
 

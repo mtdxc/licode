@@ -92,15 +92,16 @@ namespace erizo{
             if (chead->getSourceSSRC() == rtcpSource_->getVideoSourceSSRC()){
               ELOG_DEBUG("Analyzing Video RR: PacketLost %u, Ratio %u, partNum %d, blocks %d, sourceSSRC %u", 
 								chead->getLostPackets(), chead->getFractionLost(), partNum, chead->getBlockCount(), chead->getSourceSSRC());
-            }else{
+            } else {
               ELOG_DEBUG("Analyzing Audio RR: PacketLost %u, Ratio %u, partNum %d, blocks %d, sourceSSRC %u", 
 								chead->getLostPackets(), chead->getFractionLost(), partNum, chead->getBlockCount(), chead->getSourceSSRC());
             }
-            theData->ratioLost = theData->ratioLost > chead->getFractionLost()? theData->ratioLost: chead->getFractionLost();  
-            theData->totalPacketsLost = theData->totalPacketsLost > chead->getLostPackets()? theData->totalPacketsLost : chead->getLostPackets();
-            theData->highestSeqNumReceived = theData->highestSeqNumReceived > chead->getHighestSeqnum()? theData->highestSeqNumReceived : chead->getHighestSeqnum();
-            theData->seqNumCycles = theData->seqNumCycles > chead->getSeqnumCycles()? theData->seqNumCycles : chead->getSeqnumCycles();
-            theData->jitter = theData->jitter > chead->getJitter()? theData->jitter: chead->getJitter();
+            // 统计一些最大值
+            theData->ratioLost = max(theData->ratioLost, chead->getFractionLost());  
+            theData->totalPacketsLost = max(theData->totalPacketsLost, chead->getLostPackets());
+            theData->highestSeqNumReceived = max(theData->highestSeqNumReceived, chead->getHighestSeqnum());
+            theData->seqNumCycles = max(theData->seqNumCycles, chead->getSeqnumCycles());
+            theData->jitter = max(theData->jitter, chead->getJitter());
             calculateLastSr = chead->getLastSr();
             calculatedlsr = (chead->getDelaySinceLastSr()*1000)/65536;
             for (std::list<boost::shared_ptr<SrData>>::iterator it=theData->senderReports.begin(); 
@@ -117,7 +118,7 @@ namespace erizo{
               theData->delaySinceLastSr = chead->getDelaySinceLastSr();
               theData->lastSrUpdated = now;
               theData->lastDelay = delay;
-            }else{
+            } else {
               // ELOG_DEBUG("Not recording delay %u, lastDelay %u", delay, theData->lastDelay);
             }
             break;

@@ -183,6 +183,9 @@ namespace erizo{
       inline int getHeaderLength() {
         return MIN_SIZE + cc * 4 + hasextension * (4 + getExtLength() * 4);
       }
+      uint8_t* getPayload(){
+        return (uint8_t*)this + getHeaderLength();
+      }
   };
 
   class RtpRtxHeader {
@@ -194,7 +197,7 @@ namespace erizo{
       inline uint16_t getOsn(){
         return ntohs(osn);
       }
-      inline void setOs (uint16_t theOsn){
+      inline void setOsn(uint16_t theOsn){
         osn = htons(theOsn);
       }
   };
