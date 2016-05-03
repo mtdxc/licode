@@ -70,7 +70,7 @@ DtlsSocket::DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext, enum 
       break;
    case Server:
       SSL_set_accept_state(mSsl);
-      SSL_set_verify(mSsl,SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, dummy_cb);
+      SSL_set_verify(mSsl, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, dummy_cb);
       break;
    default:
       assert(0);

@@ -68,7 +68,6 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name,
   ELOG_DEBUG( "Initializing DtlsTransport" );
   dtlsRtp.reset(new DtlsSocketContext());
 
-
   // TODO the ownership of classes here is....really awkward. 
 	// Basically, the DtlsFactory created here ends up being owned the the created client
   // which is in charge of nuking it.  All of the session state is tracked in the DtlsSocketContext.

@@ -162,8 +162,9 @@ private:
   boost::thread send_Thread_;
 	std::queue<dataPacket> sendQueue_;
 	WebRtcConnectionEventListener* connEventListener_;
+
 	// bound(only have videoTransport_)
-	Transport *videoTransport_, *audioTransport_;
+	boost::scoped_ptr<Transport> videoTransport_, audioTransport_;
 	int bundle_;
 
   bool sending_;
