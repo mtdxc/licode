@@ -5,6 +5,7 @@
 #include <queue>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include "logger.h"
 #include "SdpInfo.h"
