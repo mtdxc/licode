@@ -63,7 +63,6 @@ Erizo.ChromeStableStack = function (spec) {
                 sdp = sdp.replace(a[0], r);
             }
         }
-
         return sdp;
     };
 
@@ -117,7 +116,7 @@ Erizo.ChromeStableStack = function (spec) {
   
     that.peerConnection.oniceconnectionstatechange = function (ev) {
         if (that.oniceconnectionstatechange){
-            that.oniceconnectionstatechange(ev);
+            that.oniceconnectionstatechange(ev.target.iceConnectionState);
         }
     }
 
@@ -163,16 +162,23 @@ Erizo.ChromeStableStack = function (spec) {
             }
 
             localDesc.sdp = setMaxBW(localDesc.sdp);
-            that.peerConnection.setLocalDescription(localDesc, function () {
-                remoteDesc.sdp = setMaxBW(remoteDesc.sdp);
-                that.peerConnection.setRemoteDescription(new RTCSessionDescription(remoteDesc), function () {
-                    spec.remoteDescriptionSet = true;
-                    spec.callback({type:'updatestream', sdp: localDesc.sdp});
+            if (config.Sdp || config.maxAudioBW){
+                L.Logger.debug ("Updating with SDP renegotiation", spec.maxVideoBW);
+                that.peerConnection.setLocalDescription(localDesc, function () {
+                    remoteDesc.sdp = setMaxBW(remoteDesc.sdp);
+                    that.peerConnection.setRemoteDescription(new RTCSessionDescription(remoteDesc), function () {
+                        spec.remoteDescriptionSet = true;
+                        spec.callback({type:'updatestream', sdp: localDesc.sdp});
+                    });
+                }, function (error){
+                    L.Logger.error("Error updating configuration", error);
+                    callback('error');
                 });
-            }, function (error){
-                L.Logger.error("Error updating configuration", error);
-                callback('error');
-            });
+
+            } else {
+                L.Logger.debug ("Updating without SDP renegotiation, newVideoBW:", spec.maxVideoBW, "newAudioBW:", spec.maxAudioBW);
+                spec.callback({type:'updatestream', sdp: localDesc.sdp});
+            }
         }
         if (config.minVideoBW || (config.slideShowMode!==undefined)){
             L.Logger.debug ("MinVideo Changed to ", config.minVideoBW);

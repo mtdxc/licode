@@ -40,7 +40,9 @@ class TestTimerContext: public DtlsTimerContext {
      TestTimerContext(): DtlsTimerContext() {
       mTimer = 0;
      }
-		 void addTimer(DtlsTimer *timer, unsigned int lifetime);
+
+     virtual ~TestTimerContext();
+     void addTimer(DtlsTimer *timer, unsigned int seq);
      long long getRemainingTime();
      void updateTimer();
 

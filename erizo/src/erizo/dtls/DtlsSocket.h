@@ -25,7 +25,6 @@ const int SRTP_MASTER_KEY_SALT_LEN = 14;
 struct srtp_policy_t;
 namespace dtls
 {
-class DtlsFactory;
 class DtlsSocketContext;
 class DtlsTimer;
 class DtlsSocketTimer;
@@ -55,6 +54,8 @@ class DtlsSocket
    DECLARE_LOGGER();
    public:
       enum SocketType { Client, Server};
+      // Creates an SSL socket, and if client sets state to connect_state and if server sets state to accept_state.  Sets SSL BIO's.
+      DtlsSocket(DtlsSocketContext* socketContext, enum SocketType type);
       ~DtlsSocket();
 
       // Inspects packet to see if it's a DTLS packet, if so continue processing
@@ -95,27 +96,19 @@ class DtlsSocket
       // extracted from the DTLS handshake process
       void createSrtpSessionPolicies(srtp_policy_t& outboundPolicy, srtp_policy_t& inboundPolicy);
 
-      DtlsSocketContext* getSocketContext() { return mSocketContext.get(); }
-
    private:
-      friend class DtlsFactory;
-
       // Causes an immediate handshake iteration to happen, which will retransmit the handshake
       void forceRetransmit();
 
-      // Creates an SSL socket, and if client sets state to connect_state and if server sets state to accept_state.  Sets SSL BIO's.
-      DtlsSocket(boost::shared_ptr<DtlsSocketContext> socketContext, enum SocketType);
 
       // Give CPU cyces to the handshake process - checks current state and acts appropraitely
       void doHandshakeIteration();
 
       // Internals
-      boost::shared_ptr<DtlsSocketContext> mSocketContext;
+      DtlsSocketContext* mSocketContext;
       DtlsTimer *mReadTimer;  // Timer used during handshake process
       std::auto_ptr<DtlsTimerContext> mTimerContext;
 
-      bool InitSslCtx();
-      void ClearSslCtx();
       SSL_CTX* mContext;
       EVP_MD_CTX* ctx_;
 
@@ -161,11 +154,49 @@ class DtlsSocketContext
 
       void setDtlsReceiver(DtlsReceiver *recv);
       void setDtlsSocket(DtlsSocket *sock) {mSocket = sock;}
+      void addTimerToContext(DtlsTimer* timer, int timeValue);
       std::string getFingerprint();
+
+     enum PacketType { rtp, dtls, stun, unknown};
+
+
+     // Creates a new DtlsSocket to be used as a client
+     DtlsSocket* createClient();
+
+     // Creates a new DtlsSocket to be used as a server
+     DtlsSocket* createServer();
+
+     // Returns the fingerprint of the user cert that was passed into the constructor
+     void getMyCertFingerprint(char *fingerprint);
+
+     // The default SrtpProfile used at construction time (default is: SRTP_AES128_CM_SHA1_80:SRTP_AES128_CM_SHA1_32)
+     static const char* DefaultSrtpProfile;
+
+     // Changes the default SRTP profiles supported (default is: SRTP_AES128_CM_SHA1_80:SRTP_AES128_CM_SHA1_32)
+     void setSrtpProfiles(const char *policyStr);
+
+     // Changes the default DTLS Cipher Suites supported
+     void setCipherSuites(const char *cipherSuites);
+
+     SSL_CTX* getSSLContext();
+
+     // Examines the first few bits of a packet to determine its type: rtp, dtls, stun or unknown
+     static PacketType demuxPacket(const unsigned char *buf, unsigned int len);
+
+     static X509 *mCert;
+     static EVP_PKEY *privkey;
+
+     static void Init();
 
    protected:
       DtlsSocket *mSocket;
       DtlsReceiver *receiver;
+      std::auto_ptr<DtlsTimerContext> mTimerContext;
+
+   private:
+     // Creates a DTLS SSL Context and enables srtp extension, also sets the private and public key cert
+
+     SSL_CTX* mContext;
 };
 
 }

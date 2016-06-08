@@ -28,12 +28,6 @@
     <Filter Include="Header Files\erizo\media\mixers">
       <UniqueIdentifier>{159258a8-a2c9-4f26-859a-8be0e0d9e61b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\erizo\rtp">
-      <UniqueIdentifier>{5e07aa6b-0197-4e47-ad40-47e2e1956460}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\erizo\rtp\webrtc">
-      <UniqueIdentifier>{fabb54b6-c16d-4b4c-85e2-5d804afb6dc7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\erizo">
       <UniqueIdentifier>{281515dd-0112-4d0e-98f8-2437ce426ba2}</UniqueIdentifier>
     </Filter>
@@ -63,6 +57,12 @@
     </Filter>
     <Filter Include="Source Files\test">
       <UniqueIdentifier>{49d05e19-290e-4184-9398-43b79d86736e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\erizo\rtp">
+      <UniqueIdentifier>{5e07aa6b-0197-4e47-ad40-47e2e1956460}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\erizo\rtp\webrtc">
+      <UniqueIdentifier>{fabb54b6-c16d-4b4c-85e2-5d804afb6dc7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -94,9 +94,6 @@
       <Filter>Source Files\erizo\dtls</Filter>
     </ClCompile>
     <ClCompile Include="erizo\dtls\DtlsClient.cpp">
-      <Filter>Source Files\erizo\dtls</Filter>
-    </ClCompile>
-    <ClCompile Include="erizo\dtls\DtlsFactory.cpp">
       <Filter>Source Files\erizo\dtls</Filter>
     </ClCompile>
     <ClCompile Include="erizo\dtls\DtlsSocket.cpp">
@@ -213,9 +210,6 @@
       <Filter>Header Files\erizo\dtls</Filter>
     </ClInclude>
     <ClInclude Include="erizo\dtls\config.h">
-      <Filter>Header Files\erizo\dtls</Filter>
-    </ClInclude>
-    <ClInclude Include="erizo\dtls\DtlsFactory.h">
       <Filter>Header Files\erizo\dtls</Filter>
     </ClInclude>
     <ClInclude Include="erizo\dtls\DtlsSocket.h">

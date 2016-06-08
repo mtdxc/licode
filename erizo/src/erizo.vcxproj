@@ -91,7 +91,6 @@
     <ClCompile Include="erizo\DtlsTransport.cpp" />
     <ClCompile Include="erizo\dtls\bf_dwrap.c" />
     <ClCompile Include="erizo\dtls\DtlsClient.cpp" />
-    <ClCompile Include="erizo\dtls\DtlsFactory.cpp" />
     <ClCompile Include="erizo\dtls\DtlsSocket.cpp" />
     <ClCompile Include="erizo\dtls\DtlsTimer.cpp" />
     <ClCompile Include="erizo\dtls\OpenSSLInit.cpp" />
@@ -129,7 +128,6 @@
     <ClInclude Include="erizo\DtlsTransport.h" />
     <ClInclude Include="erizo\dtls\bf_dwrap.h" />
     <ClInclude Include="erizo\dtls\config.h" />
-    <ClInclude Include="erizo\dtls\DtlsFactory.h" />
     <ClInclude Include="erizo\dtls\DtlsSocket.h" />
     <ClInclude Include="erizo\dtls\DtlsTimer.h" />
     <ClInclude Include="erizo\dtls\OpenSSLInit.h" />

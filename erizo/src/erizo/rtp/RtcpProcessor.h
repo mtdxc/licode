@@ -1,4 +1,4 @@
-ï»¿#ifndef RTCPPROCESSOR_H_
+#ifndef RTCPPROCESSOR_H_
 #define RTCPPROCESSOR_H_
 
 #include <map>
@@ -33,7 +33,7 @@ namespace erizo {
         this->timestamp = theTimestamp;
       }
   };
-  /// å¯¹åº”ä¸€ä¸ªssrcä¸€ä¸ªç»“æ„
+  /// ¶ÔÓ¦Ò»¸össrcÒ»¸ö½á¹¹
   class RtcpData {
   // lost packets - list and length
   public:
@@ -47,6 +47,7 @@ namespace erizo {
     uint16_t seqNumCycles;
     uint32_t lastSr;
     uint64_t reportedBandwidth;
+    uint32_t maxBandwidth;
     uint32_t delaySinceLastSr;
 
     uint32_t nextPacketInMs;
@@ -74,7 +75,7 @@ namespace erizo {
     bool shouldReset;
 
     MediaType mediaType;
-		// ä¿ç•™æœ€å20ä¸ªsr
+		// ±£Áô×îºó20¸ösr
     std::list<boost::shared_ptr<SrData>> senderReports;
 
     void reset(uint32_t bandwidth);
@@ -115,16 +116,17 @@ class RtcpProcessor{
 	DECLARE_LOGGER();
   
   public:
-    RtcpProcessor(MediaSink* msink, MediaSource* msource, int defaultBw = 300000);
+    RtcpProcessor(MediaSink* msink, MediaSource* msource, uint32_t maxVideoBw = 300000);
     virtual ~RtcpProcessor(){
     };
 		RtcpDataRefPtr addSourceSsrc(uint32_t ssrc);
-    void setVideoBW(uint32_t bandwidth);
-    // åˆ†æRRåŒ…
+    void setMaxVideoBW(uint32_t bandwidth);
+    void setPublisherBW(uint32_t bandwidth);
+    // ·ÖÎöRR°ü
     void analyzeSr(RtcpHeader* chead);
     void analyzeFeedback(char* buf, int len);
 
-    // æ ¹æ®å®šæ—¶å™¨å’Œæ¡ä»¶ï¼Œè§¦å‘RTCPåŒ…çš„ç”Ÿæˆå’Œå‘é€
+    // ¸ù¾İ¶¨Ê±Æ÷ºÍÌõ¼ş£¬´¥·¢RTCP°üµÄÉú³ÉºÍ·¢ËÍ
     void checkRtcpFb();
 
     // append REMB to the buf and return fill size
@@ -142,7 +144,7 @@ class RtcpProcessor{
 
     MediaSink* rtcpSink_;  // The sink to send RRs
     MediaSource* rtcpSource_; // The source of SRs
-    uint32_t defaultBw_;
+    uint32_t maxVideoBw_, defaultVideoBw_;
     uint8_t packet_[128];
 
 };

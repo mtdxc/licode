@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <arpa/inet.h>
 #endif // !WIN32
+#include "libavutil/time.h"
 
 
 namespace erizo {

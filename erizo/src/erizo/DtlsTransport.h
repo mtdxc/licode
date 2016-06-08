@@ -4,6 +4,7 @@
 #include <string.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/io_service.hpp>
 #include <boost/scoped_ptr.hpp>
 #include "dtls/DtlsSocket.h"
 #include "NiceConnection.h"
@@ -37,9 +38,10 @@ namespace erizo {
     virtual ~DtlsTransport();
 
     std::string getMyFingerprint();
-		
+
     void connectionStateChanged(IceState newState);
 		// implement NiceConnectionListener method
+    void start();
     void onNiceData(unsigned int component_id, char* data, int len, NiceConnection* nice);
     void onCandidate(const CandidateInfo &candidate, NiceConnection *conn);
     void updateIceState(IceState state, NiceConnection *conn);
@@ -54,14 +56,15 @@ namespace erizo {
 
     void processLocalSdp(SdpInfo *localSdp_);
 
+    static bool isDtlsPacket(const char* buf, int len);
   private:
-		// 发送缓冲区
+	// 发送缓冲区
     char protectBuf_[5000];
-		// 接收缓冲区
+	// 接收缓冲区
     char unprotectBuf_[5000];
     boost::mutex writeMutex_,sessionMutex_;
-		// 证书交换和密钥协商上下文(rtp和rtcp各一个，如rtcp_mux则没有rtcp)
-    boost::shared_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
+    // 证书交换和密钥协商上下文(rtp和rtcp各一个，如rtcp_mux则没有rtcp)
+    boost::scoped_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
 		boost::scoped_ptr<Resender> rtpResender, rtcpResender;
 		// 加解密上下文(rtp和rtcp各一个，如果rtcp_mux则没有rtcp)
     boost::scoped_ptr<SrtpChannel> srtp_, srtcp_;
@@ -82,6 +85,7 @@ namespace erizo {
 			const unsigned char* data, unsigned int len);
     virtual ~Resender();
 
+    void run();
     void start();
     void cancel();
     int getStatus();
@@ -100,6 +104,8 @@ namespace erizo {
 		*/
     int sent_;
     boost::asio::deadline_timer timer;
+    boost::asio::io_service service;
+    boost::scoped_ptr<boost::thread> thread_;
   };
 }
 #endif

@@ -16,6 +16,8 @@ GLOBAL.config.erizoController.publicIP = GLOBAL.config.erizoController.publicIP 
 GLOBAL.config.erizoController.hostname = GLOBAL.config.erizoController.hostname|| '';
 GLOBAL.config.erizoController.port = GLOBAL.config.erizoController.port || 8080;
 GLOBAL.config.erizoController.ssl = GLOBAL.config.erizoController.ssl || false;
+GLOBAL.config.erizoController.ssl_key = GLOBAL.config.erizoController.ssl_key || '../../cert/key.pem';
+GLOBAL.config.erizoController.ssl_cert = GLOBAL.config.erizoController.ssl_cert || '../../cert/cert.pem';
 GLOBAL.config.erizoController.listen_port = GLOBAL.config.erizoController.listen_port || 8080;
 GLOBAL.config.erizoController.listen_ssl = GLOBAL.config.erizoController.listen_ssl || false;
 GLOBAL.config.erizoController.turnServer = GLOBAL.config.erizoController.turnServer || undefined;
@@ -96,8 +98,8 @@ if (GLOBAL.config.erizoController.listen_ssl) {
     var https = require('https');
     var fs = require('fs');
     var options = {
-        key: fs.readFileSync('../../cert/key.pem').toString(),
-        cert: fs.readFileSync('../../cert/cert.pem').toString()
+        key: fs.readFileSync(config.erizoController.ssl_key).toString(),
+        cert: fs.readFileSync(config.erizoController.ssl_cert).toString()
     };
     server = https.createServer(options);
 } else {
@@ -506,7 +508,7 @@ var listen = function () {
                         return;
                     } else if (signMess.type ==='failed'){
                         log.warn("IceConnection Failed on publisher, removing " , id);
-                        socket.emit('connection_failed',{type:'publish'});
+                        socket.emit('connection_failed',{type:'publish', streamId: id});
                         socket.state = 'sleeping';
                         if (!socket.room.p2p) {
                             socket.room.controller.removePublisher(id);
@@ -598,7 +600,7 @@ var listen = function () {
                         } else if (signMess.type ==='failed'){
                             //TODO: Add Stats event
                             log.warn("IceConnection Failed on subscriber" , socket.id , "alerting client");
-                            socket.emit('connection_failed',{type:"subscribe"});
+                            socket.emit('connection_failed',{type:"subscribe", streamId: options.streamId});
                             return;
                         } else if (signMess.type === 'ready') {
                             log.info("Subscriber from client", socket.id, "to stream", options.streamId, "is now ready");
