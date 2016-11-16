@@ -20,13 +20,13 @@ PipelineBase::ContextIterator PipelineBase::removeAt(
   (*it)->detachPipeline();
 
   const auto dir = (*it)->getDirection();
-  if (dir == HandlerDir::BOTH || dir == HandlerDir::IN) {
+  if (dir == HandlerDir::BOTH || dir == HandlerDir::In) {
     auto it2 = std::find(inCtxs_.begin(), inCtxs_.end(), it->get());
     assert(it2 != inCtxs_.end());
     inCtxs_.erase(it2);
   }
 
-  if (dir == HandlerDir::BOTH || dir == HandlerDir::OUT) {
+  if (dir == HandlerDir::BOTH || dir == HandlerDir::Out) {
     auto it2 = std::find(outCtxs_.begin(), outCtxs_.end(), it->get());
     assert(it2 != outCtxs_.end());
     outCtxs_.erase(it2);

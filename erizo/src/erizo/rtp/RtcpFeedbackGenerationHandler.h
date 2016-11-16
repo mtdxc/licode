@@ -9,7 +9,7 @@
 #include "pipeline/Handler.h"
 #include "rtp/RtcpRrGenerator.h"
 #include "rtp/RtcpNackGenerator.h"
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 
 #define MAX_DELAY 450000
 

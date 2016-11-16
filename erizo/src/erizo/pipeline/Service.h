@@ -21,7 +21,7 @@ class ServiceBase {
     if (attach_count_ != 1) {
       return nullptr;
     }
-    assert(service_ctx_);
+    //assert(service_ctx_);
     return service_ctx_;
   }
 

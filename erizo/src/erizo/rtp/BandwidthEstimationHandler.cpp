@@ -4,7 +4,6 @@
 
 #include "./MediaStream.h"
 #include "lib/Clock.h"
-#include "lib/ClockUtils.h"
 
 #include "webrtc/modules/remote_bitrate_estimator/remote_bitrate_estimator_abs_send_time.h"
 #include "webrtc/modules/remote_bitrate_estimator/remote_bitrate_estimator_single_stream.h"

@@ -74,7 +74,7 @@ class Handler : public HandlerBase<HandlerContext> {
 
 class InboundHandler : public HandlerBase<InboundHandlerContext> {
  public:
-  static const HandlerDir dir = HandlerDir::IN;
+  static const HandlerDir dir = HandlerDir::In;
 
   typedef InboundHandlerContext Context;
   virtual ~InboundHandler() = default;
@@ -101,7 +101,7 @@ class InboundHandler : public HandlerBase<InboundHandlerContext> {
 
 class OutboundHandler : public HandlerBase<OutboundHandlerContext> {
  public:
-  static const HandlerDir dir = HandlerDir::OUT;
+  static const HandlerDir dir = HandlerDir::Out;
 
   typedef OutboundHandlerContext Context;
   virtual ~OutboundHandler() = default;

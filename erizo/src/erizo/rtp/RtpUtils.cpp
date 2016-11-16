@@ -20,7 +20,7 @@ bool RtpUtils::numberLessThan(uint16_t first, uint16_t last, int bits) {
   return result > threshold;
 }
 
-void RtpUtils::updateREMB(RtcpHeader *chead, uint bitrate) {
+void RtpUtils::updateREMB(RtcpHeader *chead, uint64_t bitrate) {
   if (chead->packettype == RTCP_PS_Feedback_PT && chead->getBlockCount() == RTCP_AFB) {
     char *uniqueId = reinterpret_cast<char*>(&chead->report.rembPacket.uniqueid);
     if (!strncmp(uniqueId, "REMB", 4)) {

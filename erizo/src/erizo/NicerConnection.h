@@ -14,7 +14,7 @@ extern "C" {
 #include <ice_ctx.h>
 }
 
-#include <boost/thread.hpp>
+#include <thread>
 #include <vector>
 #include <queue>
 #include <map>
@@ -75,7 +75,7 @@ class NicerConnection : public IceConnection, public std::enable_shared_from_thi
   void startChecking();
   void startSync();
   void closeSync();
-  void async(function<void(std::shared_ptr<NicerConnection>)> f);
+  void async(std::function<void(std::shared_ptr<NicerConnection>)> f);
   void setRemoteCredentialsSync(const std::string& username, const std::string& password);
 
   static void gather_callback(NR_SOCKET s, int h, void *arg);  // ICE gather complete
@@ -107,8 +107,8 @@ class NicerConnection : public IceConnection, public std::enable_shared_from_thi
   nr_ice_handler* ice_handler_;
   std::promise<void> close_promise_;
   std::promise<void> start_promise_;
-  boost::mutex close_mutex_;
-  boost::mutex close_sync_mutex_;
+  Mutex close_mutex_;
+  Mutex close_sync_mutex_;
 };
 
 }  // namespace erizo

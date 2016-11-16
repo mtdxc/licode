@@ -1,9 +1,6 @@
 #ifndef ERIZO_SRC_ERIZO_MEDIA_MEDIAPROCESSOR_H_
 #define ERIZO_SRC_ERIZO_MEDIA_MEDIAPROCESSOR_H_
 
-#include <boost/cstdint.hpp>
-#include <sys/time.h>
-#include <arpa/inet.h>
 
 extern "C" {
 #include <libavcodec/avcodec.h>

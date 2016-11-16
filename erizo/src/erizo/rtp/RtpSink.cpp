@@ -54,7 +54,7 @@ namespace erizo {
   }
 
   void RtpSink::queueData(const char* buffer, int len, packetType type) {
-    boost::mutex::scoped_lock lock(queueMutex_);
+    AutoLock lock(queueMutex_);
     if (sending_ == false)
       return;
     if (sendQueue_.size() < 1000) {

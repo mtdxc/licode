@@ -4,7 +4,6 @@
 #include <thread/Scheduler.h>
 #include <rtp/RtcpRrGenerator.h>
 #include <lib/Clock.h>
-#include <lib/ClockUtils.h>
 #include <rtp/RtpHeaders.h>
 #include <MediaDefinitions.h>
 #include <WebRtcConnection.h>

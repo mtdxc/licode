@@ -3,7 +3,6 @@
 #include <algorithm>
 
 #include "lib/Clock.h"
-#include "lib/ClockUtils.h"
 #include "rtp/RtpHeaders.h"
 
 static constexpr auto kPeriod = std::chrono::milliseconds(20);

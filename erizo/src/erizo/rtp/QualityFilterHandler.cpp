@@ -1,7 +1,7 @@
 #include "rtp/QualityFilterHandler.h"
 
 #include "./MediaStream.h"
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 #include "rtp/RtpUtils.h"
 #include "rtp/RtpVP8Parser.h"
 

@@ -6,7 +6,12 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_RTPHEADERS_H_
 #define ERIZO_SRC_ERIZO_RTP_RTPHEADERS_H_
 
+#ifdef WIN32
+#include <WinSock2.h>
+#include <stdint.h>
+#else
 #include <netinet/in.h>
+#endif
 
 namespace erizo {
 // Payload types

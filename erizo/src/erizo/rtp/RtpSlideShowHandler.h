@@ -9,7 +9,7 @@
 #include "rtp/PacketBufferService.h"
 #include "rtp/RtpVP8Parser.h"
 #include "rtp/RtpVP9Parser.h"
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 
 static constexpr uint16_t kMaxKeyframeSize = 20;
 static constexpr erizo::duration kFallbackKeyframeTimeout = std::chrono::seconds(5);

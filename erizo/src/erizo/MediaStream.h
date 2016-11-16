@@ -2,8 +2,7 @@
 #ifndef ERIZO_SRC_ERIZO_MEDIASTREAM_H_
 #define ERIZO_SRC_ERIZO_MEDIASTREAM_H_
 
-#include <boost/thread/mutex.hpp>
-
+#include <mutex>
 #include <atomic>
 #include <string>
 #include <map>
@@ -176,7 +175,7 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   // parses incoming payload type, replaces occurence in buf
 
  private:
-  boost::mutex event_listener_mutex_;
+  std::mutex event_listener_mutex_;
   MediaStreamEventListener* media_stream_event_listener_;
   std::shared_ptr<WebRtcConnection> connection_;
   std::string stream_id_;

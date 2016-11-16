@@ -1,6 +1,6 @@
 #include "rtp/SRPacketHandler.h"
 #include "./MediaStream.h"
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 
 namespace erizo {
 

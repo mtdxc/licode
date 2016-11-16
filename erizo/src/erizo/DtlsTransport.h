@@ -2,11 +2,7 @@
 #define ERIZO_SRC_ERIZO_DTLSTRANSPORT_H_
 
 
-#include <boost/thread/mutex.hpp>
-#include <boost/asio/deadline_timer.hpp>
-#include <boost/asio.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <string>
 #include "dtls/DtlsSocket.h"
 #include "./IceConnection.h"
@@ -45,9 +41,9 @@ class DtlsTransport : dtls::DtlsReceiver, public Transport {
 
  private:
   char protectBuf_[5000];
-  boost::scoped_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
-  boost::mutex writeMutex_, sessionMutex_;
-  boost::scoped_ptr<SrtpChannel> srtp_, srtcp_;
+  std::unique_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
+  std::mutex writeMutex_, sessionMutex_;
+  std::unique_ptr<SrtpChannel> srtp_, srtcp_;
   bool readyRtp, readyRtcp;
   bool isServer_;
   std::unique_ptr<TimeoutChecker> rtcp_timeout_checker_, rtp_timeout_checker_;
@@ -75,7 +71,7 @@ class TimeoutChecker {
   dtls::DtlsSocketContext* socket_context_;
   unsigned int check_seconds_;
   unsigned int max_checks_;
-  std::shared_ptr<ScheduledTaskReference> scheduled_task_;
+  int scheduled_task_;
 };
 }  // namespace erizo
 #endif  // ERIZO_SRC_ERIZO_DTLSTRANSPORT_H_

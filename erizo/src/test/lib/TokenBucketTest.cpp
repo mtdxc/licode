@@ -1,8 +1,7 @@
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <lib/TokenBucket.h>
-#include <lib/ClockUtils.h>
+#include <lib/Clock.h>
 
 #include "../utils/Mocks.h"
 #include "../utils/Tools.h"

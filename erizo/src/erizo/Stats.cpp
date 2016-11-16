@@ -8,7 +8,7 @@
 
 #include "Stats.h"
 #include "MediaStream.h"
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 
 namespace erizo {
 
@@ -29,12 +29,12 @@ namespace erizo {
   }
 
   void Stats::setStatsListener(MediaStreamStatsListener* listener) {
-    boost::mutex::scoped_lock lock(listener_mutex_);
+    AutoLock lock(listener_mutex_);
     listener_ = listener;
   }
 
   void Stats::sendStats() {
-    boost::mutex::scoped_lock lock(listener_mutex_);
+    AutoLock lock(listener_mutex_);
     if (listener_) listener_->notifyStats(getStats());
   }
 }  // namespace erizo

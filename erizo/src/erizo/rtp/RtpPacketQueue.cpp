@@ -44,13 +44,13 @@ void RtpPacketQueue::pushPacket(const char *data, int length) {
 
   // TODO(pedro) this should be a secret of the DataPacket class.  It should maintain its own memory
   // and copy stuff as necessary.
-  boost::shared_ptr<DataPacket> packet(new DataPacket());
+  packetPtr packet(new DataPacket());
   memcpy(packet->data, data, length);
   packet->length = length;
 
   // let's insert this packet where it belongs in the queue.
-  boost::mutex::scoped_lock lock(queueMutex_);
-  std::list<boost::shared_ptr<DataPacket> >::iterator it;
+  AutoLock lock(queueMutex_);
+  std::list<packetPtr>::iterator it;
   for (it=queue_.begin(); it != queue_.end(); ++it) {
     const RtpHeader *header = reinterpret_cast<const RtpHeader*>((*it)->data);
     uint16_t sequenceNumber = header->getSeqNumber();
@@ -80,10 +80,10 @@ void RtpPacketQueue::pushPacket(const char *data, int length) {
 }
 
 // pops a packet off the queue, respecting the specified queue depth.
-boost::shared_ptr<DataPacket> RtpPacketQueue::popPacket(bool ignore_depth) {
-  boost::shared_ptr<DataPacket> packet;
+packetPtr RtpPacketQueue::popPacket(bool ignore_depth) {
+  packetPtr packet;
 
-  boost::mutex::scoped_lock lock(queueMutex_);
+  AutoLock lock(queueMutex_);
   if (queue_.size() > 0) {
     if (ignore_depth || getDepthInSeconds() > depthInSeconds_) {
       packet = queue_.back();
@@ -97,12 +97,12 @@ boost::shared_ptr<DataPacket> RtpPacketQueue::popPacket(bool ignore_depth) {
 }
 
 void RtpPacketQueue::setTimebase(unsigned int timebase) {
-  boost::mutex::scoped_lock lock(queueMutex_);
+  AutoLock lock(queueMutex_);
   timebase_ = timebase;
 }
 
 int RtpPacketQueue::getSize() {
-  boost::mutex::scoped_lock lock(queueMutex_);
+  AutoLock lock(queueMutex_);
   return queue_.size();
 }
 
@@ -120,7 +120,7 @@ double RtpPacketQueue::getDepthInSeconds() {
 }
 
 bool RtpPacketQueue::hasData() {
-  boost::mutex::scoped_lock lock(queueMutex_);
+  AutoLock lock(queueMutex_);
   double currentDepth = getDepthInSeconds();
   return currentDepth > depthInSeconds_;
 }

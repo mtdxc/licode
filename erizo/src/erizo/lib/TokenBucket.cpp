@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 #include "TokenBucket.h"
-
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 

@@ -1,8 +1,7 @@
-#include "rtp/LayerBitrateCalculationHandler.h"
-
 #include <vector>
-
-#include "lib/ClockUtils.h"
+#include <algorithm>
+#include "lib/Clock.h"
+#include "rtp/LayerBitrateCalculationHandler.h"
 
 namespace erizo {
 

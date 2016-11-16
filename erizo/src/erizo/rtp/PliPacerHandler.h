@@ -44,7 +44,7 @@ class PliPacerHandler: public Handler, public std::enable_shared_from_this<PliPa
   std::shared_ptr<erizo::Clock> clock_;
   time_point time_last_keyframe_;
   bool waiting_for_keyframe_;
-  std::shared_ptr<ScheduledTaskReference> scheduled_pli_;
+  int scheduled_pli_;
   uint32_t video_sink_ssrc_;
   uint32_t video_source_ssrc_;
   uint8_t fir_seq_number_;

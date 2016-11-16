@@ -1,12 +1,6 @@
 // #include <openssl/x509.h>
-
+#include <nice/nice.h>
 extern "C" {
-  #include <srtp2/srtp.h>
-}
-
-#include <boost/thread.hpp>
-#include <boost/lexical_cast.hpp>
-
 #include <openssl/x509v3.h>
 
 #include <openssl/crypto.h>
@@ -14,9 +8,10 @@ extern "C" {
 #include <openssl/bn.h>
 #include <openssl/srtp.h>
 #include <openssl/opensslv.h>
+#include <srtp.h>
+}
 
-#include <nice/nice.h>
-
+#include <sstream>
 #include <iostream>
 #include <cassert>
 #include <string>
@@ -27,6 +22,7 @@ extern "C" {
 
 using dtls::DtlsSocketContext;
 using dtls::DtlsSocket;
+using dtls::DtlsReceiver;
 using std::memcpy;
 
 const char* DtlsSocketContext::DefaultSrtpProfile = "SRTP_AES128_CM_SHA1_80";
@@ -160,11 +156,15 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
 
   // set version to X509v3 (starts from 0)
   // X509_set_version(cert, 0L);
+#ifdef WIN32
+  int serial = rand();	// get an int worth of randomness
+#else
   std::string thread_id = boost::lexical_cast<std::string>(boost::this_thread::get_id());
   unsigned int thread_number = 0;
   sscanf(thread_id.c_str(), "%x", &thread_number);
 
   int serial = rand_r(&thread_number);  // get an int worth of randomness
+#endif
   assert(sizeof(int) == 4);
   ASN1_INTEGER_set(X509_get_serialNumber(cert), serial);
 

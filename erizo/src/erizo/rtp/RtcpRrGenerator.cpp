@@ -1,5 +1,5 @@
 #include "rtp/RtcpRrGenerator.h"
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 #include "rtp/RtpUtils.h"
 
 namespace erizo {

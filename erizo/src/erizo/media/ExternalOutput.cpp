@@ -5,7 +5,7 @@
 #include <string>
 #include <cstring>
 
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 
 #include "./WebRtcConnection.h"
 #include "rtp/RtpHeaders.h"

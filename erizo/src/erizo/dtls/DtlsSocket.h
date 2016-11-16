@@ -2,21 +2,18 @@
 #define ERIZO_SRC_ERIZO_DTLS_DTLSSOCKET_H_
 
 extern "C" {
-  #include <srtp2/srtp.h>
-}
+#include <srtp.h>
 
 #include <openssl/e_os2.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
-
-#include <boost/thread/mutex.hpp>
-#include <boost/shared_ptr.hpp>
+}
 
 #include <memory>
 #include <string>
-
+#include <mutex>
 #include "../logger.h"
 
 const int SRTP_MASTER_KEY_KEY_LEN = 16;
@@ -123,7 +120,7 @@ class DtlsSocket {
 
   SocketType mSocketType;
   bool mHandshakeCompleted;
-  boost::mutex handshakeMutex_;
+  std::mutex handshakeMutex_;
 };
 
 class DtlsReceiver {

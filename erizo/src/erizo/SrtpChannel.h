@@ -5,15 +5,13 @@
 #ifndef ERIZO_SRC_ERIZO_SRTPCHANNEL_H_
 #define ERIZO_SRC_ERIZO_SRTPCHANNEL_H_
 
-#include <netinet/in.h>
-#include <srtp2/srtp.h>
-#include <boost/thread/mutex.hpp>
 
 #include <string>
 
 #include "rtp/RtpHeaders.h"
 #include "./logger.h"
-
+typedef struct srtp_ctx_t_ srtp_ctx_t;
+typedef srtp_ctx_t *srtp_t;
 namespace erizo {
 
 /**
@@ -22,9 +20,6 @@ namespace erizo {
  */
 class SrtpChannel {
   DECLARE_LOGGER();
-  static bool initialized;
-  static boost::mutex sessionMutex_;
-
  public:
   /**
    * The constructor. At this point the class is only initialized but it still needs the Key pair.

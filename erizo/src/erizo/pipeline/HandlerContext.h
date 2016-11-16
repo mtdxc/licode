@@ -69,8 +69,8 @@ class OutboundHandlerContext {
 #endif
 
 enum class HandlerDir {
-  IN,
-  OUT,
+  In,
+  Out,
   BOTH
 };
 

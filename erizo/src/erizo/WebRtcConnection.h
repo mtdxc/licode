@@ -1,8 +1,6 @@
 #ifndef ERIZO_SRC_ERIZO_WEBRTCCONNECTION_H_
 #define ERIZO_SRC_ERIZO_WEBRTCCONNECTION_H_
 
-#include <boost/thread/mutex.hpp>
-
 #include <string>
 #include <map>
 #include <vector>
@@ -175,15 +173,15 @@ class WebRtcConnection: public TransportListener, public LogContext,
   IceConfig ice_config_;
   std::vector<RtpMap> rtp_mappings_;
   RtpExtensionProcessor extension_processor_;
-  boost::condition_variable cond_;
+  std::condition_variable cond_;
 
   std::shared_ptr<Transport> video_transport_, audio_transport_;
 
   std::shared_ptr<Stats> stats_;
   WebRTCEvent global_state_;
 
-  boost::mutex update_state_mutex_;
-  boost::mutex event_listener_mutex_;
+  std::mutex update_state_mutex_;
+  std::mutex event_listener_mutex_;
 
   std::shared_ptr<Worker> worker_;
   std::shared_ptr<IOWorker> io_worker_;

@@ -260,7 +260,7 @@ class InboundContextImpl
     public InboundLink,
     public ContextImplBase<H, InboundHandlerContext> {
  public:
-  static const HandlerDir dir = HandlerDir::IN;
+  static const HandlerDir dir = HandlerDir::In;
 
   explicit InboundContextImpl(
       std::weak_ptr<PipelineBase> pipeline,
@@ -341,7 +341,7 @@ class OutboundContextImpl
     public OutboundLink,
     public ContextImplBase<H, OutboundHandlerContext> {
  public:
-  static const HandlerDir dir = HandlerDir::OUT;
+  static const HandlerDir dir = HandlerDir::Out;
 
   explicit OutboundContextImpl(
       std::weak_ptr<PipelineBase> pipeline,
@@ -398,7 +398,7 @@ struct ContextType {
     Handler::dir == HandlerDir::BOTH,
     ContextImpl<Handler>,
     typename std::conditional<
-      Handler::dir == HandlerDir::IN,
+      Handler::dir == HandlerDir::In,
       InboundContextImpl<Handler>,
       OutboundContextImpl<Handler>
     >::type>::type

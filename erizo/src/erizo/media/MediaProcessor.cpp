@@ -11,7 +11,6 @@ extern "C" {
 #include "rtp/RtpHeaders.h"
 #include "media/codecs/VideoCodec.h"
 #include "lib/Clock.h"
-#include "lib/ClockUtils.h"
 
 using std::memcpy;
 

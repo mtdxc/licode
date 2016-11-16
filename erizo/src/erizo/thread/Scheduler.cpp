@@ -1,8 +1,5 @@
 #include "thread/Scheduler.h"
-
 #include <assert.h>
-
-#include <boost/bind.hpp>
 #include <utility>
 
 
@@ -11,7 +8,7 @@ Scheduler::Scheduler(int n_threads_servicing_queue)
   stop_requested_ = false;
   stop_when_empty_ = false;
   for (int index = 0; index < n_threads_servicing_queue; index++) {
-    group_.create_thread(boost::bind(&Scheduler::serviceQueue, this));
+    group_.push_back(std::thread(&Scheduler::serviceQueue, this));
   }
 }
 
@@ -64,7 +61,9 @@ void Scheduler::stop(bool drain) {
     }
   }
   new_task_scheduled_.notify_all();
-  group_.join_all();
+  for (std::thread& t : group_) {
+    t.join();
+  }
 }
 
 void Scheduler::schedule(Scheduler::Function f, std::chrono::system_clock::time_point t) {

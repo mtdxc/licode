@@ -331,7 +331,7 @@ void MediaStream::printStats() {
   transferMediaStats("rtxBitrate", "total", "rtxBitrate");
   transferMediaStats("bwe", "total", "senderBitrateEstimation");
 
-  ELOG_INFOT(statsLogger, "%s", log_stats_->getStats());
+  ELOG_INFO(statsLogger, "%s", log_stats_->getStats());
 }
 
 void MediaStream::initializePipeline() {
@@ -516,12 +516,12 @@ void MediaStream::read(std::shared_ptr<DataPacket> packet) {
 }
 
 void MediaStream::setMediaStreamEventListener(MediaStreamEventListener* listener) {
-  boost::mutex::scoped_lock lock(event_listener_mutex_);
+  AutoLock lock(event_listener_mutex_);
   this->media_stream_event_listener_ = listener;
 }
 
 void MediaStream::notifyMediaStreamEvent(const std::string& type, const std::string& message) {
-  boost::mutex::scoped_lock lock(event_listener_mutex_);
+  AutoLock lock(event_listener_mutex_);
   if (this->media_stream_event_listener_ != nullptr) {
     media_stream_event_listener_->notifyMediaStreamEvent(type, message);
   }

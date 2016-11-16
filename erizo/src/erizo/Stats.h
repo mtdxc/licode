@@ -33,7 +33,7 @@ class Stats : public Service {
   void sendStats();
 
  private:
-  boost::mutex listener_mutex_;
+  std::mutex listener_mutex_;
   MediaStreamStatsListener* listener_;
   StatNode root_;
 };

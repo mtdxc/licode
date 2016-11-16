@@ -103,7 +103,7 @@ bool WebRtcConnection::init() {
 }
 
 bool WebRtcConnection::createOffer(bool video_enabled, bool audioEnabled, bool bundle) {
-  boost::mutex::scoped_lock lock(update_state_mutex_);
+  AutoLock lock(update_state_mutex_);
   bundle_ = bundle;
   video_enabled_ = video_enabled;
   audio_enabled_ = audioEnabled;
@@ -131,20 +131,20 @@ bool WebRtcConnection::createOffer(bool video_enabled, bool audioEnabled, bool b
   if (bundle_) {
     video_transport_.reset(new DtlsTransport(VIDEO_TYPE, "video", connection_id_, bundle_, true,
                                             listener, ice_config_ , "", "", true, worker_, io_worker_));
-    video_transport_->copyLogContextFrom(*this);
+    video_transport_->copyLogContextFrom(this);
     video_transport_->start();
   } else {
     if (video_transport_.get() == nullptr && video_enabled_) {
       // For now we don't re/check transports, if they are already created we leave them there
       video_transport_.reset(new DtlsTransport(VIDEO_TYPE, "video", connection_id_, bundle_, true,
                                               listener, ice_config_ , "", "", true, worker_, io_worker_));
-      video_transport_->copyLogContextFrom(*this);
+      video_transport_->copyLogContextFrom(this);
       video_transport_->start();
     }
     if (audio_transport_.get() == nullptr && audio_enabled_) {
       audio_transport_.reset(new DtlsTransport(AUDIO_TYPE, "audio", connection_id_, bundle_, true,
                                               listener, ice_config_, "", "", true, worker_, io_worker_));
-      audio_transport_->copyLogContextFrom(*this);
+      audio_transport_->copyLogContextFrom(this);
       audio_transport_->start();
     }
   }
@@ -164,7 +164,7 @@ void WebRtcConnection::addMediaStream(std::shared_ptr<MediaStream> media_stream)
 
 void WebRtcConnection::removeMediaStream(const std::string& stream_id) {
   asyncTask([stream_id] (std::shared_ptr<WebRtcConnection> connection) {
-    boost::mutex::scoped_lock lock(connection->update_state_mutex_);
+    AutoLock lock(connection->update_state_mutex_);
     ELOG_DEBUG("%s message: removing mediaStream, id: %s", connection->toLog(), stream_id.c_str());
     connection->media_streams_.erase(std::remove_if(connection->media_streams_.begin(),
                                                     connection->media_streams_.end(),
@@ -213,7 +213,7 @@ bool WebRtcConnection::setRemoteSdpInfo(std::shared_ptr<SdpInfo> sdp, std::strin
 }
 
 std::shared_ptr<SdpInfo> WebRtcConnection::getLocalSdpInfo() {
-  boost::mutex::scoped_lock lock(update_state_mutex_);
+  AutoLock lock(update_state_mutex_);
   ELOG_DEBUG("%s message: getting local SDPInfo", toLog());
   forEachMediaStream([this] (const std::shared_ptr<MediaStream> &media_stream) {
     if (!media_stream->isRunning() || media_stream->isPublisher()) {
@@ -335,7 +335,7 @@ bool WebRtcConnection::processRemoteSdp(std::string stream_id) {
           video_transport_.reset(new DtlsTransport(VIDEO_TYPE, "video", connection_id_, bundle_, remote_sdp_->isRtcpMux,
                                                   listener, ice_config_ , username, password, false,
                                                   worker_, io_worker_));
-          video_transport_->copyLogContextFrom(*this);
+          video_transport_->copyLogContextFrom(this);
           video_transport_->start();
         } else {
           ELOG_DEBUG("%s message: Updating videoTransport, ufrag: %s, pass: %s",
@@ -352,7 +352,7 @@ bool WebRtcConnection::processRemoteSdp(std::string stream_id) {
           audio_transport_.reset(new DtlsTransport(AUDIO_TYPE, "audio", connection_id_, bundle_, remote_sdp_->isRtcpMux,
                                                   listener, ice_config_, username, password, false,
                                                   worker_, io_worker_));
-          audio_transport_->copyLogContextFrom(*this);
+          audio_transport_->copyLogContextFrom(this);
           audio_transport_->start();
         } else {
           ELOG_DEBUG("%s message: Update audioTransport, ufrag: %s, pass: %s",
@@ -537,7 +537,7 @@ void WebRtcConnection::onTransportData(std::shared_ptr<DataPacket> packet, Trans
 
 void WebRtcConnection::maybeNotifyWebRtcConnectionEvent(const WebRTCEvent& event, const std::string& message,
     const std::string& stream_id) {
-  boost::mutex::scoped_lock lock(event_listener_mutex_);
+  AutoLock lock(event_listener_mutex_);
   if (!conn_event_listener_) {
       return;
   }
@@ -554,7 +554,7 @@ void WebRtcConnection::asyncTask(std::function<void(std::shared_ptr<WebRtcConnec
 }
 
 void WebRtcConnection::updateState(TransportState state, Transport * transport) {
-  boost::mutex::scoped_lock lock(update_state_mutex_);
+  AutoLock lock(update_state_mutex_);
   WebRTCEvent temp = global_state_;
   std::string msg = "";
   ELOG_DEBUG("%s transportName: %s, new_state: %d", toLog(), transport->transport_name.c_str(), state);
@@ -690,7 +690,7 @@ void WebRtcConnection::setMetadata(std::map<std::string, std::string> metadata) 
 }
 
 void WebRtcConnection::setWebRtcConnectionEventListener(WebRtcConnectionEventListener* listener) {
-  boost::mutex::scoped_lock lock(event_listener_mutex_);
+  AutoLock lock(event_listener_mutex_);
   this->conn_event_listener_ = listener;
 }
 

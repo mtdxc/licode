@@ -65,7 +65,7 @@ class RtpPaddingGeneratorHandler: public Handler, public std::enable_shared_from
   MovingIntervalRateStat marker_rate_;
   uint32_t rtp_header_length_;
   TokenBucket bucket_;
-  std::shared_ptr<ScheduledTaskReference> scheduled_task_;
+  int scheduled_task_;
 };
 
 }  // namespace erizo

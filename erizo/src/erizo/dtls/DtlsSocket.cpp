@@ -4,15 +4,9 @@
 #include <cassert>
 #include <cstring>
 #include <string>
-
-#ifdef HAVE_CONFIG_H
-#include "./config.h"
-#endif
-
 #include "./bf_dwrap.h"
 
-using dtls::DtlsSocket;
-using dtls::SrtpSessionKeys;
+using namespace dtls;
 using std::memcpy;
 
 DEFINE_LOGGER(DtlsSocket, "dtls.DtlsSocket");
@@ -119,7 +113,7 @@ void DtlsSocket::forceRetransmit() {
 }
 
 void DtlsSocket::doHandshakeIteration() {
-  boost::mutex::scoped_lock lock(handshakeMutex_);
+  std::unique_lock<std::mutex> lock(handshakeMutex_);
   char errbuf[1024];
   int sslerr;
 

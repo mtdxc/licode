@@ -1,7 +1,7 @@
 /*
  * DtlsConnection.cpp
  */
-
+#include "rtp/RtpHeaders.h"
 #include "DtlsTransport.h"
 
 #include <string>
@@ -9,7 +9,6 @@
 #include <memory>
 
 #include "./SrtpChannel.h"
-#include "rtp/RtpHeaders.h"
 #include "./LibNiceConnection.h"
 #include "./NicerConnection.h"
 
@@ -27,7 +26,7 @@ static std::mutex dtls_mutex;
 TimeoutChecker::TimeoutChecker(DtlsTransport* transport, dtls::DtlsSocketContext* ctx)
     : transport_(transport), socket_context_(ctx),
       check_seconds_(kInitialSecsPerTimeoutCheck), max_checks_(kMaxTimeoutChecks),
-      scheduled_task_{std::make_shared<ScheduledTaskReference>()} {
+      scheduled_task_{0} {
 }
 
 TimeoutChecker::~TimeoutChecker() {
@@ -35,12 +34,15 @@ TimeoutChecker::~TimeoutChecker() {
 }
 
 void TimeoutChecker::cancel() {
-  transport_->getWorker()->unschedule(scheduled_task_);
+  if (scheduled_task_) {
+    transport_->getWorker()->unschedule(scheduled_task_);
+    scheduled_task_ = 0;
+  }
 }
 
 void TimeoutChecker::scheduleCheck() {
   ELOG_TRACE("message: Scheduling a new TimeoutChecker");
-  transport_->getWorker()->unschedule(scheduled_task_);
+  cancel();
   check_seconds_ = kInitialSecsPerTimeoutCheck;
   if (transport_->getTransportState() != TRANSPORT_READY) {
     scheduleNext();
@@ -276,7 +278,7 @@ void DtlsTransport::writeDtlsPacket(DtlsSocketContext *ctx, packetPtr packet) {
 
 void DtlsTransport::onHandshakeCompleted(DtlsSocketContext *ctx, std::string clientKey, std::string serverKey,
                                          std::string srtp_profile) {
-  boost::mutex::scoped_lock lock(sessionMutex_);
+  AutoLock lock(sessionMutex_);
   std::string temp;
 
   if (rtp_timeout_checker_) {

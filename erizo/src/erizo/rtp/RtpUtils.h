@@ -19,7 +19,7 @@ class RtpUtils {
 
   static void forEachRtcpBlock(std::shared_ptr<DataPacket> packet, std::function<void(RtcpHeader*)> f);
 
-  static void updateREMB(RtcpHeader *chead, uint bitrate);
+  static void updateREMB(RtcpHeader *chead, uint64_t bitrate);
 
   static bool isPLI(std::shared_ptr<DataPacket> packet);
 
