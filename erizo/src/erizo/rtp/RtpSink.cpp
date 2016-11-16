@@ -38,12 +38,12 @@ namespace erizo {
     receive_Thread_.join();
   }
 
-  int RtpSink::deliverVideoData_(std::shared_ptr<DataPacket> video_packet) {
+  int RtpSink::deliverVideoData_(packetPtr video_packet) {
     this->queueData(video_packet->data, video_packet->length, VIDEO_PACKET);
     return 0;
   }
 
-  int RtpSink::deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) {
+  int RtpSink::deliverAudioData_(packetPtr audio_packet) {
     this->queueData(audio_packet->data, audio_packet->length, AUDIO_PACKET);
     return 0;
   }
@@ -54,7 +54,7 @@ namespace erizo {
   }
 
   void RtpSink::queueData(const char* buffer, int len, packetType type) {
-    boost::mutex::scoped_lock lock(queueMutex_);
+    AutoLock lock(queueMutex_);
     if (sending_ == false)
       return;
     if (sendQueue_.size() < 1000) {
@@ -69,7 +69,7 @@ namespace erizo {
 
   void RtpSink::sendLoop() {
     while (sending_) {
-      boost::unique_lock<boost::mutex> lock(queueMutex_);
+      boost::unique_lock<Mutex> lock(queueMutex_);
       while (sendQueue_.size() == 0) {
         cond_.wait(lock);
         if (!sending_) {

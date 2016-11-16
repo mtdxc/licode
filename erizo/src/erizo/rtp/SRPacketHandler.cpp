@@ -1,6 +1,6 @@
 #include "rtp/SRPacketHandler.h"
 #include "./MediaStream.h"
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 
 namespace erizo {
 
@@ -19,7 +19,7 @@ void SRPacketHandler::disable() {
 }
 
 
-void SRPacketHandler::handleRtpPacket(std::shared_ptr<DataPacket> packet) {
+void SRPacketHandler::handleRtpPacket(packetPtr packet) {
   RtpHeader *head = reinterpret_cast<RtpHeader*>(packet->data);
   uint32_t ssrc = head->getSSRC();
   auto sr_selected_info_iter = sr_info_map_.find(ssrc);
@@ -35,7 +35,7 @@ void SRPacketHandler::handleRtpPacket(std::shared_ptr<DataPacket> packet) {
 
 
 
-void SRPacketHandler::handleSR(std::shared_ptr<DataPacket> packet) {
+void SRPacketHandler::handleSR(packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   uint32_t ssrc = chead->getSSRC();
   auto sr_selected_info_iter = sr_info_map_.find(ssrc);
@@ -51,7 +51,7 @@ void SRPacketHandler::handleSR(std::shared_ptr<DataPacket> packet) {
   chead->setPacketsSent(selected_info->sent_packets);
 }
 
-void SRPacketHandler::write(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void SRPacketHandler::write(Context *ctx, packetPtr packet) {
   if (initialized_ && enabled_) {
     RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
     if (!chead->isRtcp() && enabled_) {
@@ -63,7 +63,7 @@ void SRPacketHandler::write(Context *ctx, std::shared_ptr<DataPacket> packet) {
   ctx->fireWrite(std::move(packet));
 }
 
-void SRPacketHandler::read(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void SRPacketHandler::read(Context *ctx, packetPtr packet) {
   ctx->fireRead(std::move(packet));
 }
 

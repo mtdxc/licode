@@ -2,7 +2,7 @@
 #define ERIZO_SRC_ERIZO_RTP_RTPPADDINGGENERATORHANDLER_H_
 
 #include <string>
-
+#include <memory>
 #include "./logger.h"
 #include "pipeline/Handler.h"
 #include "lib/Clock.h"
@@ -28,15 +28,15 @@ class RtpPaddingGeneratorHandler: public Handler, public std::enable_shared_from
     return "padding-generator";
   }
 
-  void read(Context *ctx, std::shared_ptr<DataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<DataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:
-  void sendPaddingPacket(std::shared_ptr<DataPacket> packet, uint8_t padding_size);
-  void onPacketWithMarkerSet(std::shared_ptr<DataPacket> packet);
-  bool isHigherSequenceNumber(std::shared_ptr<DataPacket> packet);
-  void onVideoPacket(std::shared_ptr<DataPacket> packet);
+  void sendPaddingPacket(packetPtr packet, uint8_t padding_size);
+  void onPacketWithMarkerSet(packetPtr packet);
+  bool isHigherSequenceNumber(packetPtr packet);
+  void onVideoPacket(packetPtr packet);
 
   uint64_t getStat(std::string stat_name);
   uint64_t getTargetBitrate();
@@ -65,7 +65,7 @@ class RtpPaddingGeneratorHandler: public Handler, public std::enable_shared_from
   MovingIntervalRateStat marker_rate_;
   uint32_t rtp_header_length_;
   TokenBucket bucket_;
-  std::shared_ptr<ScheduledTaskReference> scheduled_task_;
+  int scheduled_task_;
 };
 
 }  // namespace erizo

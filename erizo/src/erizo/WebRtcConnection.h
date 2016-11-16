@@ -1,11 +1,11 @@
 #ifndef ERIZO_SRC_ERIZO_WEBRTCCONNECTION_H_
 #define ERIZO_SRC_ERIZO_WEBRTCCONNECTION_H_
 
-#include <boost/thread/mutex.hpp>
 
 #include <string>
 #include <map>
 #include <vector>
+#include <condition_variable>
 
 #include "./logger.h"
 #include "./SdpInfo.h"
@@ -116,7 +116,7 @@ class WebRtcConnection: public TransportListener, public LogContext,
    */
   WebRTCEvent getCurrentState();
 
-  void onTransportData(std::shared_ptr<DataPacket> packet, Transport *transport) override;
+  void onTransportData(packetPtr packet, Transport *transport) override;
 
   void updateState(TransportState state, Transport * transport) override;
 
@@ -124,8 +124,8 @@ class WebRtcConnection: public TransportListener, public LogContext,
 
   void setMetadata(std::map<std::string, std::string> metadata);
 
-  void read(std::shared_ptr<DataPacket> packet);
-  void write(std::shared_ptr<DataPacket> packet);
+  void read(packetPtr packet);
+  void write(packetPtr packet);
 
   void asyncTask(std::function<void(std::shared_ptr<WebRtcConnection>)> f);
 
@@ -166,14 +166,14 @@ class WebRtcConnection: public TransportListener, public LogContext,
   IceConfig ice_config_;
   std::vector<RtpMap> rtp_mappings_;
   RtpExtensionProcessor extension_processor_;
-  boost::condition_variable cond_;
+  std::condition_variable cond_;
 
   std::shared_ptr<Transport> video_transport_, audio_transport_;
 
   std::shared_ptr<Stats> stats_;
   WebRTCEvent global_state_;
 
-  boost::mutex updateStateMutex_;  // , slideShowMutex_;
+  Mutex updateStateMutex_;  // , slideShowMutex_;
 
   std::shared_ptr<Worker> worker_;
   std::shared_ptr<IOWorker> io_worker_;

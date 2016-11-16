@@ -19,11 +19,11 @@ namespace erizo {
   OneToManyProcessor::~OneToManyProcessor() {
   }
 
-  int OneToManyProcessor::deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) {
+  int OneToManyProcessor::deliverAudioData_(packetPtr audio_packet) {
     if (audio_packet->length <= 0)
       return 0;
 
-    boost::unique_lock<boost::mutex> lock(monitor_mutex_);
+    AutoLock lock(monitor_mutex_);
     if (subscribers.empty())
       return 0;
 
@@ -37,7 +37,7 @@ namespace erizo {
     return 0;
   }
 
-  int OneToManyProcessor::deliverVideoData_(std::shared_ptr<DataPacket> video_packet) {
+  int OneToManyProcessor::deliverVideoData_(packetPtr video_packet) {
     if (video_packet->length <= 0)
       return 0;
     RtcpHeader* head = reinterpret_cast<RtcpHeader*>(video_packet->data);
@@ -49,7 +49,7 @@ namespace erizo {
       }
       return 0;
     }
-    boost::unique_lock<boost::mutex> lock(monitor_mutex_);
+    AutoLock lock(monitor_mutex_);
     if (subscribers.empty())
       return 0;
     std::map<std::string, std::shared_ptr<MediaSink>>::iterator it;
@@ -62,12 +62,12 @@ namespace erizo {
   }
 
   void OneToManyProcessor::setPublisher(std::shared_ptr<MediaSource> publisher_stream) {
-    boost::mutex::scoped_lock lock(monitor_mutex_);
+    AutoLock lock(monitor_mutex_);
     this->publisher = publisher_stream;
     feedbackSink_ = publisher->getFeedbackSink();
   }
 
-  int OneToManyProcessor::deliverFeedback_(std::shared_ptr<DataPacket> fb_packet) {
+  int OneToManyProcessor::deliverFeedback_(packetPtr fb_packet) {
     if (feedbackSink_ != nullptr) {
       feedbackSink_->deliverFeedback(fb_packet);
     }
@@ -75,7 +75,7 @@ namespace erizo {
   }
 
   int OneToManyProcessor::deliverEvent_(MediaEventPtr event) {
-    boost::unique_lock<boost::mutex> lock(monitor_mutex_);
+    AutoLock lock(monitor_mutex_);
     if (subscribers.empty())
       return 0;
     std::map<std::string, std::shared_ptr<MediaSink>>::iterator it;
@@ -90,7 +90,7 @@ namespace erizo {
   void OneToManyProcessor::addSubscriber(std::shared_ptr<MediaSink> subscriber_stream,
       const std::string& peer_id) {
     ELOG_DEBUG("Adding subscriber");
-    boost::mutex::scoped_lock lock(monitor_mutex_);
+    AutoLock lock(monitor_mutex_);
     ELOG_DEBUG("From %u, %u ", publisher->getAudioSourceSSRC(), publisher->getVideoSourceSSRC());
     subscriber_stream->setAudioSinkSSRC(this->publisher->getAudioSourceSSRC());
     subscriber_stream->setVideoSinkSSRC(this->publisher->getVideoSourceSSRC());
@@ -112,7 +112,7 @@ namespace erizo {
 
   void OneToManyProcessor::removeSubscriber(const std::string& peer_id) {
     ELOG_DEBUG("Remove subscriber %s", peer_id.c_str());
-    boost::mutex::scoped_lock lock(monitor_mutex_);
+    AutoLock lock(monitor_mutex_);
     if (this->subscribers.find(peer_id) != subscribers.end()) {
       deleteAsync(std::dynamic_pointer_cast<MediaStream>(subscribers.find(peer_id)->second));
       this->subscribers.erase(peer_id);
@@ -144,7 +144,7 @@ namespace erizo {
       future.wait();
     }
     publisher.reset();
-    boost::unique_lock<boost::mutex> lock(monitor_mutex_);
+    AutoLock lock(monitor_mutex_);
     std::map<std::string, std::shared_ptr<MediaSink>>::iterator it = subscribers.begin();
     while (it != subscribers.end()) {
       if ((*it).second != nullptr) {

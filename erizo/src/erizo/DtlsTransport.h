@@ -1,12 +1,6 @@
 #ifndef ERIZO_SRC_ERIZO_DTLSTRANSPORT_H_
 #define ERIZO_SRC_ERIZO_DTLSTRANSPORT_H_
-
-
-#include <boost/thread/mutex.hpp>
-#include <boost/asio/deadline_timer.hpp>
-#include <boost/asio.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <string>
 #include "dtls/DtlsSocket.h"
 #include "./IceConnection.h"
@@ -45,10 +39,10 @@ class DtlsTransport : dtls::DtlsReceiver, public Transport {
 
  private:
   char protectBuf_[5000];
-  std::shared_ptr<DataPacket> unprotect_packet_;
-  boost::scoped_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
-  boost::mutex writeMutex_, sessionMutex_;
-  boost::scoped_ptr<SrtpChannel> srtp_, srtcp_;
+  packetPtr unprotect_packet_;
+  std::unique_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
+  Mutex writeMutex_, sessionMutex_;
+  std::unique_ptr<SrtpChannel> srtp_, srtcp_;
   bool readyRtp, readyRtcp;
   bool isServer_;
   std::unique_ptr<Resender> rtcp_resender_, rtp_resender_;
@@ -78,7 +72,7 @@ class Resender {
   packetPtr packet_;
   unsigned int resend_seconds_;
   unsigned int max_resends_;
-  std::shared_ptr<ScheduledTaskReference> scheduled_task_;
+  int scheduled_task_;
 };
 }  // namespace erizo
 #endif  // ERIZO_SRC_ERIZO_DTLSTRANSPORT_H_

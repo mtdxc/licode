@@ -1,9 +1,7 @@
 #ifndef ERIZO_SRC_ERIZO_MEDIA_EXTERNALINPUT_H_
 #define ERIZO_SRC_ERIZO_MEDIA_EXTERNALINPUT_H_
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/thread.hpp>
-
+#include <thread>
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -13,6 +11,7 @@ extern "C" {
 
 #include <string>
 #include <map>
+#include <vector>
 #include <queue>
 
 #include "./MediaDefinitions.h"
@@ -35,15 +34,15 @@ class ExternalInput : public MediaSource, public RTPDataReceiver {
   void close() override {}
 
  private:
-  boost::scoped_ptr<OutputProcessor> op_;
+  std::unique_ptr<OutputProcessor> op_;
   VideoDecoder inCodec_;
-  boost::scoped_array<unsigned char> decodedBuffer_;
+  std::vector<unsigned char> decodedBuffer_;
 
   std::string url_;
   bool running_;
   bool needTranscoding_;
-  boost::mutex queueMutex_;
-  boost::thread thread_, encodeThread_;
+  Mutex queueMutex_;
+  std::thread thread_, encodeThread_;
   std::queue<RawDataPacket> packetQueue_;
   AVFormatContext* context_;
   AVPacket avpacket_;

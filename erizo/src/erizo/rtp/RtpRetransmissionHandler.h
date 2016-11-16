@@ -10,7 +10,7 @@
 #include "Stats.h"
 #include "rtp/PacketBufferService.h"
 
-static constexpr uint kRetransmissionsBufferSize = 256;
+static constexpr uint32_t kRetransmissionsBufferSize = 256;
 static constexpr int kNackBlpSize = 16;
 
 static constexpr erizo::duration kTimeToUpdateBitrate = std::chrono::milliseconds(500);
@@ -34,8 +34,8 @@ class RtpRetransmissionHandler : public Handler {
     return "retransmissions";
   }
 
-  void read(Context *ctx, std::shared_ptr<DataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<DataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:

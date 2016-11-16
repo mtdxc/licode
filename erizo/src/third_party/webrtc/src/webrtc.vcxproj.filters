@@ -1,0 +1,591 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="源文件\rtp_rtcp">
+      <UniqueIdentifier>{c162f6df-276f-4060-8d9c-a65825f8146d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\rtp_rtcp">
+      <UniqueIdentifier>{50848c3a-3c78-4978-9ed8-849c0193e7f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\base">
+      <UniqueIdentifier>{c459ed20-10e6-4eba-a94a-81c229195504}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\base">
+      <UniqueIdentifier>{9edfa353-c0d1-46c9-848b-2bf579f6e7a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\system_wrappers">
+      <UniqueIdentifier>{5eacfb10-5bd8-4ebd-b924-b0300783451f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\system_wrappers">
+      <UniqueIdentifier>{ad075abf-9f4f-4189-a17c-a432992ad58a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\remote_bitrate_estimator">
+      <UniqueIdentifier>{8cb5bf6f-2ee6-4ea1-8db2-5bc556c6c37d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\remote_bitrate_estimator">
+      <UniqueIdentifier>{d1f652c3-e732-493b-b597-5f1d409af2f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\remote_bitrate_estimator\include">
+      <UniqueIdentifier>{c7b12293-33d8-43dd-b4ce-2ab16b5ff510}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\h264">
+      <UniqueIdentifier>{28841a20-7531-49cc-bb44-7c6788b90c2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\h264">
+      <UniqueIdentifier>{8443fa2c-79a5-47e1-a37c-43ac5ae5d42e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\bitrate_controller">
+      <UniqueIdentifier>{d17798f0-973e-49bb-8feb-7f4d4a84a89e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\bitrate_controller\include">
+      <UniqueIdentifier>{06d171c1-7c60-444f-a9c7-17179fd240a8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="webrtc\common_types.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\byte_io.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtcp_packet\common_header.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\fec_private_tables_bursty.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\fec_private_tables_random.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\flexfec_header_reader_writer.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\include\flexfec_sender.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\forward_error_correction.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\forward_error_correction_internal.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\include\receive_statistics.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\receive_statistics_impl.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtcp_packet.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\include\rtp_cvo.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_format.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_format_h264.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_format_video_generic.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_format_vp8.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_format_vp9.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_header_extension.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_header_extensions.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_packet.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_packet_to_send.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\include\rtp_payload_registry.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_receiver_strategy.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_receiver_video.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\include\rtp_rtcp.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_rtcp_config.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\include\rtp_rtcp_defines.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtp_utility.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtcp_packet\rtpfb.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\time_util.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\rtcp_packet\transport_feedback.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\ulpfec_generator.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\ulpfec_header_reader_writer.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\include\ulpfec_receiver.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\ulpfec_receiver_impl.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\rtp_rtcp\source\vp8_partition_aggregator.h">
+      <Filter>头文件\rtp_rtcp</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\arraysize.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\array_view.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\atomicops.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\basictypes.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\bitbuffer.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\buffer.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\bytebuffer.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\byteorder.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\callback.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\checks.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\common.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\constructormagic.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\copyonwritebuffer.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\criticalsection.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\deprecation.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\event.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\event_tracer.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\ignore_wundef.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\logging.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\onetimeevent.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\optional.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\platform_thread.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\platform_thread_types.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\random.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\rate_statistics.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\refcount.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\refcountedobject.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\safe_compare.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\sanitizer.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\scoped_ref_ptr.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\sequenced_task_checker.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\sequenced_task_checker_impl.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\stringencode.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\stringutils.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\thread_annotations.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\thread_checker.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\thread_checker_impl.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\timeutils.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\trace_event.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\type_traits.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\base\win32.h">
+      <Filter>头文件\base</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\clock.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\rw_lock_wrapper.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\source\trace_impl.h">
+      <Filter>源文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\source\trace_win.h">
+      <Filter>源文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\remote_bitrate_estimator\aimd_rate_control.h">
+      <Filter>头文件\remote_bitrate_estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\remote_bitrate_estimator\inter_arrival.h">
+      <Filter>头文件\remote_bitrate_estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\remote_bitrate_estimator\overuse_detector.h">
+      <Filter>头文件\remote_bitrate_estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\remote_bitrate_estimator\overuse_estimator.h">
+      <Filter>头文件\remote_bitrate_estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\remote_bitrate_estimator\remote_bitrate_estimator_abs_send_time.h">
+      <Filter>头文件\remote_bitrate_estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\remote_bitrate_estimator\remote_bitrate_estimator_single_stream.h">
+      <Filter>头文件\remote_bitrate_estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\remote_bitrate_estimator\remote_estimator_proxy.h">
+      <Filter>头文件\remote_bitrate_estimator</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\remote_bitrate_estimator\include\bwe_defines.h">
+      <Filter>头文件\remote_bitrate_estimator\include</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\remote_bitrate_estimator\include\remote_bitrate_estimator.h">
+      <Filter>头文件\remote_bitrate_estimator\include</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\remote_bitrate_estimator\include\send_time_history.h">
+      <Filter>头文件\remote_bitrate_estimator\include</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\file_wrapper.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\metrics.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\metrics_default.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\trace.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\aligned_malloc.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\critical_section_wrapper.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\event_wrapper.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\field_trial.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\field_trial_default.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\fix_interlocked_exchange_pointer_win.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\ntp_time.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\system_wrappers\include\static_instance.h">
+      <Filter>头文件\system_wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\typedefs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\common_video\h264\h264_common.h">
+      <Filter>头文件\h264</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\common_video\h264\pps_parser.h">
+      <Filter>头文件\h264</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\common_video\h264\sps_parser.h">
+      <Filter>头文件\h264</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\common_video\h264\sps_vui_rewriter.h">
+      <Filter>头文件\h264</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\bitrate_controller\send_side_bandwidth_estimation.h">
+      <Filter>头文件\bitrate_controller</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\bitrate_controller\include\bitrate_controller.h">
+      <Filter>头文件\bitrate_controller\include</Filter>
+    </ClInclude>
+    <ClInclude Include="webrtc\modules\bitrate_controller\include\mock\mock_bitrate_controller.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="webrtc\common_types.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtcp_packet\common_header.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\flexfec_header_reader_writer.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\forward_error_correction.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\forward_error_correction_internal.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\receive_statistics_impl.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtcp_packet.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_format.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_format_h264.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_format_video_generic.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_format_vp8.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_format_vp9.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_header_extension.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_header_extensions.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_packet.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_payload_registry.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_receiver_strategy.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_receiver_video.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtp_utility.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtcp_packet\rtpfb.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\time_util.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\rtcp_packet\transport_feedback.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\ulpfec_header_reader_writer.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\ulpfec_receiver_impl.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\rtp_rtcp\source\vp8_partition_aggregator.cc">
+      <Filter>源文件\rtp_rtcp</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\bitbuffer.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\bytebuffer.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\checks.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\common.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\copyonwritebuffer.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\criticalsection.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\event.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\event_tracer.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\logging.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\optional.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\platform_thread.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\rate_statistics.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\stringencode.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\stringutils.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\thread_checker_impl.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\timeutils.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\base\win32.cc">
+      <Filter>源文件\base</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\system_wrappers\source\clock.cc">
+      <Filter>源文件\system_wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\system_wrappers\source\rw_lock.cc">
+      <Filter>源文件\system_wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\system_wrappers\source\rw_lock_win.cc">
+      <Filter>源文件\system_wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\system_wrappers\source\trace_impl.cc">
+      <Filter>源文件\system_wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\system_wrappers\source\trace_win.cc">
+      <Filter>源文件\system_wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\system_wrappers\source\file_impl.cc">
+      <Filter>源文件\system_wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\remote_bitrate_estimator\aimd_rate_control.cc">
+      <Filter>源文件\remote_bitrate_estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\remote_bitrate_estimator\bwe_defines.cc">
+      <Filter>源文件\remote_bitrate_estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\remote_bitrate_estimator\inter_arrival.cc">
+      <Filter>源文件\remote_bitrate_estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\remote_bitrate_estimator\overuse_detector.cc">
+      <Filter>源文件\remote_bitrate_estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\remote_bitrate_estimator\overuse_estimator.cc">
+      <Filter>源文件\remote_bitrate_estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\remote_bitrate_estimator\remote_bitrate_estimator_abs_send_time.cc">
+      <Filter>源文件\remote_bitrate_estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\remote_bitrate_estimator\remote_bitrate_estimator_single_stream.cc">
+      <Filter>源文件\remote_bitrate_estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\remote_bitrate_estimator\remote_estimator_proxy.cc">
+      <Filter>源文件\remote_bitrate_estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\remote_bitrate_estimator\send_time_history.cc">
+      <Filter>源文件\remote_bitrate_estimator</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\system_wrappers\source\metrics_default.cc">
+      <Filter>源文件\system_wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\system_wrappers\source\field_trial_default.cc">
+      <Filter>源文件\system_wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\common_video\h264\h264_common.cc">
+      <Filter>源文件\h264</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\common_video\h264\pps_parser.cc">
+      <Filter>源文件\h264</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\common_video\h264\sps_parser.cc">
+      <Filter>源文件\h264</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\common_video\h264\sps_vui_rewriter.cc">
+      <Filter>源文件\h264</Filter>
+    </ClCompile>
+    <ClCompile Include="webrtc\modules\bitrate_controller\send_side_bandwidth_estimation.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

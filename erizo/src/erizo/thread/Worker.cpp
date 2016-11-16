@@ -1,40 +1,124 @@
-#include "thread/Worker.h"
+#include "Worker.h"
+#include <assert.h>
+#include <utility>
+namespace erizo{
 
-#include <boost/asio.hpp>
-#include <boost/thread.hpp>
-
-#include <algorithm>
-#include <memory>
-
-#include "lib/ClockUtils.h"
-
-using erizo::Worker;
-using erizo::SimulatedWorker;
-using erizo::ScheduledTaskReference;
-
-ScheduledTaskReference::ScheduledTaskReference() : cancelled{false} {
-}
-
-bool ScheduledTaskReference::isCancelled() {
-  return cancelled;
-}
-void ScheduledTaskReference::cancel() {
-  cancelled = true;
-}
-
-Worker::Worker(std::weak_ptr<Scheduler> scheduler, std::shared_ptr<Clock> the_clock)
-    : scheduler_{scheduler},
-      clock_{the_clock},
-      service_{},
-      service_worker_{new asio_worker::element_type(service_)},
-      closed_{false} {
+Worker::Worker(int thread_count)
+	: thread_count_(thread_count),
+	stop_requested_(false), stop_when_empty_(false) {
+	cur_task_ = 0;
+	for (int index = 0; index < thread_count_; index++) {
+		threads_.push_back(std::thread(&Worker::serviceQueue, this));
+	}
 }
 
 Worker::~Worker() {
+	stop(false);
+	assert(thread_count_ == 0);
 }
 
-void Worker::task(Task f) {
-  service_.post(f);
+void Worker::serviceQueue() {
+	std::unique_lock<std::mutex> lock(task_mutex_);
+#if 1
+	while (!stop_requested_) { // main loop modify by cai
+		if (task_queue_.empty()) {
+			if (stop_when_empty_)
+				break;
+			task_cond_.wait(lock);
+			continue;
+		}
+		else {
+			if (std::cv_status::timeout != task_cond_.wait_until(lock, task_queue_.begin()->first))
+				continue;
+		}
+		if (!task_queue_.empty() && !stop_requested_) {
+			Task t = task_queue_.begin()->second;
+			task_queue_.erase(task_queue_.begin());
+			if (t.delta && !stop_when_empty_) {
+				task_queue_.insert(std::make_pair(clock::now() + std::chrono::milliseconds(t.delta), t));
+			}
+
+			lock.unlock();
+			try { t.func(); }
+			catch (...) {}
+			lock.lock();
+		}
+	}
+#else
+	while (!stop_requested_ && !(stop_when_empty_ && task_queue_.empty())) {
+		try {
+			while (!stop_requested_ && !stop_when_empty_ && task_queue_.empty()) {
+				task_cond_.wait(lock);
+			}
+
+			while (!stop_requested_ && !task_queue_.empty() &&
+				task_cond_.wait_until(lock, task_queue_.begin()->first) != std::cv_status::timeout) {
+			}
+			if (stop_requested_) {
+				break;
+			}
+
+			if (task_queue_.empty()) {
+				continue;
+			}
+
+			Task t = task_queue_.begin()->second;
+			task_queue_.erase(task_queue_.begin());
+			if (t.delta && !stop_when_empty_) {
+				task_queue_.insert(std::make_pair(std::chrono::system_clock::now() + std::chrono::milliseconds(t.delta), t));
+			}
+
+			lock.unlock();
+			t.func();
+			lock.lock();
+		}
+		catch (...) {
+			--thread_count_;
+			throw;
+		}
+	}
+#endif
+	--thread_count_;
+}
+
+void Worker::stop(bool drain) {
+	{
+		std::unique_lock<std::mutex> lock(task_mutex_);
+		if (drain) {
+			stop_when_empty_ = true;
+		}
+		else {
+			stop_requested_ = true;
+		}
+	}
+	task_cond_.notify_all();
+	for (auto &t : threads_) {
+		t.join();
+	}
+}
+
+int Worker::unschedule(int task_id) {
+	std::unique_lock<std::mutex> lock(task_mutex_);
+	for (auto it = task_queue_.begin(); it != task_queue_.end(); it++) {
+		if (it->second.id == task_id) {
+			task_queue_.erase(it);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int Worker::schedule(Worker::Function f, time_point t) {
+	int task_id = 0;
+	{
+		std::unique_lock<std::mutex> lock(task_mutex_);
+		task_id = ++cur_task_;
+		Task tk = { task_id, 0, f };
+		// Pairs in this multimap are sorted by the Key value, so begin() will always point to the earlier task
+		task_queue_.insert(std::make_pair(t, tk));
+	}
+	task_cond_.notify_one();
+	return task_id;
 }
 
 void Worker::start() {
@@ -42,118 +126,29 @@ void Worker::start() {
   start(promise);
 }
 
-void Worker::start(std::shared_ptr<std::promise<void>> start_promise) {
-  auto this_ptr = shared_from_this();
-  auto worker = [this_ptr, start_promise] {
-    start_promise->set_value();
-    if (!this_ptr->closed_) {
-      return this_ptr->service_.run();
-    }
-    return size_t(0);
-  };
-  group_.add_thread(new boost::thread(worker));
+void Worker::start(std::shared_ptr<std::promise<void>> start_promise)
+{
+  start_promise->set_value();
 }
 
-void Worker::close() {
-  closed_ = true;
-  service_worker_.reset();
-  group_.join_all();
-  service_.stop();
+void Worker::task(Worker::Function f) {
+	schedule(f, std::chrono::steady_clock::now());
 }
 
-std::shared_ptr<ScheduledTaskReference> Worker::scheduleFromNow(Task f, duration delta) {
-  auto delta_ms = std::chrono::duration_cast<std::chrono::milliseconds>(delta);
-  auto id = std::make_shared<ScheduledTaskReference>();
-  if (auto scheduler = scheduler_.lock()) {
-    scheduler->scheduleFromNow(safeTask([f, id](std::shared_ptr<Worker> this_ptr) {
-      this_ptr->task(this_ptr->safeTask([f, id](std::shared_ptr<Worker> this_ptr) {
-        {
-          if (id->isCancelled()) {
-            return;
-          }
-        }
-        f();
-      }));
-    }), delta_ms);
-  }
-  return id;
+int Worker::scheduleFromNow(Worker::Function f, duration delta_ms) {
+	return schedule(f, clock::now() + delta_ms);
 }
 
-void Worker::scheduleEvery(ScheduledTask f, duration period) {
-  scheduleEvery(f, period, period);
+int Worker::scheduleEvery(Worker::Function f, duration delta_ms) {
+	int task_id = 0;
+	{
+		std::unique_lock<std::mutex> lock(task_mutex_);
+		task_id = ++cur_task_;
+		Task tk = { task_id, delta_ms.count(), f };
+		// Pairs in this multimap are sorted by the Key value, so begin() will always point to the earlier task
+		task_queue_.insert(std::make_pair(clock::now() + delta_ms, tk));
+	}
+	task_cond_.notify_one();
+	return task_id;
 }
-
-void Worker::scheduleEvery(ScheduledTask f, duration period, duration next_delay) {
-  time_point start = clock_->now();
-  std::shared_ptr<Clock> clock = clock_;
-
-  scheduleFromNow(safeTask([start, period, next_delay, f, clock](std::shared_ptr<Worker> this_ptr) {
-    if (f()) {
-      duration clock_skew = clock->now() - start - next_delay;
-      duration delay = std::max(period - clock_skew, duration(0));
-      this_ptr->scheduleEvery(f, period, delay);
-    }
-  }), next_delay);
-}
-
-void Worker::unschedule(std::shared_ptr<ScheduledTaskReference> id) {
-  id->cancel();
-}
-
-std::function<void()> Worker::safeTask(std::function<void(std::shared_ptr<Worker>)> f) {
-  std::weak_ptr<Worker> weak_this = shared_from_this();
-  return [f, weak_this] {
-    if (auto this_ptr = weak_this.lock()) {
-      f(this_ptr);
-    }
-  };
-}
-
-SimulatedWorker::SimulatedWorker(std::shared_ptr<SimulatedClock> the_clock)
-    : Worker(std::make_shared<Scheduler>(1), the_clock), clock_{the_clock} {
-}
-
-void SimulatedWorker::task(Task f) {
-  tasks_.push_back(f);
-}
-
-void SimulatedWorker::start() {
-}
-
-void SimulatedWorker::start(std::shared_ptr<std::promise<void>> start_promise) {
-}
-
-void SimulatedWorker::close() {
-  scheduled_tasks_.clear();
-  tasks_.clear();
-}
-
-std::shared_ptr<ScheduledTaskReference> SimulatedWorker::scheduleFromNow(Task f, duration delta) {
-  auto id = std::make_shared<ScheduledTaskReference>();
-  scheduled_tasks_[clock_->now() + delta] =  [this, f, id] {
-      if (id->isCancelled()) {
-        return;
-      }
-      f();
-    };
-  return id;
-}
-
-void SimulatedWorker::executeTasks() {
-  for (Task f : tasks_) {
-    f();
-  }
-  tasks_.clear();
-}
-
-void SimulatedWorker::executePastScheduledTasks() {
-  time_point now = clock_->now();
-  for (auto iter = scheduled_tasks_.begin(), last_iter = scheduled_tasks_.end(); iter != last_iter; ) {
-    if (iter->first <= now) {
-      iter->second();
-      iter = scheduled_tasks_.erase(iter);
-    } else {
-      ++iter;
-    }
-  }
 }

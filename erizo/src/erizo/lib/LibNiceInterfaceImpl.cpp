@@ -4,7 +4,6 @@
 
 #include "./LibNiceInterface.h"
 #include <nice/nice.h>
-#include <nice/interfaces.h>
 
 namespace erizo {
 

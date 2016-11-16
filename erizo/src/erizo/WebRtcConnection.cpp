@@ -370,7 +370,7 @@ void WebRtcConnection::onCandidate(const CandidateInfo& cand, Transport *transpo
   }
 }
 
-void WebRtcConnection::onTransportData(std::shared_ptr<DataPacket> packet, Transport *transport) {
+void WebRtcConnection::onTransportData(packetPtr packet, Transport *transport) {
   if (getCurrentState() != CONN_READY) {
     return;
   }
@@ -387,7 +387,7 @@ void WebRtcConnection::asyncTask(std::function<void(std::shared_ptr<WebRtcConnec
 }
 
 void WebRtcConnection::updateState(TransportState state, Transport * transport) {
-  boost::mutex::scoped_lock lock(updateStateMutex_);
+  AutoLock lock(updateStateMutex_);
   WebRTCEvent temp = global_state_;
   std::string msg = "";
   ELOG_DEBUG("%s transportName: %s, new_state: %d", toLog(), transport->transport_name.c_str(), state);
@@ -547,7 +547,7 @@ WebRTCEvent WebRtcConnection::getCurrentState() {
   return global_state_;
 }
 
-void WebRtcConnection::write(std::shared_ptr<DataPacket> packet) {
+void WebRtcConnection::write(packetPtr packet) {
   Transport *transport = (bundle_ || packet->type == VIDEO_PACKET) ? video_transport_.get() : audio_transport_.get();
   if (transport == nullptr) {
     return;

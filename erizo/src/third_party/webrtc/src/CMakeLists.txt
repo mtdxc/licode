@@ -10,7 +10,17 @@ endfunction(test_lib)
 project (WEBRTC)
 
 set (WEBRTC_SOURCE ${CMAKE_CURRENT_SOURCE_DIR})
+IF (WIN32)
+    #do something related to WIN32
+ELSEIF (UNIX)
+    #do something related to UNIX
+ELSEIF(APPLE)
+    #do something related to APPLE
+ENDIF (WIN32)
 
+IF (WIN32)
+set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11 -DWEBRTC_WIN")
+ELSE (WIN32)
 set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11 -DWEBRTC_POSIX")
 
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -18,6 +28,7 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ELSE()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -DWEBRTC_LINUX")
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+ENDIF (WIN32)
 
 include_directories("${WEBRTC_SOURCE_DIR}" "${THIRD_PARTY_INCLUDE}")
 

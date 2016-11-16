@@ -4,7 +4,6 @@
 #include <thread/Scheduler.h>
 #include <rtp/RtcpRrGenerator.h>
 #include <lib/Clock.h>
-#include <lib/ClockUtils.h>
 #include <rtp/RtpHeaders.h>
 #include <MediaDefinitions.h>
 #include <WebRtcConnection.h>
@@ -23,6 +22,7 @@ using ::testing::Return;
 using ::testing::AllOf;
 using erizo::DataPacket;
 using erizo::packetType;
+using erizo::packetPtr;
 using erizo::AUDIO_PACKET;
 using erizo::VIDEO_PACKET;
 using erizo::RtcpRrGenerator;
@@ -51,7 +51,7 @@ TEST_F(RtcpRrGeneratorTest, shouldReportPacketLoss) {
       VIDEO_PACKET);
   rr_generator.handleRtpPacket(first_packet);
   rr_generator.handleRtpPacket(second_packet);
-  std::shared_ptr<DataPacket> rr_packet = rr_generator.generateReceiverReport();
+  packetPtr rr_packet = rr_generator.generateReceiverReport();
   RtcpHeader* rtcp_header = reinterpret_cast<RtcpHeader*>(rr_packet->data);
   EXPECT_EQ(rtcp_header->getLostPackets(), kArbitraryPacketsLost);
 }
@@ -66,7 +66,7 @@ TEST_F(RtcpRrGeneratorTest, shouldReportFractionLost) {
   rr_generator.handleRtpPacket(first_packet);
   rr_generator.handleRtpPacket(second_packet);
 
-  std::shared_ptr<DataPacket> rr_packet = rr_generator.generateReceiverReport();
+  packetPtr rr_packet = rr_generator.generateReceiverReport();
   RtcpHeader* rtcp_header = reinterpret_cast<RtcpHeader*>(rr_packet->data);
   EXPECT_EQ(rtcp_header->getFractionLost(), kFractionLost);
 }
@@ -80,7 +80,7 @@ TEST_F(RtcpRrGeneratorTest, shouldReportHighestSeqnum) {
   rr_generator.handleRtpPacket(first_packet);
   rr_generator.handleRtpPacket(second_packet);
 
-  std::shared_ptr<DataPacket> rr_packet = rr_generator.generateReceiverReport();
+  packetPtr rr_packet = rr_generator.generateReceiverReport();
   RtcpHeader* rtcp_header = reinterpret_cast<RtcpHeader*>(rr_packet->data);
   EXPECT_EQ(rtcp_header->getHighestSeqnum(), erizo::kArbitrarySeqNumber + kArbitraryNumberOfPackets);
 }
@@ -97,7 +97,7 @@ TEST_F(RtcpRrGeneratorTest, shouldReportHighestSeqnumWithRollover) {
   rr_generator.handleRtpPacket(first_packet);
   rr_generator.handleRtpPacket(second_packet);
 
-  std::shared_ptr<DataPacket> rr_packet = rr_generator.generateReceiverReport();
+  packetPtr rr_packet = rr_generator.generateReceiverReport();
   RtcpHeader* rtcp_header = reinterpret_cast<RtcpHeader*>(rr_packet->data);
   EXPECT_EQ(rtcp_header->getSeqnumCycles(), kSeqnumCyclesExpected);
   EXPECT_EQ(rtcp_header->getHighestSeqnum(), kNewSeqNum);
@@ -106,7 +106,7 @@ TEST_F(RtcpRrGeneratorTest, shouldReportHighestSeqnumWithRollover) {
 
 TEST_F(RtcpRrGeneratorTest, shouldReportDelaySinceLastSr) {
   int kArbitraryTimePassedInMs = 500;
-  uint kArbitratyTimePassed = kArbitraryTimePassedInMs * 65536/1000;
+  uint32_t kArbitratyTimePassed = kArbitraryTimePassedInMs * 65536/1000;
   auto first_packet = erizo::PacketTools::createDataPacket(erizo::kArbitrarySeqNumber, VIDEO_PACKET);
   auto sender_report = erizo::PacketTools::createSenderReport(erizo::kVideoSsrc, VIDEO_PACKET);
   sender_report->received_time_ms = erizo::ClockUtils::timePointToMs(clock->now());
@@ -114,7 +114,7 @@ TEST_F(RtcpRrGeneratorTest, shouldReportDelaySinceLastSr) {
   rr_generator.handleSr(sender_report);
   advanceClockMs(kArbitraryTimePassedInMs);
 
-  std::shared_ptr<DataPacket> rr_packet = rr_generator.generateReceiverReport();
+  packetPtr rr_packet = rr_generator.generateReceiverReport();
   RtcpHeader* rtcp_header = reinterpret_cast<RtcpHeader*>(rr_packet->data);
   EXPECT_EQ(rtcp_header->getDelaySinceLastSr(), kArbitratyTimePassed);
 }

@@ -26,7 +26,7 @@ class FecReceiverHandler: public OutboundHandler, public webrtc::RtpData {
     return "fec-receiver";
   }
 
-  void write(Context *ctx, std::shared_ptr<DataPacket> packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
   // webrtc::RtpHeader overrides.

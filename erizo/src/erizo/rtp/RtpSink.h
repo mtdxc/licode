@@ -37,15 +37,15 @@ class RtpSink: public MediaSink, public FeedbackSource {
 
   boost::thread send_Thread_, receive_Thread_;
   boost::condition_variable cond_;
-  boost::mutex queueMutex_;
+  Mutex queueMutex_;
   std::queue<DataPacket> sendQueue_;
   bool sending_;
 
   static const int LENGTH = 1500;
   char* buffer_[LENGTH];
 
-  int deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<DataPacket> video_packet) override;
+  int deliverAudioData_(packetPtr audio_packet) override;
+  int deliverVideoData_(packetPtr video_packet) override;
   int sendData(char* buffer, int len);
   void sendLoop();
   void serviceLoop();

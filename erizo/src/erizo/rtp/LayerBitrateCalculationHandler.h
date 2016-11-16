@@ -27,7 +27,7 @@ class LayerBitrateCalculationHandler: public OutboundHandler {
      return "layer_bitrate_calculator";
   }
 
-  void write(Context *ctx, std::shared_ptr<DataPacket> packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:

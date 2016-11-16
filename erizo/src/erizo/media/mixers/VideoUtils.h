@@ -4,8 +4,6 @@
 #ifndef ERIZO_SRC_ERIZO_MEDIA_MIXERS_VIDEOUTILS_H_
 #define ERIZO_SRC_ERIZO_MEDIA_MIXERS_VIDEOUTILS_H_
 
-#include <boost/cstdint.hpp>
-
 #include "./logger.h"
 
 class VideoUtils{

@@ -15,23 +15,23 @@ class RtpUtils {
  public:
   static bool sequenceNumberLessThan(uint16_t first, uint16_t second);
 
-  static void forEachRRBlock(std::shared_ptr<DataPacket> packet, std::function<void(RtcpHeader*)> f);
+  static void forEachRRBlock(packetPtr packet, std::function<void(RtcpHeader*)> f);
 
-  static void updateREMB(RtcpHeader *chead, uint bitrate);
+  static void updateREMB(RtcpHeader *chead, uint64_t bitrate);
 
-  static bool isPLI(std::shared_ptr<DataPacket> packet);
+  static bool isPLI(packetPtr packet);
 
-  static bool isFIR(std::shared_ptr<DataPacket> packet);
+  static bool isFIR(packetPtr packet);
 
   static void forEachNack(RtcpHeader *chead, std::function<void(uint16_t, uint16_t, RtcpHeader*)> f);
 
-  static std::shared_ptr<DataPacket> createPLI(uint32_t source_ssrc, uint32_t sink_ssrc);
+  static packetPtr createPLI(uint32_t source_ssrc, uint32_t sink_ssrc);
 
-  static std::shared_ptr<DataPacket> createFIR(uint32_t source_ssrc, uint32_t sink_ssrc, uint8_t seq_number);
+  static packetPtr createFIR(uint32_t source_ssrc, uint32_t sink_ssrc, uint8_t seq_number);
 
-  static int getPaddingLength(std::shared_ptr<DataPacket> packet);
+  static int getPaddingLength(packetPtr packet);
 
-  static std::shared_ptr<DataPacket> makePaddingPacket(std::shared_ptr<DataPacket> packet, uint8_t padding_size);
+  static packetPtr makePaddingPacket(packetPtr packet, uint8_t padding_size);
 };
 
 }  // namespace erizo

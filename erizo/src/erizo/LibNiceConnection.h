@@ -5,13 +5,12 @@
 #ifndef ERIZO_SRC_ERIZO_LIBNICECONNECTION_H_
 #define ERIZO_SRC_ERIZO_LIBNICECONNECTION_H_
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/thread.hpp>
 #include <string>
 #include <vector>
 #include <queue>
 #include <map>
-
+#include <thread>
+#include <condition_variable>
 #include "./IceConnection.h"
 #include "./MediaDefinitions.h"
 #include "./SdpInfo.h"
@@ -33,7 +32,7 @@ namespace erizo {
 #define NICE_STREAM_DEF_PWD     22 + 1   /* pwd + NULL */
 
 // forward declarations
-typedef std::shared_ptr<DataPacket> packetPtr;
+typedef packetPtr packetPtr;
 class CandidateInfo;
 class WebRtcConnection;
 
@@ -41,7 +40,7 @@ class LibNiceConnection : public IceConnection {
   DECLARE_LOGGER();
 
  public:
-  LibNiceConnection(boost::shared_ptr<LibNiceInterface> libnice, const IceConfig& ice_config);
+  LibNiceConnection(std::shared_ptr<LibNiceInterface> libnice, const IceConfig& ice_config);
 
   virtual ~LibNiceConnection();
   /**
@@ -66,19 +65,19 @@ class LibNiceConnection : public IceConnection {
   void mainLoop();
 
  private:
-  boost::shared_ptr<LibNiceInterface> lib_nice_;
+  std::shared_ptr<LibNiceInterface> lib_nice_;
   NiceAgent* agent_;
   GMainContext* context_;
   GMainLoop* loop_;
 
   unsigned int candsDelivered_;
 
-  boost::thread m_Thread_;
-  boost::mutex close_mutex_;
-  boost::condition_variable cond_;
+  std::thread m_Thread_;
+  Mutex close_mutex_;
+  std::condition_variable cond_;
 
   bool receivedLastCandidate_;
-  boost::shared_ptr<std::vector<CandidateInfo> > local_candidates;
+  std::vector<CandidateInfo> local_candidates;
 };
 
 }  // namespace erizo

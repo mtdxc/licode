@@ -1,11 +1,9 @@
 #include "media/ExternalOutput.h"
 
-#include <sys/time.h>
-
 #include <string>
 #include <cstring>
 
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 
 #include "./WebRtcConnection.h"
 #include "rtp/RtpHeaders.h"
@@ -64,7 +62,7 @@ bool ExternalOutput::init() {
   MediaInfo m;
   m.hasVideo = false;
   m.hasAudio = false;
-  thread_ = boost::thread(&ExternalOutput::sendLoop, this);
+  thread_ = std::thread(&ExternalOutput::sendLoop, this);
   recording_ = true;
   ELOG_DEBUG("Initialized successfully");
   return true;
@@ -265,14 +263,14 @@ void ExternalOutput::maybeWriteVideoPacket(char* buf, int len) {
   }
 }
 
-int ExternalOutput::deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) {
-  std::shared_ptr<DataPacket> copied_packet = std::make_shared<DataPacket>(*audio_packet);
+int ExternalOutput::deliverAudioData_(packetPtr audio_packet) {
+  packetPtr copied_packet = std::make_shared<DataPacket>(*audio_packet);
   queueData(copied_packet->data, copied_packet->length, AUDIO_PACKET);
   return 0;
 }
 
-int ExternalOutput::deliverVideoData_(std::shared_ptr<DataPacket> video_packet) {
-  std::shared_ptr<DataPacket> copied_packet = std::make_shared<DataPacket>(*video_packet);
+int ExternalOutput::deliverVideoData_(packetPtr video_packet) {
+  packetPtr copied_packet = std::make_shared<DataPacket>(*video_packet);
   // TODO(javierc): We should support higher layers, but it requires having an entire pipeline at this point
   if (!video_packet->belongsToSpatialLayer(0)) {
     return 0;
@@ -306,10 +304,10 @@ bool ExternalOutput::initContext() {
     video_stream_->codec->codec_id = video_codec_;
     video_stream_->codec->width = 640;
     video_stream_->codec->height = 480;
-    video_stream_->time_base = (AVRational) { 1, 30 };
+    video_stream_->time_base = { 1, 30 };
     // A decent guess here suffices; if processing the file with ffmpeg,
       // use -vsync 0 to force it not to duplicate frames.
-    video_stream_->codec->pix_fmt = PIX_FMT_YUV420P;
+    video_stream_->codec->pix_fmt = AV_PIX_FMT_YUV420P;
     if (context_->oformat->flags & AVFMT_GLOBALHEADER) {
       video_stream_->codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
     }
@@ -325,7 +323,7 @@ bool ExternalOutput::initContext() {
     audio_stream_->id = 1;
     audio_stream_->codec->codec_id = audio_codec_;
     audio_stream_->codec->sample_rate = audio_map_.clock_rate;
-    audio_stream_->time_base = (AVRational) { 1, audio_stream_->codec->sample_rate };
+    audio_stream_->time_base = { 1, audio_stream_->codec->sample_rate };
     audio_stream_->codec->channels = audio_map_.channels;
     if (context_->oformat->flags & AVFMT_GLOBALHEADER) {
       audio_stream_->codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
@@ -432,7 +430,7 @@ int ExternalOutput::sendFirPacket() {
       pli_header.setLength(2);
       char *buf = reinterpret_cast<char*>(&pli_header);
       int len = (pli_header.getLength() + 1) * 4;
-      std::shared_ptr<DataPacket> pli_packet = std::make_shared<DataPacket>(0, buf, len, VIDEO_PACKET);
+      packetPtr pli_packet = std::make_shared<DataPacket>(0, buf, len, VIDEO_PACKET);
       fb_sink_->deliverFeedback(pli_packet);
       return len;
     }
@@ -441,14 +439,14 @@ int ExternalOutput::sendFirPacket() {
 
 void ExternalOutput::sendLoop() {
   while (recording_) {
-    boost::unique_lock<boost::mutex> lock(mtx_);
+    AutoLock lock(mtx_);
     cond_.wait(lock);
     while (audio_queue_.hasData()) {
-      boost::shared_ptr<DataPacket> audio_packet = audio_queue_.popPacket();
+      std::shared_ptr<DataPacket> audio_packet = audio_queue_.popPacket();
       writeAudioData(audio_packet->data, audio_packet->length);
     }
     while (video_queue_.hasData()) {
-      boost::shared_ptr<DataPacket> video_packet = video_queue_.popPacket();
+      std::shared_ptr<DataPacket> video_packet = video_queue_.popPacket();
       writeVideoData(video_packet->data, video_packet->length);
     }
     if (!inited_ && first_data_received_ != time_point()) {
@@ -458,11 +456,11 @@ void ExternalOutput::sendLoop() {
 
   // Since we're bailing, let's completely drain our queues of all data.
   while (audio_queue_.getSize() > 0) {
-    boost::shared_ptr<DataPacket> audio_packet = audio_queue_.popPacket(true);  // ignore our minimum depth check
+    std::shared_ptr<DataPacket> audio_packet = audio_queue_.popPacket(true);  // ignore our minimum depth check
     writeAudioData(audio_packet->data, audio_packet->length);
   }
   while (video_queue_.getSize() > 0) {
-    boost::shared_ptr<DataPacket> video_packet = video_queue_.popPacket(true);  // ignore our minimum depth check
+    std::shared_ptr<DataPacket> video_packet = video_queue_.popPacket(true);  // ignore our minimum depth check
     writeVideoData(video_packet->data, video_packet->length);
   }
 }

@@ -1,9 +1,10 @@
 #ifndef ERIZO_SRC_ERIZO_MEDIA_MEDIAPROCESSOR_H_
 #define ERIZO_SRC_ERIZO_MEDIA_MEDIAPROCESSOR_H_
 
-#include <boost/cstdint.hpp>
+#ifndef WIN32
 #include <sys/time.h>
 #include <arpa/inet.h>
+#endif // WIN32
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -126,8 +127,8 @@ class InputProcessor: public MediaSink {
 
   bool initAudioUnpackager();
   bool initVideoUnpackager();
-  int deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<DataPacket> video_packet) override;
+  int deliverAudioData_(packetPtr audio_packet) override;
+  int deliverVideoData_(packetPtr video_packet) override;
   int deliverEvent_(MediaEventPtr event) override;
 
   int decodeAudio(unsigned char* inBuff, int inBuffLen, unsigned char* outBuff);

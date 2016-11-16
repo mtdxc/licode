@@ -26,7 +26,7 @@ RtpPaddingGeneratorHandler::RtpPaddingGeneratorHandler(std::shared_ptr<erizo::Cl
   marker_rate_{std::chrono::milliseconds(100), 20, 1., clock_},
   rtp_header_length_{12},
   bucket_{kInitialBitrate, kPaddingBurstSize, clock_},
-  scheduled_task_{std::make_shared<ScheduledTaskReference>()} {}
+  scheduled_task_{0} {}
 
 
 
@@ -61,11 +61,11 @@ void RtpPaddingGeneratorHandler::notifyUpdate() {
   }
 }
 
-void RtpPaddingGeneratorHandler::read(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void RtpPaddingGeneratorHandler::read(Context *ctx, packetPtr packet) {
   ctx->fireRead(std::move(packet));
 }
 
-void RtpPaddingGeneratorHandler::write(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void RtpPaddingGeneratorHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   bool is_higher_sequence_number = false;
   if (packet->type == VIDEO_PACKET && !chead->isRtcp()) {
@@ -84,7 +84,7 @@ void RtpPaddingGeneratorHandler::write(Context *ctx, std::shared_ptr<DataPacket>
   }
 }
 
-void RtpPaddingGeneratorHandler::sendPaddingPacket(std::shared_ptr<DataPacket> packet, uint8_t padding_size) {
+void RtpPaddingGeneratorHandler::sendPaddingPacket(packetPtr packet, uint8_t padding_size) {
   if (padding_size == 0) {
     return;
   }
@@ -104,10 +104,10 @@ void RtpPaddingGeneratorHandler::sendPaddingPacket(std::shared_ptr<DataPacket> p
   getContext()->fireWrite(std::move(padding_packet));
 }
 
-void RtpPaddingGeneratorHandler::onPacketWithMarkerSet(std::shared_ptr<DataPacket> packet) {
+void RtpPaddingGeneratorHandler::onPacketWithMarkerSet(packetPtr packet) {
   marker_rate_++;
 
-  for (uint i = 0; i < number_of_full_padding_packets_; i++) {
+  for (int i = 0; i < number_of_full_padding_packets_; i++) {
     sendPaddingPacket(packet, kMaxPaddingSize);
   }
   sendPaddingPacket(packet, last_padding_packet_size_);
@@ -119,7 +119,7 @@ void RtpPaddingGeneratorHandler::onPacketWithMarkerSet(std::shared_ptr<DataPacke
   }, std::chrono::milliseconds(1000 / kMinMarkerRate));
 }
 
-bool RtpPaddingGeneratorHandler::isHigherSequenceNumber(std::shared_ptr<DataPacket> packet) {
+bool RtpPaddingGeneratorHandler::isHigherSequenceNumber(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   rtp_header_length_ = rtp_header->getHeaderLength();
   uint16_t new_sequence_number = rtp_header->getSeqNumber();
@@ -132,7 +132,7 @@ bool RtpPaddingGeneratorHandler::isHigherSequenceNumber(std::shared_ptr<DataPack
   return true;
 }
 
-void RtpPaddingGeneratorHandler::onVideoPacket(std::shared_ptr<DataPacket> packet) {
+void RtpPaddingGeneratorHandler::onVideoPacket(packetPtr packet) {
   if (!enabled_) {
     return;
   }

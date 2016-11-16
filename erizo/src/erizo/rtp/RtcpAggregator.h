@@ -1,12 +1,10 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_RTCPAGGREGATOR_H_
 #define ERIZO_SRC_ERIZO_RTP_RTCPAGGREGATOR_H_
 
-#include <boost/shared_ptr.hpp>
-
 #include <map>
 #include <list>
 #include <set>
-
+#include <memory>
 #include "./logger.h"
 #include "./MediaDefinitions.h"
 #include "./SdpInfo.h"
@@ -31,13 +29,13 @@ class RtcpAggregator: public RtcpProcessor{
  private:
   static const int REMB_TIMEOUT = 1000;
   static const uint64_t NTPTOMSCONV = 4294967296;
-  std::map<uint32_t, boost::shared_ptr<RtcpData>> rtcpData_;
-  boost::mutex mapLock_;
+  std::map<uint32_t, RtcpDataPtr> rtcpData_;
+  Mutex mapLock_;
   uint32_t defaultVideoBw_;
   uint8_t packet_[128];
   int addREMB(char* buf, int len, uint32_t bitrate);
   int addNACK(char* buf, int len, uint16_t seqNum, uint16_t blp, uint32_t sourceSsrc, uint32_t sinkSsrc);
-  void resetData(boost::shared_ptr<RtcpData> data, uint32_t bandwidth);
+  void resetData(RtcpDataPtr data, uint32_t bandwidth);
 };
 
 }  // namespace erizo

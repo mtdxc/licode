@@ -1,7 +1,5 @@
 #include "rtp/RtpH264Parser.h"
 
-#include <arpa/inet.h>
-
 #include <cstddef>
 #include <cstdio>
 #include <string>

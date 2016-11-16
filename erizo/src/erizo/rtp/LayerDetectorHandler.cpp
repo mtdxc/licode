@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "./MediaStream.h"
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 
 namespace erizo {
 
@@ -31,7 +31,7 @@ void LayerDetectorHandler::disable() {
   enabled_ = false;
 }
 
-void LayerDetectorHandler::read(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void LayerDetectorHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (!chead->isRtcp() && enabled_ && packet->type == VIDEO_PACKET) {
     RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
@@ -86,7 +86,7 @@ int LayerDetectorHandler::getSsrcPosition(uint32_t ssrc) {
   return -1;
 }
 
-void LayerDetectorHandler::parseLayerInfoFromVP8(std::shared_ptr<DataPacket> packet) {
+void LayerDetectorHandler::parseLayerInfoFromVP8(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   unsigned char* start_buffer = reinterpret_cast<unsigned char*> (packet->data);
   start_buffer = start_buffer + rtp_header->getHeaderLength();
@@ -115,7 +115,7 @@ void LayerDetectorHandler::parseLayerInfoFromVP8(std::shared_ptr<DataPacket> pac
     packet->is_keyframe = false;
   }
 
-  if (payload->frameWidth != -1 && static_cast<uint>(payload->frameWidth) != video_frame_width_list_[position]) {
+  if (payload->frameWidth != -1 && (payload->frameWidth) != video_frame_width_list_[position]) {
     video_frame_width_list_[position] = payload->frameWidth;
     video_frame_height_list_[position] = payload->frameHeight;
     notifyLayerInfoChangedEvent();
@@ -124,7 +124,7 @@ void LayerDetectorHandler::parseLayerInfoFromVP8(std::shared_ptr<DataPacket> pac
   delete payload;
 }
 
-void LayerDetectorHandler::addTemporalLayerAndCalculateRate(const std::shared_ptr<DataPacket> &packet,
+void LayerDetectorHandler::addTemporalLayerAndCalculateRate(const packetPtr &packet,
                                                             int temporal_layer, bool new_frame) {
   if (new_frame) {
     video_frame_rate_list_[temporal_layer]++;
@@ -132,7 +132,7 @@ void LayerDetectorHandler::addTemporalLayerAndCalculateRate(const std::shared_pt
   packet->compatible_temporal_layers.push_back(temporal_layer);
 }
 
-void LayerDetectorHandler::parseLayerInfoFromVP9(std::shared_ptr<DataPacket> packet) {
+void LayerDetectorHandler::parseLayerInfoFromVP9(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   unsigned char* start_buffer = reinterpret_cast<unsigned char*> (packet->data);
   start_buffer = start_buffer + rtp_header->getHeaderLength();
@@ -164,7 +164,7 @@ void LayerDetectorHandler::parseLayerInfoFromVP9(std::shared_ptr<DataPacket> pac
   }
   bool resolution_changed = false;
   if (payload->resolutions.size() > 0) {
-    for (uint position = 0; position < payload->resolutions.size(); position++) {
+    for (int position = 0; position < payload->resolutions.size(); position++) {
       resolution_changed = true;
       video_frame_width_list_[position] = payload->resolutions[position].width;
       video_frame_height_list_[position] = payload->resolutions[position].height;
@@ -180,7 +180,7 @@ void LayerDetectorHandler::parseLayerInfoFromVP9(std::shared_ptr<DataPacket> pac
   delete payload;
 }
 
-void LayerDetectorHandler::parseLayerInfoFromH264(std::shared_ptr<DataPacket> packet) {
+void LayerDetectorHandler::parseLayerInfoFromH264(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   unsigned char* start_buffer = reinterpret_cast<unsigned char*> (packet->data);
   start_buffer = start_buffer + rtp_header->getHeaderLength();

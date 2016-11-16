@@ -1,8 +1,8 @@
 #include "media/ExternalInput.h"
-
-#include <boost/cstdint.hpp>
+#ifndef WIN32
 #include <sys/time.h>
 #include <arpa/inet.h>
+#endif
 #include <libavutil/time.h>
 
 #include <cstdio>
@@ -106,7 +106,7 @@ int ExternalInput::init() {
     ELOG_DEBUG("No need for video transcoding, already VP8");
     video_time_base_ = st->time_base.den;
     needTranscoding_ = false;
-    decodedBuffer_.reset((unsigned char*) malloc(100000));
+    decodedBuffer_.resize(100000);
     MediaInfo om;
     om.processorType = PACKAGE_ONLY;
     if (audio_st) {
@@ -129,7 +129,7 @@ int ExternalInput::init() {
     inCodec_.initDecoder(st->codec);
 
     bufflen_ = st->codec->width*st->codec->height*3/2;
-    decodedBuffer_.reset((unsigned char*) malloc(bufflen_));
+    decodedBuffer_.resize(bufflen_);
 
 
     om.processorType = RTP_ONLY;
@@ -152,10 +152,10 @@ int ExternalInput::init() {
 
   av_init_packet(&avpacket_);
 
-  thread_ = boost::thread(&ExternalInput::receiveLoop, this);
+  thread_ = std::thread(&ExternalInput::receiveLoop, this);
   running_ = true;
   if (needTranscoding_)
-    encodeThread_ = boost::thread(&ExternalInput::encodeLoop, this);
+    encodeThread_ = std::thread(&ExternalInput::encodeLoop, this);
 
   return true;
 }
@@ -167,7 +167,7 @@ int ExternalInput::sendPLI() {
 
 void ExternalInput::receiveRtpData(unsigned char* rtpdata, int len) {
   if (video_sink_ != nullptr) {
-    std::shared_ptr<DataPacket> packet = std::make_shared<DataPacket>(0, reinterpret_cast<char*>(rtpdata),
+    packetPtr packet = std::make_shared<DataPacket>(0, reinterpret_cast<char*>(rtpdata),
         len, VIDEO_PACKET);
     video_sink_->deliverVideoData(packet);
   }
@@ -184,10 +184,10 @@ void ExternalInput::receiveLoop() {
     AVPacket orig_pkt = avpacket_;
     if (needTranscoding_) {
       if (avpacket_.stream_index == video_stream_index_) {  // packet is video
-        inCodec_.decodeVideo(avpacket_.data, avpacket_.size, decodedBuffer_.get(), bufflen_, &gotDecodedFrame);
+        inCodec_.decodeVideo(avpacket_.data, avpacket_.size, decodedBuffer_.data(), bufflen_, &gotDecodedFrame);
         RawDataPacket packetR;
         if (gotDecodedFrame) {
-          packetR.data = decodedBuffer_.get();
+          packetR.data = decodedBuffer_.data();
           packetR.length = bufflen_;
           packetR.type = VIDEO;
           queueMutex_.lock();
@@ -205,7 +205,7 @@ void ExternalInput::receiveLoop() {
           av_usleep(pts - now);
         }
         lastPts_ = avpacket_.pts;
-        op_->packageVideo(avpacket_.data, avpacket_.size, decodedBuffer_.get(), avpacket_.pts);
+        op_->packageVideo(avpacket_.data, avpacket_.size, decodedBuffer_.data(), avpacket_.pts);
       } else if (avpacket_.stream_index == audio_stream_index_) {  // packet is audio
         int64_t pts = av_rescale(lastAudioPts_, 1000000, (long int)audio_time_base_);  // NOLINT
         int64_t now = av_gettime() - startTime_;
@@ -213,10 +213,10 @@ void ExternalInput::receiveLoop() {
           av_usleep(pts - now);
         }
         lastAudioPts_ = avpacket_.pts;
-        length = op_->packageAudio(avpacket_.data, avpacket_.size, decodedBuffer_.get(), avpacket_.pts);
+        length = op_->packageAudio(avpacket_.data, avpacket_.size, decodedBuffer_.data(), avpacket_.pts);
         if (length > 0) {
-          std::shared_ptr<DataPacket> packet = std::make_shared<DataPacket>(0,
-              reinterpret_cast<char*>(decodedBuffer_.get()), length, AUDIO_PACKET);
+          packetPtr packet = std::make_shared<DataPacket>(0,
+              reinterpret_cast<char*>(decodedBuffer_.data()), length, AUDIO_PACKET);
           audio_sink_->deliverAudioData(packet);
         }
       }
@@ -237,7 +237,7 @@ void ExternalInput::encodeLoop() {
       queueMutex_.unlock();
     } else {
       queueMutex_.unlock();
-      usleep(10000);
+      av_usleep(10000);
     }
   }
 }

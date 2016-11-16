@@ -6,7 +6,12 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_RTPHEADERS_H_
 #define ERIZO_SRC_ERIZO_RTP_RTPHEADERS_H_
 
+#ifdef WIN32
+#include <WinSock2.h>
+#include <stdint.h>
+#else
 #include <netinet/in.h>
+#endif
 
 namespace erizo {
 // Payload types
@@ -97,81 +102,81 @@ class RtpHeader {
   */
   uint32_t extensions;
 
-  inline RtpHeader() :
+  RtpHeader() :
     cc(0), hasextension(0), padding(0), version(2), payloadtype(0), marker(
         0), seqnum(0), timestamp(0), ssrc(0), extensionpayload(0), extensionlength(0) {
       // No implementation required
   }
 
-  inline uint8_t hasPadding() const {
+  uint8_t hasPadding() const {
     return padding;
   }
 
-  inline void setPadding(uint8_t has_padding) {
+  void setPadding(uint8_t has_padding) {
     padding = has_padding;
   }
 
-  inline uint8_t getVersion() const {
+  uint8_t getVersion() const {
     return version;
   }
-  inline void setVersion(uint8_t aVersion) {
+  void setVersion(uint8_t aVersion) {
     version = aVersion;
   }
-  inline uint8_t getMarker() const {
+  uint8_t getMarker() const {
     return marker;
   }
-  inline void setMarker(uint8_t aMarker) {
+  void setMarker(uint8_t aMarker) {
     marker = aMarker;
   }
-  inline uint8_t getExtension() const {
+  uint8_t getExtension() const {
     return hasextension;
   }
-  inline void setExtension(uint8_t ext) {
+  void setExtension(uint8_t ext) {
     hasextension = ext;
   }
-  inline uint8_t getCc() const {
+  uint8_t getCc() const {
     return cc;
   }
-  inline void setCc(uint8_t theCc) {
+  void setCc(uint8_t theCc) {
     cc = theCc;
   }
-  inline uint8_t getPayloadType() const {
+  uint8_t getPayloadType() const {
     return payloadtype;
   }
-  inline void setPayloadType(uint8_t aType) {
+  void setPayloadType(uint8_t aType) {
     payloadtype = aType;
   }
-  inline uint16_t getSeqNumber() const {
+  uint16_t getSeqNumber() const {
     return ntohs(seqnum);
   }
-  inline void setSeqNumber(uint16_t aSeqNumber) {
+  void setSeqNumber(uint16_t aSeqNumber) {
     seqnum = htons(aSeqNumber);
   }
-  inline uint32_t getTimestamp() const {
+  uint32_t getTimestamp() const {
     return ntohl(timestamp);
   }
-  inline void setTimestamp(uint32_t aTimestamp) {
+  void setTimestamp(uint32_t aTimestamp) {
     timestamp = htonl(aTimestamp);
   }
-  inline uint32_t getSSRC() const {
+  uint32_t getSSRC() const {
     return ntohl(ssrc);
   }
-  inline void setSSRC(uint32_t aSSRC) {
+  void setSSRC(uint32_t aSSRC) {
     ssrc = htonl(aSSRC);
   }
-  inline uint16_t getExtId() const {
+  uint16_t getExtId() const {
     return ntohs(extensionpayload);
   }
-  inline void setExtId(uint16_t extensionId) {
+  void setExtId(uint16_t extensionId) {
     extensionpayload = htons(extensionId);
   }
-  inline uint16_t getExtLength() const {
+  uint16_t getExtLength() const {
     return ntohs(extensionlength);
   }
-  inline void setExtLength(uint16_t extensionLength) {
+  void setExtLength(uint16_t extensionLength) {
     extensionlength = htons(extensionLength);
   }
-  inline int getHeaderLength() const {
+  int getHeaderLength() const {
     return MIN_SIZE + cc * 4 + hasextension * (4 + ntohs(extensionlength) * 4);
   }
 };
@@ -180,16 +185,16 @@ class AbsSendTimeExtension {
  public:
   uint32_t ext_info:8;
   uint32_t abs_data:24;
-  inline uint8_t getId() {
+  uint8_t getId() {
     return ext_info >> 4;
   }
-  inline uint8_t getLength() {
+  uint8_t getLength() {
     return (ext_info & 0x0F);
   }
-  inline uint32_t getAbsSendTime() {
+  uint32_t getAbsSendTime() {
     return ntohl(abs_data)>>8;
   }
-  inline void setAbsSendTime(uint32_t aTime) {
+  void setAbsSendTime(uint32_t aTime) {
     abs_data = htonl(aTime)>>8;
   }
 };
@@ -199,10 +204,10 @@ class RtpRtxHeader {
   RtpHeader rtpHeader;
   uint16_t osn;
 
-  inline uint16_t getOsn() {
+  uint16_t getOsn() {
     return ntohs(osn);
   }
-  inline void setOs(uint16_t theOsn) {
+  void setOs(uint16_t theOsn) {
     osn = htons(theOsn);
   }
 };
@@ -220,16 +225,16 @@ class NackBlock {
   uint32_t pid:16;
   uint32_t blp:16;
 
-  inline uint16_t getNackPid() {
+  uint16_t getNackPid() {
     return ntohs(pid);
   }
-  inline void setNackPid(uint16_t new_pid) {
+  void setNackPid(uint16_t new_pid) {
     pid = htons(new_pid);
   }
-  inline uint16_t getNackBlp() {
+  uint16_t getNackBlp() {
     return ntohs(blp);
   }
-  inline void setNackBlp(uint16_t new_blp) {
+  void setNackBlp(uint16_t new_blp) {
     blp = htons(new_blp);
   }
 };
@@ -364,124 +369,127 @@ class RtcpHeader {
     } fir;
   } report;
 
-  inline RtcpHeader() : blockcount(0), padding(0), version(2), packettype(0), length(0), ssrc(0) {
+  RtcpHeader() : blockcount(0), padding(0), version(2), packettype(0), length(0), ssrc(0) {
   }
 
-  inline bool isFeedback(void) {
+  bool isFeedback(void) {
     return (packettype == RTCP_Receiver_PT ||
         packettype == RTCP_PS_Feedback_PT ||
         packettype == RTCP_RTP_Feedback_PT);
   }
-  inline bool isRtcp(void) {
+  bool isRtcp(void) {
     return (packettype >= RTCP_MIN_PT && packettype <= RTCP_MAX_PT);
   }
-  inline uint8_t getPacketType() {
+  uint8_t getPacketType() {
     return packettype;
   }
-  inline void setPacketType(uint8_t pt) {
+  void setPacketType(uint8_t pt) {
     packettype = pt;
   }
-  inline uint8_t getBlockCount() {
+  uint8_t getBlockCount() {
     return (uint8_t)blockcount;
   }
-  inline void setBlockCount(uint8_t count) {
+  void setBlockCount(uint8_t count) {
     blockcount = count;
   }
-  inline uint16_t getLength() {
+  int getSize() {
+    return (getLength() + 1) * 4;
+  }
+  uint16_t getLength() {
     return ntohs(length);
   }
-  inline void setLength(uint16_t theLength) {
+  void setLength(uint16_t theLength) {
     length = htons(theLength);
   }
-  inline uint32_t getSSRC() {
+  uint32_t getSSRC() {
     return ntohl(ssrc);
   }
-  inline void setSSRC(uint32_t aSsrc) {
+  void setSSRC(uint32_t aSsrc) {
     ssrc = htonl(aSsrc);
   }
-  inline uint32_t getSourceSSRC() {
+  uint32_t getSourceSSRC() {
     return ntohl(report.receiverReport.ssrcsource);
   }
-  inline void setSourceSSRC(uint32_t sourceSsrc) {
+  void setSourceSSRC(uint32_t sourceSsrc) {
     report.receiverReport.ssrcsource = htonl(sourceSsrc);
   }
-  inline uint8_t getFractionLost() {
+  uint8_t getFractionLost() {
     return (uint8_t)report.receiverReport.fractionlost;
   }
-  inline void setFractionLost(uint8_t fractionLost) {
+  void setFractionLost(uint8_t fractionLost) {
     report.receiverReport.fractionlost = fractionLost;
   }
-  inline uint32_t getLostPackets() {
+  uint32_t getLostPackets() {
     return ntohl(report.receiverReport.lost) >> 8;
   }
-  inline void setLostPackets(uint32_t lost) {
+  void setLostPackets(uint32_t lost) {
     report.receiverReport.lost = htonl(lost) >> 8;
   }
-  inline uint16_t getSeqnumCycles() {
+  uint16_t getSeqnumCycles() {
     return ntohs(report.receiverReport.seqnumcycles);
   }
-  inline void setSeqnumCycles(uint16_t seqnumcycles) {
+  void setSeqnumCycles(uint16_t seqnumcycles) {
     report.receiverReport.seqnumcycles = htons(seqnumcycles);
   }
-  inline uint16_t getHighestSeqnum() {
+  uint16_t getHighestSeqnum() {
     return ntohs(report.receiverReport.highestseqnum);
   }
-  inline void setHighestSeqnum(uint16_t highest) {
+  void setHighestSeqnum(uint16_t highest) {
     report.receiverReport.highestseqnum = htons(highest);
   }
-  inline uint32_t getJitter() {
+  uint32_t getJitter() {
     return ntohl(report.receiverReport.jitter);
   }
-  inline void setJitter(uint32_t jitter) {
+  void setJitter(uint32_t jitter) {
     report.receiverReport.jitter = htonl(jitter);
   }
-  inline uint32_t getLastSr() {
+  uint32_t getLastSr() {
     return ntohl(report.receiverReport.lastsr);
   }
-  inline void setLastSr(uint32_t lastsr) {
+  void setLastSr(uint32_t lastsr) {
     report.receiverReport.lastsr = htonl(lastsr);
   }
-  inline uint32_t getDelaySinceLastSr() {
+  uint32_t getDelaySinceLastSr() {
     return ntohl (report.receiverReport.delaysincelast);
   }
-  inline void setDelaySinceLastSr(uint32_t delaylastsr) {
+  void setDelaySinceLastSr(uint32_t delaylastsr) {
     report.receiverReport.delaysincelast = htonl(delaylastsr);
   }
-  inline uint32_t getPacketsSent() {
+  uint32_t getPacketsSent() {
     return ntohl(report.senderReport.packetsent);
   }
-  inline void setPacketsSent(uint32_t packetssent) {
+  void setPacketsSent(uint32_t packetssent) {
     report.senderReport.packetsent = htonl(packetssent);
   }
-  inline uint32_t getOctetsSent() {
+  uint32_t getOctetsSent() {
     return ntohl(report.senderReport.octetssent);
   }
-  inline void setOctetsSent(uint32_t octets_sent) {
+  void setOctetsSent(uint32_t octets_sent) {
     report.senderReport.octetssent = htonl(octets_sent);
   }
-  inline uint64_t getNtpTimestamp() {
+  uint64_t getNtpTimestamp() {
     return (((uint64_t)htonl(report.senderReport.ntptimestamp)) << 32) + htonl(report.senderReport.ntptimestamp >> 32);
   }
-  inline void setNtpTimestamp(uint64_t ntp_timestamp) {
+  void setNtpTimestamp(uint64_t ntp_timestamp) {
     report.senderReport.ntptimestamp = (((uint64_t)ntohl(ntp_timestamp)) << 32) + ntohl(ntp_timestamp >> 32);
   }
-  inline uint32_t get32MiddleNtp() {
+  uint32_t get32MiddleNtp() {
     uint64_t middle = (report.senderReport.ntptimestamp << 16) >> 32;
     return ntohl(middle);
   }
-  inline uint16_t getNackPid() {
+  uint16_t getNackPid() {
     return report.nackPacket.nack_block.getNackPid();
   }
-  inline void setNackPid(uint16_t pid) {
+  void setNackPid(uint16_t pid) {
     report.nackPacket.nack_block.setNackPid(pid);
   }
-  inline uint16_t getNackBlp() {
+  uint16_t getNackBlp() {
     return report.nackPacket.nack_block.getNackBlp();
   }
-  inline void setNackBlp(uint16_t blp) {
+  void setNackBlp(uint16_t blp) {
     report.nackPacket.nack_block.setNackBlp(blp);
   }
-  inline void setREMBBitRate(uint64_t bitRate) {
+  void setREMBBitRate(uint64_t bitRate) {
     uint64_t max = 0x3FFFF;  // 18 bits
     uint16_t exp = 0;
     while (bitRate >= max && exp < 64) {
@@ -494,39 +502,39 @@ class RtcpHeader {
     uint32_t line = mantissa + (exp << 18);
     report.rembPacket.brLength = htonl(line) >> 8;
   }
-  inline uint64_t getREMBBitRate() {
+  uint64_t getREMBBitRate() {
     return getBrMantis() << getBrExp();
   }
 
-  inline uint32_t getBrExp() {
+  uint32_t getBrExp() {
     // remove the 0s added by nothl (8) + the 18 bits of Mantissa
     return (ntohl(report.rembPacket.brLength) >> 26);
   }
-  inline uint32_t getBrMantis() {
+  uint32_t getBrMantis() {
     return (ntohl(report.rembPacket.brLength) >> 8 & 0x3ffff);
   }
-  inline uint8_t getREMBNumSSRC() {
+  uint8_t getREMBNumSSRC() {
     return report.rembPacket.numssrc;
   }
-  inline void setREMBNumSSRC(uint8_t num) {
+  void setREMBNumSSRC(uint8_t num) {
     report.rembPacket.numssrc = num;
   }
-  inline uint32_t getREMBFeedSSRC() {
+  uint32_t getREMBFeedSSRC() {
     return ntohl(report.rembPacket.ssrcfeedb);
   }
-  inline void setREMBFeedSSRC(uint32_t ssrc) {
+  void setREMBFeedSSRC(uint32_t ssrc) {
      report.rembPacket.ssrcfeedb = htonl(ssrc);
   }
-  inline uint32_t getFCI() {
+  uint32_t getFCI() {
     return ntohl(report.pli.fci);
   }
-  inline void setFCI(uint32_t fci) {
+  void setFCI(uint32_t fci) {
     report.pli.fci = htonl(fci);
   }
-  inline void setFIRSourceSSRC(uint32_t ssrc) {
+  void setFIRSourceSSRC(uint32_t ssrc) {
     report.fir.mediasource = htonl(ssrc);
   }
-  inline void setFIRSequenceNumber(uint8_t seq_number) {
+  void setFIRSequenceNumber(uint8_t seq_number) {
     report.fir.seqnumber = seq_number;
   }
 };

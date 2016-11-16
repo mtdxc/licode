@@ -253,7 +253,7 @@ TEST_F(SdpInfoMediaTest, shouldOnlyMapRtxCorrespondingToSupportedCodecs) {
 }
 
 TEST_F(SdpInfoTest, shouldParseSIMGroup) {
-  const uint kSimSSRCsInSdp = 2;
+  const uint32_t kSimSSRCsInSdp = 2;
   const uint32_t kFirstSimSSRC = 1662454169;
   const uint32_t kSecondSimSSRC = 1662455169;
   std::ifstream ifs("ChromeSimulcast.sdp", std::fstream::in);
@@ -267,7 +267,7 @@ TEST_F(SdpInfoTest, shouldParseSIMGroup) {
 }
 
 TEST_F(SdpInfoTest, shouldParseRidSimulcast) {
-  const uint kSimSSRCsInSdp = 2;
+  const uint32_t kSimSSRCsInSdp = 2;
   const uint32_t kFirstSimSSRC = 1553976150;
   const std::string kFirstSimId = "spam";
   const uint32_t kSecondSimSSRC = 2935962150;

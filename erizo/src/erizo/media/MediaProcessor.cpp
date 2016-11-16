@@ -11,7 +11,6 @@ extern "C" {
 #include "rtp/RtpHeaders.h"
 #include "media/codecs/VideoCodec.h"
 #include "lib/Clock.h"
-#include "lib/ClockUtils.h"
 
 using std::memcpy;
 
@@ -70,9 +69,9 @@ int InputProcessor::init(const MediaInfo& info, RawDataReceiver* receiver) {
   return 0;
 }
 
-int InputProcessor::deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) {
+int InputProcessor::deliverAudioData_(packetPtr audio_packet) {
   if (audioDecoder && audioUnpackager) {
-    std::shared_ptr<DataPacket> copied_packet = std::make_shared<DataPacket>(*audio_packet);
+    packetPtr copied_packet = std::make_shared<DataPacket>(*audio_packet);
     ELOG_DEBUG("Decoding audio");
     int unp = unpackageAudio((unsigned char*) copied_packet->data, copied_packet->length,
         unpackagedAudioBuffer_);
@@ -87,9 +86,9 @@ int InputProcessor::deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) 
   }
   return 0;
 }
-int InputProcessor::deliverVideoData_(std::shared_ptr<DataPacket> video_packet) {
+int InputProcessor::deliverVideoData_(packetPtr video_packet) {
   if (videoUnpackager && videoDecoder) {
-    std::shared_ptr<DataPacket> copied_packet = std::make_shared<DataPacket>(*video_packet);
+    packetPtr copied_packet = std::make_shared<DataPacket>(*video_packet);
     int ret = unpackageVideo(reinterpret_cast<unsigned char*>(copied_packet->data), copied_packet->length,
         unpackagedBufferPtr_, &gotUnpackagedFrame_);
     if (ret < 0)

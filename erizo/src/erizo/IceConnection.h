@@ -5,8 +5,6 @@
 #ifndef ERIZO_SRC_ERIZO_ICECONNECTION_H_
 #define ERIZO_SRC_ERIZO_ICECONNECTION_H_
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/thread.hpp>
 #include <string>
 #include <vector>
 #include <queue>
@@ -21,12 +19,10 @@ typedef struct _NiceAgent NiceAgent;
 typedef struct _GMainContext GMainContext;
 typedef struct _GMainLoop GMainLoop;
 
-typedef unsigned int uint;
-
 namespace erizo {
 
 // forward declarations
-typedef std::shared_ptr<DataPacket> packetPtr;
+typedef packetPtr packetPtr;
 class CandidateInfo;
 class WebRtcConnection;
 class IceConnection;

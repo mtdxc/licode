@@ -88,7 +88,7 @@ class LayerDetectorHandlerVp8Test : public erizo::BaseHandlerTest,
   }
 
   std::shared_ptr<LayerDetectorHandler> layer_detector_handler;
-  std::shared_ptr<DataPacket> packet;
+  erizo::packetPtr packet;
   int ssrc;
   int tid;
   int spatial_layer_id;

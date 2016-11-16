@@ -7,7 +7,7 @@
 
 #include "./logger.h"
 #include "pipeline/Handler.h"
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 
 #define MAX_DELAY 450000
 
@@ -28,8 +28,8 @@ class RtcpNackGenerator{
  public:
   explicit RtcpNackGenerator(uint32_t ssrc_,
       std::shared_ptr<Clock> the_clock = std::make_shared<SteadyClock>());
-  bool handleRtpPacket(std::shared_ptr<DataPacket> packet);
-  bool addNackPacketToRr(std::shared_ptr<DataPacket> rr_packet);
+  bool handleRtpPacket(packetPtr packet);
+  bool addNackPacketToRr(packetPtr rr_packet);
 
  private:
   bool addNacks(uint16_t seq_num);

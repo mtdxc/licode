@@ -1,11 +1,9 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_RTPPACKETQUEUE_H_
 #define ERIZO_SRC_ERIZO_RTP_RTPPACKETQUEUE_H_
 
-#include <boost/shared_ptr.hpp>
-#include <boost/thread/mutex.hpp>
 
 #include <list>
-
+#include <memory>
 #include "./logger.h"
 
 namespace erizo {
@@ -45,7 +43,7 @@ class RtpPacketQueue {
   ~RtpPacketQueue(void);
   void setTimebase(unsigned int timebase);
   void pushPacket(const char *data, int length);
-  boost::shared_ptr<DataPacket> popPacket(bool ignore_depth = false);
+  std::shared_ptr<DataPacket> popPacket(bool ignore_depth = false);
   int getSize();  // total size of all items in the queue
   bool hasData();  // whether or not current queue depth is >= depth_
 
@@ -54,8 +52,8 @@ class RtpPacketQueue {
   // Must be called with queueMutex_ locked.
   double getDepthInSeconds();
 
-  boost::mutex queueMutex_;
-  std::list<boost::shared_ptr<DataPacket> > queue_;
+  Mutex queueMutex_;
+  std::list<std::shared_ptr<DataPacket> > queue_;
   int lastSequenceNumberGiven_;
   bool rtpSequenceLessThan(uint16_t x, uint16_t y);
 

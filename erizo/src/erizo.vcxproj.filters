@@ -1,0 +1,630 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{2f94e964-73c8-4f09-8566-4291518be64e}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header files">
+      <UniqueIdentifier>{cd3a6232-d519-41c4-ad7b-629d559b569a}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource files">
+      <UniqueIdentifier>{82a40cf8-7d26-42f7-86a2-53e5fe63d565}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Header files\erizo">
+      <UniqueIdentifier>{89d9a475-1dc5-43f8-8f7a-4c0533ceb3fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\erizo\dtls">
+      <UniqueIdentifier>{1561ad78-e74f-4e7e-bfb9-032816710c27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\erizo\lib">
+      <UniqueIdentifier>{4b266a72-5a7a-40b9-b452-d2132c267f4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\erizo\media">
+      <UniqueIdentifier>{ab12abbe-f167-4d7c-9aa7-3307ca6b9f55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\erizo\media\codecs">
+      <UniqueIdentifier>{71338686-49b2-404b-9e8e-7613160641dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\erizo\media\mixers">
+      <UniqueIdentifier>{bdca451c-bfa7-4fa6-b0f2-5dbdecd50ccb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\erizo\pipeline">
+      <UniqueIdentifier>{6783f639-4aab-4737-aa45-2e91db831e6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\erizo\rtp">
+      <UniqueIdentifier>{18d1f12a-b9c0-49bb-9b63-f88e8ce0bdc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\erizo\stats">
+      <UniqueIdentifier>{4d0f7b6a-044e-41f7-82e6-668b47abf029}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\erizo\thread">
+      <UniqueIdentifier>{6d634723-2b39-467a-a0d4-1c562058b7e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\test">
+      <UniqueIdentifier>{9ebbc1ab-93e7-4302-8aef-ece1abe5fa1e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\test\utils">
+      <UniqueIdentifier>{a7110fa5-15af-4880-9da5-9c2b6624d747}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\erizo">
+      <UniqueIdentifier>{eac13245-e419-4345-86db-0ca0be2a2ed7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\erizo\dtls">
+      <UniqueIdentifier>{2adb1cc8-5bde-45fc-85d1-c79fe7b76751}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\erizo\lib">
+      <UniqueIdentifier>{be3c25fc-4b59-4dce-808b-fad3121b2859}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\erizo\media">
+      <UniqueIdentifier>{cf2380a4-bbda-42c4-a77f-51612d6fcba4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\erizo\media\codecs">
+      <UniqueIdentifier>{64d34722-f83e-4941-a63b-bb609dc77b86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\erizo\media\mixers">
+      <UniqueIdentifier>{eb291ace-8887-4c48-96e5-87d8b9c4a926}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\erizo\pipeline">
+      <UniqueIdentifier>{23dc92fa-fc61-4efe-b7f4-bb48c942ac1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\erizo\rtp">
+      <UniqueIdentifier>{412ba14c-75a7-4d0d-bdc2-79c0676e8ae2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\erizo\stats">
+      <UniqueIdentifier>{9e0bb007-9cf9-4d6e-a5df-2f79638f41c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\erizo\thread">
+      <UniqueIdentifier>{b1ee0a9e-6bbe-4d09-9ce2-1769ddfea544}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\test">
+      <UniqueIdentifier>{d93218ca-8b4d-477d-be7c-32c31ebc95f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\test\lib">
+      <UniqueIdentifier>{36ea7018-beab-4ba4-86fe-97dd2ee8c5b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\test\media">
+      <UniqueIdentifier>{35c84069-f78b-4e34-8b6f-c51de64abf3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\test\rtp">
+      <UniqueIdentifier>{7c04f524-4afc-4b3e-969e-8e411e15d40a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\test\stats">
+      <UniqueIdentifier>{a23a37ba-2388-446d-8323-1f68bebc57fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\test\thread">
+      <UniqueIdentifier>{4337c018-9e9f-4392-9dad-2a0acf727773}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\test\utils">
+      <UniqueIdentifier>{125ccf99-da26-4a8c-bdbb-5ee685bd20a4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="erizo\DtlsTransport.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\IceConnection.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\LibNiceConnection.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\logger.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\MediaDefinitions.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\OneToManyProcessor.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\SdpInfo.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\SrtpChannel.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\Stats.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\StringUtil.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\WebRtcConnection.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\dtls\bf_dwrap.c">
+      <Filter>Source files\erizo\dtls</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\dtls\DtlsClient.cpp">
+      <Filter>Source files\erizo\dtls</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\dtls\DtlsSocket.cpp">
+      <Filter>Source files\erizo\dtls</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\lib\LibNiceInterfaceImpl.cpp">
+      <Filter>Source files\erizo\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\lib\TokenBucket.cpp">
+      <Filter>Source files\erizo\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\ExternalInput.cpp">
+      <Filter>Source files\erizo\media</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\ExternalOutput.cpp">
+      <Filter>Source files\erizo\media</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\MediaProcessor.cpp">
+      <Filter>Source files\erizo\media</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\OneToManyTranscoder.cpp">
+      <Filter>Source files\erizo\media</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\SyntheticInput.cpp">
+      <Filter>Source files\erizo\media</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\codecs\AudioCodec.cpp">
+      <Filter>Source files\erizo\media\codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\codecs\VideoCodec.cpp">
+      <Filter>Source files\erizo\media\codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\mixers\VideoMixer.cpp">
+      <Filter>Source files\erizo\media\mixers</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\mixers\VideoUtils.cpp">
+      <Filter>Source files\erizo\media\mixers</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\pipeline\Pipeline.cpp">
+      <Filter>Source files\erizo\pipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\BandwidthEstimationHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\FecReceiverHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\LayerBitrateCalculationHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\LayerDetectorHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\PacketBufferService.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\PliPacerHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\QualityFilterHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\QualityManager.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtcpAggregator.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtcpFeedbackGenerationHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtcpForwarder.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtcpNackGenerator.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtcpProcessorHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtcpRrGenerator.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpExtensionProcessor.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpPacketQueue.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpPaddingGeneratorHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpPaddingRemovalHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpRetransmissionHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpSlideShowHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpTrackMuteHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpUtils.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpVP8Fragmenter.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpVP8Parser.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpVP9Parser.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\SenderBandwidthEstimantionHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\SequenceNumberTranslator.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\SRPacketHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\StatsHandler.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\stats\StatNode.cpp">
+      <Filter>Source files\erizo\stats</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\thread\IOThreadPool.cpp">
+      <Filter>Source files\erizo\thread</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\thread\Scheduler.cpp">
+      <Filter>Source files\erizo\thread</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\thread\Worker.cpp">
+      <Filter>Source files\erizo\thread</Filter>
+    </ClCompile>
+    <ClCompile Include="test\LibNiceConnectionTest.cpp">
+      <Filter>Source files\test</Filter>
+    </ClCompile>
+    <ClCompile Include="test\main.cpp">
+      <Filter>Source files\test</Filter>
+    </ClCompile>
+    <ClCompile Include="test\OneToManyProcessorTest.cpp">
+      <Filter>Source files\test</Filter>
+    </ClCompile>
+    <ClCompile Include="test\PacketTest.cpp">
+      <Filter>Source files\test</Filter>
+    </ClCompile>
+    <ClCompile Include="test\SdpTest.cpp">
+      <Filter>Source files\test</Filter>
+    </ClCompile>
+    <ClCompile Include="test\lib\TokenBucketTest.cpp">
+      <Filter>Source files\test\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\BandwidthEstimationHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\FecReceiverHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\LayerBitrateCalculationHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\LayerDetectorHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\PliPacerHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\QualityManagerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\RtcpFeedbackGenerationHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\RtcpNackGeneratorTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\RtcpProcessorHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\RtcpRrGeneratorTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\RtpExtensionProcessorTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\RtpPaddingGeneratorHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\RtpRetransmissionHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\RtpSlideShowHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\RtpTrackMuteHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\SenderBandwidthEstimationTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\SequenceNumberTranslatorTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\SRPacketHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\rtp\StatsHandlerTest.cpp">
+      <Filter>Source files\test\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\stats\MovingAverageStatTest.cpp">
+      <Filter>Source files\test\stats</Filter>
+    </ClCompile>
+    <ClCompile Include="test\stats\MovingIntervalRateStatTest.cpp">
+      <Filter>Source files\test\stats</Filter>
+    </ClCompile>
+    <ClCompile Include="test\stats\StatNodeTest.cpp">
+      <Filter>Source files\test\stats</Filter>
+    </ClCompile>
+    <ClCompile Include="test\thread\SchedulerTest.cpp">
+      <Filter>Source files\test\thread</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\Depacketizer.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\MediaStream.cpp">
+      <Filter>Source files\erizo\media</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpH264Parser.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="test\media\DepacketizerTest.cpp">
+      <Filter>Source files\test</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\thread\IOWorker.cpp">
+      <Filter>Header files\erizo\thread</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="erizo\DtlsTransport.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\IceConnection.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\LibNiceConnection.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\logger.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\MediaDefinitions.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\NicerConnection.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\OneToManyProcessor.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\SdpInfo.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\SrtpChannel.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\Stats.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\StringUtil.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\Transport.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\WebRtcConnection.h">
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\dtls\bf_dwrap.h">
+      <Filter>Header files\erizo\dtls</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\dtls\DtlsSocket.h">
+      <Filter>Header files\erizo\dtls</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\lib\Clock.h">
+      <Filter>Header files\erizo\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\lib\LibNiceInterface.h">
+      <Filter>Header files\erizo\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\lib\NicerInterface.h">
+      <Filter>Header files\erizo\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\lib\TokenBucket.h">
+      <Filter>Header files\erizo\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\ExternalInput.h">
+      <Filter>Header files\erizo\media</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\ExternalOutput.h">
+      <Filter>Header files\erizo\media</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\MediaProcessor.h">
+      <Filter>Header files\erizo\media</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\OneToManyTranscoder.h">
+      <Filter>Header files\erizo\media</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\SyntheticInput.h">
+      <Filter>Header files\erizo\media</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\codecs\AudioCodec.h">
+      <Filter>Header files\erizo\media\codecs</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\codecs\Codecs.h">
+      <Filter>Header files\erizo\media\codecs</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\codecs\VideoCodec.h">
+      <Filter>Header files\erizo\media\codecs</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\mixers\VideoMixer.h">
+      <Filter>Header files\erizo\media\mixers</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\mixers\VideoUtils.h">
+      <Filter>Header files\erizo\media\mixers</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\pipeline\Handler.h">
+      <Filter>Header files\erizo\pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\pipeline\HandlerContext-inl.h">
+      <Filter>Header files\erizo\pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\pipeline\HandlerContext.h">
+      <Filter>Header files\erizo\pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\pipeline\Pipeline-inl.h">
+      <Filter>Header files\erizo\pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\pipeline\Pipeline.h">
+      <Filter>Header files\erizo\pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\pipeline\Service.h">
+      <Filter>Header files\erizo\pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\pipeline\ServiceContext-inl.h">
+      <Filter>Header files\erizo\pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\pipeline\ServiceContext.h">
+      <Filter>Header files\erizo\pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\BandwidthEstimationHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\FecReceiverHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\LayerBitrateCalculationHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\LayerDetectorHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\PacketBufferService.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\PliPacerHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\QualityFilterHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\QualityManager.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtcpAggregator.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtcpFeedbackGenerationHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtcpForwarder.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtcpNackGenerator.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtcpProcessor.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtcpProcessorHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtcpRrGenerator.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpExtensionProcessor.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpHeaders.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpPacketQueue.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpPaddingGeneratorHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpPaddingRemovalHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpRetransmissionHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpSink.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpSlideShowHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpSource.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpTrackMuteHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpUtils.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpVP8Fragmenter.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpVP8Parser.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpVP9Parser.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\SenderBandwidthEstimationHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\SequenceNumberTranslator.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\SRPacketHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\StatsHandler.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\stats\StatNode.h">
+      <Filter>Header files\erizo\stats</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\thread\IOThreadPool.h">
+      <Filter>Header files\erizo\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\thread\IOWorker.h">
+      <Filter>Header files\erizo\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\thread\Scheduler.h">
+      <Filter>Header files\erizo\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\thread\Worker.h">
+      <Filter>Header files\erizo\thread</Filter>
+    </ClInclude>
+    <ClInclude Include="test\utils\Matchers.h">
+      <Filter>Header files\test\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="test\utils\Mocks.h">
+      <Filter>Header files\test\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="test\utils\Tools.h">
+      <Filter>Header files\test\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpH264Parser.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\media\Depacketizer.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\MediaStream.h">
+      <Filter>Header files\erizo\media</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -12,8 +12,11 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 #include "rtp/RtpVP9Parser.h"
-
+#ifdef WIN32
+#include <WinSock2.h>
+#else
 #include <arpa/inet.h>
+#endif // WIN32
 
 #include <cstddef>
 #include <cstdio>

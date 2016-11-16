@@ -41,7 +41,7 @@ MATCHER_P(ReceiverReportHasDlsrValue, delay_since_last_sr, "") {
   return (reinterpret_cast<erizo::RtcpHeader*>(std::get<0>(arg)->data))->getDelaySinceLastSr() == delay_since_last_sr;
 }
 MATCHER_P(SenderReportHasPacketsSentValue, packets_sent, "") {
-  uint unsigned_packets_sent = abs(packets_sent);
+  uint32_t unsigned_packets_sent = abs(packets_sent);
   return (reinterpret_cast<erizo::RtcpHeader*>(std::get<0>(arg)->data))->getPacketsSent() == unsigned_packets_sent;
 }
 MATCHER_P(SenderReportHasOctetsSentValue, octets_sent, "") {

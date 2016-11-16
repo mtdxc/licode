@@ -1,20 +1,19 @@
 /*
  * DtlsConnection.cpp
  */
-
+#include "rtp/RtpHeaders.h"
 #include "DtlsTransport.h"
 
 #include <string>
 #include <cstring>
 #include <memory>
-
+#include "MediaDefinitions.h"
 #include "./SrtpChannel.h"
-#include "rtp/RtpHeaders.h"
 #include "./LibNiceConnection.h"
+#ifdef HAS_NICER
 #include "./NicerConnection.h"
-
-using erizo::Resender;
-using erizo::DtlsTransport;
+#endif
+using namespace erizo;
 using dtls::DtlsSocketContext;
 
 DEFINE_LOGGER(DtlsTransport, "DtlsTransport");
@@ -27,7 +26,7 @@ static std::mutex dtls_mutex;
 Resender::Resender(DtlsTransport* transport, dtls::DtlsSocketContext* ctx)
     : transport_(transport), socket_context_(ctx),
       resend_seconds_(kInitialSecsPerResend), max_resends_(kMaxResends),
-      scheduled_task_{std::make_shared<ScheduledTaskReference>()} {
+      scheduled_task_{0} {
 }
 
 Resender::~Resender() {
@@ -35,12 +34,15 @@ Resender::~Resender() {
 }
 
 void Resender::cancel() {
-  transport_->getWorker()->unschedule(scheduled_task_);
+  if (scheduled_task_) {
+    transport_->getWorker()->unschedule(scheduled_task_);
+    scheduled_task_ = 0;
+  }
 }
 
 void Resender::scheduleResend(packetPtr packet) {
   ELOG_DEBUG("message: Scheduling a new resender");
-  transport_->getWorker()->unschedule(scheduled_task_);
+  cancel();
   resend_seconds_ = kInitialSecsPerResend;
   packet_ = packet;
   transport_->writeDtlsPacket(socket_context_, packet_);
@@ -74,7 +76,7 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, c
                             const IceConfig& iceConfig, std::string username, std::string password,
                             bool isServer, std::shared_ptr<Worker> worker, std::shared_ptr<IOWorker> io_worker):
   Transport(med, transport_name, connection_id, bundle, rtcp_mux, transport_listener, iceConfig, worker, io_worker),
-  unprotect_packet_{std::make_shared<DataPacket>()},
+  unprotect_packet_{std::make_shared<erizo::DataPacket>()},
   readyRtp(false), readyRtcp(false), isServer_(isServer) {
     ELOG_DEBUG("%s message: constructor, transportName: %s, isBundle: %d", toLog(), transport_name.c_str(), bundle);
     dtlsRtp.reset(new DtlsSocketContext());
@@ -110,7 +112,9 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, c
     iceConfig_.username = username;
     iceConfig_.password = password;
     if (iceConfig_.use_nicer) {
+#ifdef HAS_NICER
       ice_ = NicerConnection::create(io_worker_, iceConfig_);
+#endif
     } else {
       ice_.reset(LibNiceConnection::create(iceConfig_));
     }
@@ -285,7 +289,7 @@ void DtlsTransport::writeDtlsPacket(DtlsSocketContext *ctx, packetPtr packet) {
 
 void DtlsTransport::onHandshakeCompleted(DtlsSocketContext *ctx, std::string clientKey, std::string serverKey,
                                          std::string srtp_profile) {
-  boost::mutex::scoped_lock lock(sessionMutex_);
+  AutoLock lock(sessionMutex_);
   std::string temp;
 
   if (isServer_) {  // If we are server, we swap the keys

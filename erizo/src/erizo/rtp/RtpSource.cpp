@@ -33,7 +33,7 @@ RtpSource::~RtpSource() {
   rtpSource_thread_.join();
 }
 
-int RtpSource::deliverFeedback_(std::shared_ptr<DataPacket> fb_packet) {
+int RtpSource::deliverFeedback_(packetPtr fb_packet) {
   fbSocket_->send_to(boost::asio::buffer(fb_packet->data, fb_packet->length), *iterator_);
   return fb_packet->length;
 }

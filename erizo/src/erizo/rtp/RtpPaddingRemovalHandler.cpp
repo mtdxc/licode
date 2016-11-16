@@ -17,7 +17,7 @@ void RtpPaddingRemovalHandler::disable() {
   enabled_ = false;
 }
 
-void RtpPaddingRemovalHandler::read(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void RtpPaddingRemovalHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
 
@@ -41,7 +41,7 @@ void RtpPaddingRemovalHandler::read(Context *ctx, std::shared_ptr<DataPacket> pa
   ctx->fireRead(std::move(packet));
 }
 
-void RtpPaddingRemovalHandler::write(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void RtpPaddingRemovalHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader* rtcp_head = reinterpret_cast<RtcpHeader*>(packet->data);
   if (!enabled_ || packet->type != VIDEO_PACKET || !rtcp_head->isFeedback()) {
     ctx->fireWrite(std::move(packet));
@@ -87,7 +87,7 @@ void RtpPaddingRemovalHandler::write(Context *ctx, std::shared_ptr<DataPacket> p
   ctx->fireWrite(std::move(packet));
 }
 
-bool RtpPaddingRemovalHandler::removePaddingBytes(std::shared_ptr<DataPacket> packet,
+bool RtpPaddingRemovalHandler::removePaddingBytes(packetPtr packet,
     std::shared_ptr<SequenceNumberTranslator> translator) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   int header_length = rtp_header->getHeaderLength();

@@ -1,9 +1,9 @@
 #ifndef ERIZO_SRC_ERIZO_THREAD_SCHEDULER_H_
 #define ERIZO_SRC_ERIZO_THREAD_SCHEDULER_H_
 
-#include <boost/function.hpp>
-#include <boost/thread.hpp>
-
+#include <functional>
+#include <thread>
+#include <vector>
 #include <chrono>  // NOLINT
 #include <map>
 #include <mutex>  // NOLINT
@@ -19,7 +19,7 @@ class Scheduler {
   explicit Scheduler(int n_threads_servicing_queue);
   ~Scheduler();
 
-  typedef boost::function<void(void)> Function;
+  typedef std::function<void(void)> Function;
 
   void schedule(Function f, std::chrono::system_clock::time_point t);
 
@@ -42,7 +42,7 @@ class Scheduler {
   std::atomic<int> n_threads_servicing_queue_;
   bool stop_requested_;
   bool stop_when_empty_;
-  boost::thread_group group_;
+  std::vector<std::thread> group_;
 };
 
 #endif  // ERIZO_SRC_ERIZO_THREAD_SCHEDULER_H_

@@ -1,7 +1,7 @@
 #ifndef ERIZO_SRC_ERIZO_MEDIA_EXTERNALOUTPUT_H_
 #define ERIZO_SRC_ERIZO_MEDIA_EXTERNALOUTPUT_H_
 
-#include <boost/thread.hpp>
+#include <thread>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -9,7 +9,7 @@ extern "C" {
 }
 
 #include <string>
-
+#include <condition_variable>
 #include "./MediaDefinitions.h"
 #include "rtp/RtpPacketQueue.h"
 #include "webrtc/modules/rtp_rtcp/source/ulpfec_receiver_impl.h"
@@ -51,9 +51,9 @@ class ExternalOutput : public MediaSink, public RawDataReceiver, public Feedback
   std::unique_ptr<webrtc::UlpfecReceiver> fec_receiver_;
   RtpPacketQueue audio_queue_, video_queue_;
   bool recording_, inited_;
-  boost::mutex mtx_;  // a mutex we use to signal our writer thread that data is waiting.
-  boost::thread thread_;
-  boost::condition_variable cond_;
+  Mutex mtx_;  // a mutex we use to signal our writer thread that data is waiting.
+  std::thread thread_;
+  std::condition_variable cond_;
   AVStream *video_stream_, *audio_stream_;
   AVFormatContext *context_;
 
@@ -98,8 +98,8 @@ class ExternalOutput : public MediaSink, public RawDataReceiver, public Feedback
   std::vector<RtpMap> rtp_mappings_;
   enum AVCodecID video_codec_;
   enum AVCodecID audio_codec_;
-  std::map<uint, RtpMap> video_maps_;
-  std::map<uint, RtpMap> audio_maps_;
+  std::map<uint32_t, RtpMap> video_maps_;
+  std::map<uint32_t, RtpMap> audio_maps_;
   RtpMap video_map_;
   RtpMap audio_map_;
 
@@ -107,8 +107,8 @@ class ExternalOutput : public MediaSink, public RawDataReceiver, public Feedback
   int sendFirPacket();
   void queueData(char* buffer, int length, packetType type);
   void sendLoop();
-  int deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<DataPacket> video_packet) override;
+  int deliverAudioData_(packetPtr audio_packet) override;
+  int deliverVideoData_(packetPtr video_packet) override;
   int deliverEvent_(MediaEventPtr event) override;
   void writeAudioData(char* buf, int len);
   void writeVideoData(char* buf, int len);

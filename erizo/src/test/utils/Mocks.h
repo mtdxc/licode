@@ -46,11 +46,11 @@ class MockMediaSink : public MediaSink {
   MOCK_METHOD1(deliverEventInternal, void(MediaEventPtr));
 
  private:
-  int deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) override {
+  int deliverAudioData_(packetPtr audio_packet) override {
     deliverAudioDataInternal(audio_packet->data, audio_packet->length);
     return 0;
   }
-  int deliverVideoData_(std::shared_ptr<DataPacket> video_packet) override {
+  int deliverVideoData_(packetPtr video_packet) override {
     deliverVideoDataInternal(video_packet->data, video_packet->length);
     return 0;
   }
@@ -86,7 +86,7 @@ class Reader : public InboundHandler {
   MOCK_METHOD0(disable, void());
   MOCK_METHOD0(notifyUpdate, void());
   MOCK_METHOD0(getName, std::string());
-  MOCK_METHOD2(read, void(Context*, std::shared_ptr<DataPacket>));
+  MOCK_METHOD2(read, void(Context*, packetPtr));
 };
 
 class Writer : public OutboundHandler {
@@ -95,7 +95,7 @@ class Writer : public OutboundHandler {
   MOCK_METHOD0(disable, void());
   MOCK_METHOD0(notifyUpdate, void());
   MOCK_METHOD0(getName, std::string());
-  MOCK_METHOD2(write, void(Context*, std::shared_ptr<DataPacket>));
+  MOCK_METHOD2(write, void(Context*, packetPtr));
 };
 
 class MockRemoteBitrateEstimatorPicker : public RemoteBitrateEstimatorPicker {

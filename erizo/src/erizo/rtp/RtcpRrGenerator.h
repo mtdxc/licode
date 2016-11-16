@@ -8,7 +8,7 @@
 
 #include "./logger.h"
 #include "pipeline/Handler.h"
-#include "lib/ClockUtils.h"
+#include "lib/Clock.h"
 
 #define MAX_DELAY 450000
 
@@ -23,12 +23,12 @@ class RtcpRrGenerator {
       std::shared_ptr<Clock> the_clock = std::make_shared<SteadyClock>());
 
   explicit RtcpRrGenerator(const RtcpRrGenerator&& handler);  // NOLINT
-  bool handleRtpPacket(std::shared_ptr<DataPacket> packet);
-  void handleSr(std::shared_ptr<DataPacket> packet);
-  std::shared_ptr<DataPacket> generateReceiverReport();
+  bool handleRtpPacket(packetPtr packet);
+  void handleSr(packetPtr packet);
+  packetPtr generateReceiverReport();
 
  private:
-  bool isRetransmitOfOldPacket(std::shared_ptr<DataPacket> packet);
+  bool isRetransmitOfOldPacket(packetPtr packet);
   int getAudioClockRate(uint8_t payload_type);
   int getVideoClockRate(uint8_t payload_type);
   uint16_t selectInterval();

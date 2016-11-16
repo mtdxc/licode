@@ -73,7 +73,7 @@ class LibNiceConnectionStartTest : public ::testing::Test {
     delete ice_config;
   }
 
-  boost::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
+  std::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
   MockLibNice* libnice;
   std::shared_ptr<MockLibNiceConnectionListener> nice_listener;
   erizo::IceConfig* ice_config;
@@ -123,7 +123,7 @@ class LibNiceConnectionTest : public ::testing::Test {
     free(test_packet);
   }
 
-  boost::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
+  std::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
   MockLibNice* libnice;
   std::shared_ptr<MockLibNiceConnectionListener> nice_listener;
   erizo::IceConfig* ice_config;
@@ -171,7 +171,7 @@ class LibNiceConnectionTwoComponentsTest : public ::testing::Test {
     delete ice_config;
   }
 
-  boost::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
+  std::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
   MockLibNice* libnice;
   std::shared_ptr<MockLibNiceConnectionListener> nice_listener;
   erizo::IceConfig* ice_config;
