@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <SSL_DIR>C:\SDKs\OpenSSL-Win32</SSL_DIR>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IncludePath>$(SSL_DIR)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SSL_DIR)\lib\VC;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup />
+  <ItemGroup>
+    <BuildMacro Include="SSL_DIR">
+      <Value>$(SSL_DIR)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

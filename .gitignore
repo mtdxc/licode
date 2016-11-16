@@ -18,4 +18,8 @@ erizo_controller/erizoAgent/erizo-*.log
 spine/erizofc.js
 spine/testResult.json
 extras/basic_example/public/assets/
+Debug
+Release
+*.obj
+/third_party/ffmpeg
 rtp_media_config.js

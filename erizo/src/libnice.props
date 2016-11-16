@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <LIBNICE_DIR>C:\Google\libnice</LIBNICE_DIR>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(LIBNICE_DIR)\glib\include\glib-2.0;$(LIBNICE_DIR)\agent;$(LIBNICE_DIR)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(LIBNICE_DIR)\glib\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libnice.lib;glib-2.0.lib;gobject-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="LIBNICE_DIR">
+      <Value>$(LIBNICE_DIR)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

@@ -4,11 +4,6 @@
 #include <cassert>
 #include <cstring>
 #include <string>
-
-#ifdef HAVE_CONFIG_H
-#include "./config.h"
-#endif
-
 #include "./bf_dwrap.h"
 
 using dtls::DtlsSocket;
