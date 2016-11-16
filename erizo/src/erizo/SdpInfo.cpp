@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "rtp/RtpHeaders.h"
-#include "./StringUtil.h"
+#include "StringUtil.h"
 
 using std::endl;
 namespace erizo {
@@ -488,6 +488,7 @@ namespace erizo {
     if (audioEnabled)
       this->audioSdpMLine = 0;
 
+    audioCodecs = videoCodecs = 0;
     for (unsigned int it = 0; it < internalPayloadVector_.size(); it++) {
       RtpMap& rtp = internalPayloadVector_[it];
       if (rtp.media_type == VIDEO_TYPE) {

@@ -9,9 +9,9 @@
 #include <string>
 #include <future>  // NOLINT
 
-#include "./MediaDefinitions.h"
+#include "MediaDefinitions.h"
 #include "media/ExternalOutput.h"
-#include "./logger.h"
+#include "logger.h"
 
 namespace erizo {
 
@@ -25,7 +25,8 @@ class OneToManyProcessor : public MediaSink, public FeedbackSink {
   DECLARE_LOGGER();
 
  public:
-  std::map<std::string, std::shared_ptr<MediaSink>> subscribers;
+  typedef std::shared_ptr<MediaSink> sink_ptr;
+  std::map<std::string, sink_ptr> subscribers;
   std::shared_ptr<MediaSource> publisher;
 
   OneToManyProcessor();
@@ -50,12 +51,11 @@ class OneToManyProcessor : public MediaSink, public FeedbackSink {
   void close() override;
 
  private:
-  typedef std::shared_ptr<MediaSink> sink_ptr;
   FeedbackSink* feedbackSink_;
 
-  int deliverAudioData_(std::shared_ptr<dataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<dataPacket> video_packet) override;
-  int deliverFeedback_(std::shared_ptr<dataPacket> fb_packet) override;
+  int deliverAudioData_(packetPtr audio_packet) override;
+  int deliverVideoData_(packetPtr video_packet) override;
+  int deliverFeedback_(packetPtr fb_packet) override;
   std::future<void> deleteAsync(std::shared_ptr<WebRtcConnection> connection);
   void closeAll();
 };

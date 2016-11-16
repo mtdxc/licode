@@ -4,8 +4,8 @@
 #include <chrono>  // NOLINT
 #include <random>
 
-#include "./logger.h"
-#include "./MediaDefinitions.h"
+#include "logger.h"
+#include "MediaDefinitions.h"
 #include "thread/Worker.h"
 #include "lib/Clock.h"
 

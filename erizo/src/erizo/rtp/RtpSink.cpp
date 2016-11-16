@@ -6,7 +6,7 @@
  */
 
 #include "rtp/RtpSink.h"
-
+#include "thread/Worker.h"
 #include <string>
 #include <cstring>
 
@@ -16,10 +16,10 @@ using boost::asio::ip::udp;
 namespace erizo {
   DEFINE_LOGGER(RtpSink, "rtp.RtpSink");
 
-  RtpSink::RtpSink(const std::string& url, const std::string& port, int feedbackPort) {
-    resolver_.reset(new udp::resolver(io_service_));
-    socket_.reset(new udp::socket(io_service_, udp::endpoint(udp::v4(), 0)));
-    fbSocket_.reset(new udp::socket(io_service_, udp::endpoint(udp::v4(), feedbackPort)));
+  RtpSink::RtpSink(Worker* work, const std::string& url, const std::string& port, int feedbackPort) {
+    resolver_.reset(new udp::resolver(work->io_service()));
+    socket_.reset(new udp::socket(work->io_service(), udp::endpoint(udp::v4(), 0)));
+    fbSocket_.reset(new udp::socket(work->io_service(), udp::endpoint(udp::v4(), feedbackPort)));
     query_.reset(new udp::resolver::query(udp::v4(), url.c_str(), port.c_str()));
     iterator_ = resolver_->resolve(*query_);
     sending_ = true;
@@ -28,22 +28,19 @@ namespace erizo {
         boost::bind(&RtpSink::handleReceive, this, boost::asio::placeholders::error,
           boost::asio::placeholders::bytes_transferred));
     send_Thread_ = boost::thread(&RtpSink::sendLoop, this);
-    receive_Thread_ = boost::thread(&RtpSink::serviceLoop, this);
   }
 
   RtpSink::~RtpSink() {
     sending_ = false;
     send_Thread_.join();
-    io_service_.stop();
-    receive_Thread_.join();
   }
 
-  int RtpSink::deliverVideoData_(std::shared_ptr<dataPacket> video_packet) {
+  int RtpSink::deliverVideoData_(packetPtr video_packet) {
     this->queueData(video_packet->data, video_packet->length, VIDEO_PACKET);
     return 0;
   }
 
-  int RtpSink::deliverAudioData_(std::shared_ptr<dataPacket> audio_packet) {
+  int RtpSink::deliverAudioData_(packetPtr audio_packet) {
     this->queueData(audio_packet->data, audio_packet->length, AUDIO_PACKET);
     return 0;
   }
@@ -92,10 +89,6 @@ namespace erizo {
       fb_sink_->deliverFeedback(std::make_shared<dataPacket>(0, reinterpret_cast<char*>(buffer_),
             static_cast<int>(bytes_recvd), OTHER_PACKET));
     }
-  }
-
-  void RtpSink::serviceLoop() {
-    io_service_.run();
   }
 
 } /* namespace erizo */

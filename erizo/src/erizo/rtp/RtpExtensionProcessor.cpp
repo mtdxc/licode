@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 #include <vector>
-
+#include <algorithm>
 #include "lib/Clock.h"
 
 namespace erizo {
@@ -63,7 +63,7 @@ bool RtpExtensionProcessor::isValidExtension(std::string uri) {
   return value != ext_mappings_.end() && translationMap_.find(uri) != translationMap_.end();
 }
 
-uint32_t RtpExtensionProcessor::processRtpExtensions(std::shared_ptr<dataPacket> p) {
+uint32_t RtpExtensionProcessor::processRtpExtensions(packetPtr p) {
   const RtpHeader* head = reinterpret_cast<const RtpHeader*>(p->data);
   uint32_t len = p->length;
   std::array<RTPExtensions, 10> extMap;

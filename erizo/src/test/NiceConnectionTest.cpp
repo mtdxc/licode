@@ -74,7 +74,7 @@ class NiceConnectionStartTest : public ::testing::Test {
     delete ice_config;
   }
 
-  boost::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
+  std::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
   MockLibNice* libnice;
   MockNiceConnectionListener* nice_listener;
   erizo::IceConfig* ice_config;
@@ -124,7 +124,7 @@ class NiceConnectionTest : public ::testing::Test {
     free(test_packet);
   }
 
-  boost::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
+  std::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
   MockLibNice* libnice;
   MockNiceConnectionListener* nice_listener;
   erizo::IceConfig* ice_config;
@@ -173,7 +173,7 @@ class NiceConnectionTwoComponentsTest : public ::testing::Test {
     delete ice_config;
   }
 
-  boost::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
+  std::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
   MockLibNice* libnice;
   MockNiceConnectionListener* nice_listener;
   erizo::IceConfig* ice_config;
@@ -238,10 +238,10 @@ TEST_F(NiceConnectionStartTest, start_Configures_Libnice_With_Remote_Credentials
       kArbitraryConnectionId,
       nice_listener,
       1,
-      *ice_config,
-      kArbitraryRemoteCredentialUsername,
-      kArbitraryRemoteCredentialPassword);
+      *ice_config);
   nice.start();
+  nice.setRemoteCredentials(kArbitraryRemoteCredentialUsername,
+    kArbitraryRemoteCredentialPassword);
 }
 
 TEST_F(NiceConnectionStartTest, start_Configures_Libnice_With_Port_Range) {
@@ -444,7 +444,7 @@ TEST_F(NiceConnectionTest, getCandidate_Passes_Candidate_to_Listener) {
   candidate_list = g_slist_prepend(candidate_list, arbitrary_candidate);
   EXPECT_CALL(*libnice, NiceAgentGetLocalCandidates(_, _, _)).Times(1).WillOnce(Return(candidate_list));
   EXPECT_CALL(*nice_listener, onCandidate(_, _)).Times(1);
-  nice_connection->getCandidate(1, 1, "test");
+  nice_connection->gotCandidate(1, 1, "test");
 }
 
 TEST_F(NiceConnectionTest, setRemoteCredentials_Configures_NiceAgent) {

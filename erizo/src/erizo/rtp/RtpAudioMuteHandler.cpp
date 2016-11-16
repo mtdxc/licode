@@ -1,6 +1,6 @@
 #include "rtp/RtpAudioMuteHandler.h"
-#include "./MediaDefinitions.h"
-#include "./WebRtcConnection.h"
+#include "MediaDefinitions.h"
+#include "WebRtcConnection.h"
 
 namespace erizo {
 
@@ -24,7 +24,7 @@ void RtpAudioMuteHandler::notifyUpdate() {
   muteAudio(connection_->isAudioMuted());
 }
 
-void RtpAudioMuteHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtpAudioMuteHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (connection_->getAudioSinkSSRC() != chead->getSourceSSRC()) {
     ctx->fireRead(packet);
@@ -32,15 +32,8 @@ void RtpAudioMuteHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet)
   }
   uint16_t offset = seq_num_offset_;
   if (offset > 0) {
-    char* buf = packet->data;
-    char* report_pointer = buf;
-    int rtcp_length = 0;
-    int total_length = 0;
-    do {
-      report_pointer += rtcp_length;
-      chead = reinterpret_cast<RtcpHeader*>(report_pointer);
-      rtcp_length = (ntohs(chead->length) + 1) * 4;
-      total_length += rtcp_length;
+    RtcpAccessor rtcp_acs(packet);
+    while(chead = rtcp_acs.nextRtcp()) {//process seq offset of rtcp
       switch (chead->packettype) {
         case RTCP_Receiver_PT:
           if ((chead->getHighestSeqnum() + offset) < chead->getHighestSeqnum()) {
@@ -56,12 +49,12 @@ void RtpAudioMuteHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet)
         default:
           break;
       }
-    } while (total_length < packet->length);
+    }
   }
   ctx->fireRead(packet);
 }
 
-void RtpAudioMuteHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtpAudioMuteHandler::write(Context *ctx, packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   RtcpHeader *rtcp_header = reinterpret_cast<RtcpHeader*>(packet->data);
   if (packet->type != AUDIO_PACKET || rtcp_header->isRtcp()) {
@@ -87,15 +80,15 @@ void RtpAudioMuteHandler::muteAudio(bool active) {
     return;
   }
   mute_is_active_ = active;
-  ELOG_INFO("%s message: Mute Audio, active: %d", connection_->toLog(), active);
+  connection_->Info("Mute Audio, active: %d", active);
   if (!mute_is_active_) {
     seq_num_offset_ = last_original_seq_num_ - last_sent_seq_num_;
-    ELOG_DEBUG("%s message: Deactivated, original_seq_num: %u, last_sent_seq_num: %u, offset: %u",
-        connection_->toLog(), last_original_seq_num_, last_sent_seq_num_, seq_num_offset_);
+    connection_->Info("Deactivated, original_seq_num: %u, last_sent_seq_num: %u, offset: %u",
+        last_original_seq_num_, last_sent_seq_num_, seq_num_offset_);
   }
 }
 
-inline void RtpAudioMuteHandler::setPacketSeqNumber(std::shared_ptr<dataPacket> packet, uint16_t seq_number) {
+inline void RtpAudioMuteHandler::setPacketSeqNumber(packetPtr packet, uint16_t seq_number) {
   RtpHeader *head = reinterpret_cast<RtpHeader*> (packet->data);
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (packet->data);
   if (chead->isRtcp()) {

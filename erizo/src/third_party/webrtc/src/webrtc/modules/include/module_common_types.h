@@ -19,7 +19,7 @@
 
 #include "webrtc/base/constructormagic.h"
 #include "webrtc/base/deprecation.h"
-#include "webrtc/base/safe_conversions.h"
+//#include "webrtc/base/safe_conversions.h"
 #include "webrtc/common_types.h"
 #include "webrtc/common_video/rotation.h"
 #include "webrtc/typedefs.h"
@@ -431,7 +431,7 @@ class RTPFragmentationHeader {
   }
 
   void VerifyAndAllocateFragmentationHeader(const size_t size) {
-    assert(size <= std::numeric_limits<uint16_t>::max());
+    //assert(size <= std::numeric_limits<uint16_t>::max());
     const uint16_t size16 = static_cast<uint16_t>(size);
     if (fragmentationVectorSize < size16) {
       uint16_t oldVectorSize = fragmentationVectorSize;
@@ -724,7 +724,7 @@ inline AudioFrame& AudioFrame::operator+=(const AudioFrame& rhs) {
     for (size_t i = 0; i < samples_per_channel_ * num_channels_; i++) {
       int32_t wrap_guard =
           static_cast<int32_t>(data_[i]) + static_cast<int32_t>(rhs.data_[i]);
-      data_[i] = rtc::saturated_cast<int16_t>(wrap_guard);
+      data_[i] = (int16_t)(wrap_guard);
     }
   }
   return *this;

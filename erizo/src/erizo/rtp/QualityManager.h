@@ -1,7 +1,7 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_QUALITYMANAGER_H_
 #define ERIZO_SRC_ERIZO_RTP_QUALITYMANAGER_H_
 
-#include "./logger.h"
+#include "logger.h"
 #include "Stats.h"
 #include "lib/Clock.h"
 #include "pipeline/Service.h"
@@ -14,15 +14,15 @@ class QualityManager: public Service, public std::enable_shared_from_this<Qualit
  public:
   static constexpr duration kMinLayerSwitchInterval = std::chrono::seconds(10);
   static constexpr duration kActiveLayerInterval = std::chrono::milliseconds(500);
-  static constexpr float kIncreaseLayerBitrateThreshold = 0.1;
+  static constexpr float kIncreaseLayerBitrateThreshold = 0.1f;
 
  public:
   explicit QualityManager(std::shared_ptr<Clock> the_clock = std::make_shared<SteadyClock>());
   void enable();
   void disable();
 
-  virtual  int getSpatialLayer() const { return spatial_layer_; }
-  virtual  int getTemporalLayer() const { return temporal_layer_; }
+  virtual int getSpatialLayer() const { return spatial_layer_; }
+  virtual int getTemporalLayer() const { return temporal_layer_; }
   virtual  bool isSlideShowEnabled() const { return slideshow_mode_active_; }
 
   void setSpatialLayer(int spatial_layer);

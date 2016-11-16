@@ -5,16 +5,15 @@
 #ifndef ERIZO_SRC_ERIZO_NICECONNECTION_H_
 #define ERIZO_SRC_ERIZO_NICECONNECTION_H_
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/thread.hpp>
 #include <string>
-#include <vector>
-#include <queue>
 #include <map>
-
-#include "./MediaDefinitions.h"
-#include "./SdpInfo.h"
-#include "./logger.h"
+#include <memory>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include "MediaDefinitions.h"
+#include "SdpInfo.h"
+#include "logger.h"
 #include "lib/LibNiceInterface.h"
 
 typedef struct _NiceAgent NiceAgent;
@@ -32,7 +31,6 @@ namespace erizo {
 #define NICE_STREAM_DEF_PWD     22 + 1   /* pwd + NULL */
 
 // forward declarations
-typedef std::shared_ptr<dataPacket> packetPtr;
 class CandidateInfo;
 class WebRtcConnection;
 
@@ -48,14 +46,12 @@ struct CandidatePair{
 class IceConfig {
  public:
     std::string turnServer, turnUsername, turnPass;
-    std::string stunServer, network_interface;
-    uint16_t stunPort, turnPort, minPort, maxPort;
+    std::string stunServer;
+    uint16_t stunPort;
+    uint16_t turnPort, minPort, maxPort;
+    std::string network_interface;
     bool shouldTrickle;
     IceConfig(){
-      turnServer = "";
-      turnUsername = "";
-      turnPass = "";
-      stunServer = "";
       stunPort = 0;
       turnPort = 0;
       minPort = 0;
@@ -95,11 +91,11 @@ class NiceConnection : public LogContext {
   /**
    * The transport name
    */
-  boost::scoped_ptr<std::string> transportName;
+  std::string transportName;
   /**
    * The Obtained local candidates.
    */
-  boost::shared_ptr<std::vector<CandidateInfo> > localCandidates;
+  //std::vector<CandidateInfo> localCandidates;
 
   /**
    * Constructs a new NiceConnection.
@@ -107,9 +103,9 @@ class NiceConnection : public LogContext {
    * @param transportName The name of the transport protocol. Was used when WebRTC used video_rtp instead of just rtp.
    * @param iceComponents Number of ice components pero connection. Default is 1 (rtcp-mux).
    */
-  NiceConnection(boost::shared_ptr<LibNiceInterface> libnice, MediaType med, const std::string &transportName,
+  NiceConnection(std::shared_ptr<LibNiceInterface> libnice, MediaType med, const std::string &transportName,
       const std::string& connection_id, NiceConnectionListener* listener, unsigned int iceComponents,
-      const IceConfig& iceConfig, std::string username = "", std::string password = "");
+      const IceConfig& iceConfig);
 
   virtual ~NiceConnection();
   /**
@@ -132,7 +128,7 @@ class NiceConnection : public LogContext {
    * Sets a local ICE Candidates. Called by C Nice functions.
    * @param candidate info to look for
    */
-  void getCandidate(uint stream_id, uint component_id, const std::string &foundation);
+  void gotCandidate(uint stream_id, uint component_id, const std::string &foundation);
   /**
    * Get local ICE credentials.
    * @return username and password where credentials will be stored
@@ -165,19 +161,18 @@ class NiceConnection : public LogContext {
   int sendData(unsigned int compId, const void* buf, int len);
 
   void updateIceState(IceState state);
-  IceState checkIceState();
+  IceState getIceState();
   void updateComponentState(unsigned int compId, IceState state);
   void onData(unsigned int component_id, char* buf, int len);
   CandidatePair getSelectedPair();
   void setReceivedLastCandidate(bool hasReceived);
   void close();
 
- private:
-  std::string iceStateToString(IceState state) const;
+  static std::string iceStateToString(IceState state);
 
  private:
   std::string connection_id_;
-  boost::shared_ptr<LibNiceInterface> lib_nice_;
+  std::shared_ptr<LibNiceInterface> lib_nice_;
   NiceAgent* agent_;
   GMainContext* context_;
   GMainLoop* loop_;
@@ -186,21 +181,17 @@ class NiceConnection : public LogContext {
   unsigned int candsDelivered_;
   IceState iceState_;
 
-  boost::thread m_Thread_;
-  boost::mutex closeMutex_;
-  boost::condition_variable cond_;
+  std::thread m_Thread_;
+  std::mutex closeMutex_;
+  std::condition_variable cond_;
 
   unsigned int iceComponents_;
   std::map <unsigned int, IceState> comp_state_list_;
-  std::string ufrag_, upass_, username_, password_;
+  std::string ufrag_, upass_;
   IceConfig iceConfig_;
   bool receivedLastCandidate_;
 
   void mainLoop();
-
-  inline const char* toLog() {
-    return ("id: " + connection_id_ + ", " + printLogContext()).c_str();
-  }
 };
 
 }  // namespace erizo

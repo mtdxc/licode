@@ -31,6 +31,7 @@ using erizo::InboundHandler;
 using erizo::OutboundHandler;
 using erizo::Worker;
 using std::queue;
+using erizo::packetPtr;
 
 
 class RtpAudioMuteHandlerTest : public erizo::HandlerTest {

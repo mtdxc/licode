@@ -31,7 +31,7 @@ using erizo::Pipeline;
 using erizo::InboundHandler;
 using erizo::OutboundHandler;
 using erizo::Worker;
-
+using erizo::packetPtr;
 class RtpRetransmissionHandlerTest : public erizo::HandlerTest {
  public:
   RtpRetransmissionHandlerTest() {}

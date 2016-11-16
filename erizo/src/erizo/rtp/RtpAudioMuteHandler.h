@@ -1,7 +1,7 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_RTPAUDIOMUTEHANDLER_H_
 #define ERIZO_SRC_ERIZO_RTP_RTPAUDIOMUTEHANDLER_H_
 
-#include "./logger.h"
+#include "logger.h"
 #include "pipeline/Handler.h"
 
 #include <mutex>  // NOLINT
@@ -24,8 +24,8 @@ class RtpAudioMuteHandler: public Handler {
     return "audio-mute";
   }
 
-  void read(Context *ctx, std::shared_ptr<dataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:
@@ -36,7 +36,7 @@ class RtpAudioMuteHandler: public Handler {
 
   WebRtcConnection* connection_;
 
-  inline void setPacketSeqNumber(std::shared_ptr<dataPacket> packet, uint16_t seq_number);
+  inline void setPacketSeqNumber(packetPtr packet, uint16_t seq_number);
 };
 
 }  // namespace erizo

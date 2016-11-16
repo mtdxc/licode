@@ -6,15 +6,11 @@
 #include <algorithm>
 #include <memory>
 
-#include "lib/ClockUtils.h"
-
-using erizo::Worker;
-using erizo::SimulatedWorker;
+namespace erizo{
 
 Worker::Worker(std::weak_ptr<Scheduler> scheduler, std::shared_ptr<Clock> the_clock)
     : scheduler_{scheduler},
       clock_{the_clock},
-      service_{},
       service_worker_{new asio_worker::element_type(service_)},
       closed_{false} {
 }
@@ -147,4 +143,7 @@ void SimulatedWorker::executePastScheduledTasks() {
       ++iter;
     }
   }
+  // todo call clock_->advanceTime(duration);
+}
+
 }

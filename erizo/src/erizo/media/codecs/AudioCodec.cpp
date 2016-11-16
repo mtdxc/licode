@@ -1,8 +1,12 @@
 /**
  * AudioCodec.pp
  */
-#include "media/codecs/AudioCodec.h"
-
+#include "logger.h"
+#include "AudioCodec.h"
+extern "C" {
+#include <libavutil/avutil.h>
+#include <libavcodec/avcodec.h>
+}
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

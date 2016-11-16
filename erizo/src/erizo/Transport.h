@@ -3,10 +3,9 @@
 
 #include <string>
 #include <vector>
-#include <cstdio>
 #include "NiceConnection.h"
 #include "thread/Worker.h"
-#include "./logger.h"
+#include "logger.h"
 
 /**
  * States of Transport
@@ -20,23 +19,25 @@ class Transport;
 
 class TransportListener {
  public:
-  virtual void onTransportData(std::shared_ptr<dataPacket> packet, Transport *transport) = 0;
+  virtual void onTransportData(packetPtr packet, Transport *transport) = 0;
   virtual void updateState(TransportState state, Transport *transport) = 0;
   virtual void onCandidate(const CandidateInfo& cand, Transport *transport) = 0;
 };
 
-class Transport : public std::enable_shared_from_this<Transport>, public NiceConnectionListener, public LogContext {
- public:
-  boost::shared_ptr<NiceConnection> nice_;
-  MediaType mediaType;
-  std::string transport_name;
+class Transport : public NiceConnectionListener, 
+  public std::enable_shared_from_this<Transport>, public LogContext {
+public:
+
   Transport(MediaType med, const std::string& transport_name, const std::string& connection_id, bool bundle,
       bool rtcp_mux, std::weak_ptr<TransportListener> transport_listener, const IceConfig& iceConfig,
       std::shared_ptr<Worker> worker) :
-    mediaType(med), transport_name(transport_name), rtcp_mux_(rtcp_mux), transport_listener_(transport_listener),
+    mediaType(med), transport_name(transport_name), rtcp_mux_(rtcp_mux), 
     connection_id_(connection_id), state_(TRANSPORT_INITIAL), iceConfig_(iceConfig), bundle_(bundle),
-    running_{true}, worker_{worker} {}
+    running_(true), worker_{ worker } {
+		transport_listener_ = transport_listener;
+  }
   virtual ~Transport() {}
+
   virtual void updateIceState(IceState state, NiceConnection *conn) = 0;
   virtual void onNiceData(packetPtr packet) = 0;
   virtual void onCandidate(const CandidateInfo &candidate, NiceConnection *conn) = 0;
@@ -44,7 +45,8 @@ class Transport : public std::enable_shared_from_this<Transport>, public NiceCon
   virtual void processLocalSdp(SdpInfo *localSdp_) = 0;
   virtual void start() = 0;
   virtual void close() = 0;
-  virtual boost::shared_ptr<NiceConnection> getNiceConnection() { return nice_; }
+
+  virtual std::shared_ptr<NiceConnection> getNiceConnection() { return nice_; }
   void setTransportListener(std::weak_ptr<TransportListener> listener) {
     transport_listener_ = listener;
   }
@@ -58,6 +60,7 @@ class Transport : public std::enable_shared_from_this<Transport>, public NiceCon
     if (state == state_) {
       return;
     }
+    //Log("updateTransportState %d->%d", state_, state);
     state_ = state;
     if (auto listener = getTransportListener().lock()) {
       listener->updateState(state, this);
@@ -73,6 +76,7 @@ class Transport : public std::enable_shared_from_this<Transport>, public NiceCon
     return nice_->setRemoteCandidates(candidates, isBundle);
   }
 
+  // implement for NiceConnectionListener
   void onPacketReceived(packetPtr packet) {
     std::weak_ptr<Transport> weak_transport = Transport::shared_from_this();
     worker_->task([weak_transport, packet]() {
@@ -88,12 +92,6 @@ class Transport : public std::enable_shared_from_this<Transport>, public NiceCon
     });
   }
 
-  bool rtcp_mux_;
-
-  inline const char* toLog() {
-    return ("id: " + connection_id_ + ", " + printLogContext()).c_str();
-  }
-
   std::shared_ptr<Worker> getWorker() {
     return worker_;
   }
@@ -102,6 +100,13 @@ class Transport : public std::enable_shared_from_this<Transport>, public NiceCon
   std::weak_ptr<TransportListener> transport_listener_;
 
  protected:
+   // for access this two value
+   friend class WebRtcConnection;
+   MediaType mediaType;
+   std::string transport_name;
+
+  std::shared_ptr<NiceConnection> nice_;
+  bool rtcp_mux_;
   std::string connection_id_;
   TransportState state_;
   IceConfig iceConfig_;

@@ -1,8 +1,8 @@
 #include "rtp/PliPacerHandler.h"
 
 #include "rtp/RtpUtils.h"
-#include "./MediaDefinitions.h"
-#include "./WebRtcConnection.h"
+#include "MediaDefinitions.h"
+#include "WebRtcConnection.h"
 
 namespace erizo {
 
@@ -33,7 +33,7 @@ void PliPacerHandler::notifyUpdate() {
   }
 }
 
-void PliPacerHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void PliPacerHandler::read(Context *ctx, packetPtr packet) {
   if (enabled_ && packet->is_keyframe) {
     time_last_keyframe_ = clock_->now();
     waiting_for_keyframe_ = false;
@@ -49,7 +49,7 @@ void PliPacerHandler::sendPLI() {
 }
 
 void PliPacerHandler::sendFIR() {
-  ELOG_WARN("%s message: Timed out waiting for a keyframe", connection_->toLog());
+  connection_->Info("Timed out waiting for a keyframe");
   getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
   getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
   getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
@@ -73,7 +73,7 @@ void PliPacerHandler::scheduleNextPLI() {
   }, kMinPLIPeriod);
 }
 
-void PliPacerHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void PliPacerHandler::write(Context *ctx, packetPtr packet) {
   if (enabled_ && RtpUtils::isPLI(packet)) {
     if (waiting_for_keyframe_) {
       return;

@@ -1,7 +1,7 @@
 #include <algorithm>
 #include "rtp/RtcpNackGenerator.h"
 #include "rtp/RtpUtils.h"
-#include "./WebRtcConnection.h"
+#include "WebRtcConnection.h"
 
 namespace erizo {
 
@@ -15,7 +15,7 @@ static const int kNackCommonHeaderLengthRtcp = kNackCommonHeaderLengthBytes/4 - 
 RtcpNackGenerator::RtcpNackGenerator(uint32_t ssrc, std::shared_ptr<Clock> the_clock) :
   initialized_{false}, highest_seq_num_{0}, ssrc_{ssrc}, clock_{the_clock} {}
 
-bool RtcpNackGenerator::handleRtpPacket(std::shared_ptr<dataPacket> packet) {
+bool RtcpNackGenerator::handleRtpPacket(packetPtr packet) {
   if (packet->type != VIDEO_PACKET) {
     return false;
   }
@@ -64,7 +64,7 @@ bool RtcpNackGenerator::addNacks(uint16_t seq_num) {
   return !nack_info_list_.empty();
 }
 
-bool RtcpNackGenerator::addNackPacketToRr(std::shared_ptr<dataPacket> rr_packet) {
+bool RtcpNackGenerator::addNackPacketToRr(packetPtr rr_packet) {
   // Goes through the list adds blocks of 16 in compound packets (adds more PID/BLP blocks) max is 10 blocks
   // Only does it if it's time (> 100 ms since last NACK)
   std::vector <NackBlock> nack_vector;
@@ -89,8 +89,7 @@ bool RtcpNackGenerator::addNackPacketToRr(std::shared_ptr<dataPacket> rr_packet)
     uint16_t blp = 0;
     base_nack_info.sent_time = now_ms;
     base_nack_info.retransmits++;
-    while (index < nack_info_list_.size()) {
-      index++;
+    for (; index < nack_info_list_.size(); index++) {
       NackInfo& blp_nack_info = nack_info_list_[index];
       uint16_t distance = blp_nack_info.seq_num - pid -1;
       if (distance <= 15) {

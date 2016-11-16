@@ -1,19 +1,18 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_RTCPPROCESSOR_H_
 #define ERIZO_SRC_ERIZO_RTP_RTCPPROCESSOR_H_
 
-#include <boost/shared_ptr.hpp>
-
+#include <memory>
 #include <map>
 #include <list>
 #include <set>
+#include <mutex>
 
-#include "./MediaDefinitions.h"
-#include "./SdpInfo.h"
-#include "rtp/RtpHeaders.h"
+#include "MediaDefinitions.h"
+#include "SdpInfo.h"
 #include "pipeline/Service.h"
 
 namespace erizo {
-
+class RtcpHeader;
 class SrDelayData {
  public:
   uint32_t sr_ntp;
@@ -24,6 +23,7 @@ class SrDelayData {
   SrDelayData(uint32_t ntp, uint64_t send_time) : sr_ntp{ntp},
     sr_send_time{send_time} {}
 };
+typedef std::shared_ptr<SrDelayData> SrDataPtr;
 
 class RtcpData {
 // lost packets - list and length
@@ -70,7 +70,7 @@ class RtcpData {
 
   MediaType mediaType;
 
-  std::list<boost::shared_ptr<SrDelayData>> senderReports;
+  std::list<SrDataPtr> senderReports;
   std::set<uint32_t> nackedPackets_;
 
   RtcpData() {
@@ -104,8 +104,9 @@ class RtcpData {
   }
 
   // lock for any blocking data change
-  boost::mutex dataLock;
+  std::mutex dataLock;
 };
+typedef std::shared_ptr<RtcpData> RtcpDataPtr;
 
 class RtcpProcessor : public Service {
  public:

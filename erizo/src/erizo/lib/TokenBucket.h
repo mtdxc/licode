@@ -25,7 +25,7 @@ SOFTWARE.
 #include <atomic>
 #include <memory>
 
-#include "ClockUtils.h"
+#include "Clock.h"
 
 namespace erizo {
 

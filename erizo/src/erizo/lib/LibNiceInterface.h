@@ -5,8 +5,6 @@
 #ifndef ERIZO_SRC_ERIZO_LIB_LIBNICEINTERFACE_H_
 #define ERIZO_SRC_ERIZO_LIB_LIBNICEINTERFACE_H_
 
-
-
 typedef struct _NiceAgent NiceAgent;
 typedef struct _GMainContext GMainContext;
 typedef struct _GMainLoop GMainLoop;

@@ -1,17 +1,13 @@
 #include "media/ExternalOutput.h"
-
-#include <sys/time.h>
-
 #include <string>
-#include <cstring>
+#include <string.h>
 
-#include "lib/ClockUtils.h"
-
-#include "./WebRtcConnection.h"
-#include "rtp/RtpHeaders.h"
+#include "WebRtcConnection.h"
 #include "rtp/RtpVP8Parser.h"
-
-using std::memcpy;
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+}
 
 namespace erizo {
 
@@ -59,7 +55,7 @@ bool ExternalOutput::init() {
   MediaInfo m;
   m.hasVideo = false;
   m.hasAudio = false;
-  thread_ = boost::thread(&ExternalOutput::sendLoop, this);
+  thread_ = std::thread(&ExternalOutput::sendLoop, this);
   recording_ = true;
   ELOG_DEBUG("Initialized successfully");
   return true;
@@ -326,14 +322,14 @@ void ExternalOutput::writeVideoData(char* buf, int len) {
     }
 }
 
-int ExternalOutput::deliverAudioData_(std::shared_ptr<dataPacket> audio_packet) {
-  std::shared_ptr<dataPacket> copied_packet = std::make_shared<dataPacket>(*audio_packet);
+int ExternalOutput::deliverAudioData_(packetPtr audio_packet) {
+  packetPtr copied_packet = std::make_shared<dataPacket>(*audio_packet);
   this->queueData(copied_packet->data, copied_packet->length, AUDIO_PACKET);
   return 0;
 }
 
-int ExternalOutput::deliverVideoData_(std::shared_ptr<dataPacket> video_packet) {
-  std::shared_ptr<dataPacket> copied_packet = std::make_shared<dataPacket>(*video_packet);
+int ExternalOutput::deliverVideoData_(packetPtr video_packet) {
+  packetPtr copied_packet = std::make_shared<dataPacket>(*video_packet);
   // TODO(javierc): We should support higher layers, but it requires having an entire pipeline at this point
   if (!video_packet->belongsToSpatialLayer(0)) {
     return 0;
@@ -362,10 +358,10 @@ bool ExternalOutput::initContext() {
     video_stream_->codec->codec_id = context_->oformat->video_codec;
     video_stream_->codec->width = 640;
     video_stream_->codec->height = 480;
-    video_stream_->time_base = (AVRational) { 1, 30 };
+    video_stream_->time_base = { 1, 30 };
     // A decent guess here suffices; if processing the file with ffmpeg,
       // use -vsync 0 to force it not to duplicate frames.
-    video_stream_->codec->pix_fmt = PIX_FMT_YUV420P;
+    video_stream_->codec->pix_fmt = AV_PIX_FMT_YUV420P;
     if (context_->oformat->flags & AVFMT_GLOBALHEADER) {
       video_stream_->codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
     }
@@ -382,7 +378,7 @@ bool ExternalOutput::initContext() {
     audio_stream_->codec->codec_id = context_->oformat->audio_codec;
     audio_stream_->codec->sample_rate = context_->oformat->audio_codec == AV_CODEC_ID_PCM_MULAW ? 8000 : 48000;
     // TODO(pedro) is it always 48 khz for opus?
-    audio_stream_->time_base = (AVRational) { 1, audio_stream_->codec->sample_rate };
+    audio_stream_->time_base =  { 1, audio_stream_->codec->sample_rate };
     audio_stream_->codec->channels = context_->oformat->audio_codec == AV_CODEC_ID_PCM_MULAW ? 1 : 2;
     // TODO(pedro) is it always two channels for opus?
     if (context_->oformat->flags & AVFMT_GLOBALHEADER) {
@@ -485,8 +481,8 @@ int ExternalOutput::sendFirPacket() {
       thePLI.setSourceSSRC(videoSourceSsrc_);
       thePLI.setLength(2);
       char *buf = reinterpret_cast<char*>(&thePLI);
-      int len = (thePLI.getLength() + 1) * 4;
-      std::shared_ptr<dataPacket> pli_packet = std::make_shared<dataPacket>(0, buf, len, VIDEO_PACKET);
+      int len = thePLI.getPacketSize();
+      packetPtr pli_packet = std::make_shared<dataPacket>(0, buf, len, VIDEO_PACKET);
       fb_sink_->deliverFeedback(pli_packet);
       return len;
     }
@@ -495,14 +491,14 @@ int ExternalOutput::sendFirPacket() {
 
 void ExternalOutput::sendLoop() {
   while (recording_) {
-    boost::unique_lock<boost::mutex> lock(mtx_);
+    std::unique_lock<std::mutex> lock(mtx_);
     cond_.wait(lock);
     while (audioQueue_.hasData()) {
-      boost::shared_ptr<dataPacket> audioP = audioQueue_.popPacket();
+      packetPtr audioP = audioQueue_.popPacket();
       this->writeAudioData(audioP->data, audioP->length);
     }
     while (videoQueue_.hasData()) {
-      boost::shared_ptr<dataPacket> videoP = videoQueue_.popPacket();
+      packetPtr videoP = videoQueue_.popPacket();
       this->writeVideoData(videoP->data, videoP->length);
     }
     if (!inited_ && first_data_received_ != time_point()) {
@@ -512,11 +508,11 @@ void ExternalOutput::sendLoop() {
 
   // Since we're bailing, let's completely drain our queues of all data.
   while (audioQueue_.getSize() > 0) {
-    boost::shared_ptr<dataPacket> audioP = audioQueue_.popPacket(true);  // ignore our minimum depth check
+    packetPtr audioP = audioQueue_.popPacket(true);  // ignore our minimum depth check
     this->writeAudioData(audioP->data, audioP->length);
   }
   while (videoQueue_.getSize() > 0) {
-    boost::shared_ptr<dataPacket> videoP = videoQueue_.popPacket(true);  // ignore our minimum depth check
+    packetPtr videoP = videoQueue_.popPacket(true);  // ignore our minimum depth check
     this->writeVideoData(videoP->data, videoP->length);
   }
 }

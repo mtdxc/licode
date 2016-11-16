@@ -1,22 +1,16 @@
 #ifndef ERIZO_SRC_ERIZO_MEDIA_EXTERNALOUTPUT_H_
 #define ERIZO_SRC_ERIZO_MEDIA_EXTERNALOUTPUT_H_
 
-#include <boost/thread.hpp>
-
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-}
-
-#include <string>
-
-#include "./MediaDefinitions.h"
+#include <thread>
+#include <condition_variable>  // NOLINT
 #include "rtp/RtpPacketQueue.h"
 #include "webrtc/modules/rtp_rtcp/source/ulpfec_receiver_impl.h"
 #include "media/MediaProcessor.h"
 #include "lib/Clock.h"
+#include "logger.h"
 
-#include "./logger.h"
+struct AVFormatContext;
+struct AVStream;
 
 namespace erizo {
 
@@ -51,9 +45,9 @@ class ExternalOutput : public MediaSink, public RawDataReceiver, public Feedback
   std::unique_ptr<webrtc::UlpfecReceiver> fec_receiver_;
   RtpPacketQueue audioQueue_, videoQueue_;
   bool recording_, inited_;
-  boost::mutex mtx_;  // a mutex we use to signal our writer thread that data is waiting.
-  boost::thread thread_;
-  boost::condition_variable cond_;
+  std::mutex mtx_;  // a mutex we use to signal our writer thread that data is waiting.
+  std::thread thread_;
+  std::condition_variable cond_;
   AVStream *video_stream_, *audio_stream_;
   AVFormatContext *context_;
 
@@ -102,8 +96,8 @@ class ExternalOutput : public MediaSink, public RawDataReceiver, public Feedback
   int sendFirPacket();
   void queueData(char* buffer, int length, packetType type);
   void sendLoop();
-  int deliverAudioData_(std::shared_ptr<dataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<dataPacket> video_packet) override;
+  int deliverAudioData_(packetPtr audio_packet) override;
+  int deliverVideoData_(packetPtr video_packet) override;
   void writeAudioData(char* buf, int len);
   void writeVideoData(char* buf, int len);
   bool bufferCheck(RTPPayloadVP8* payload);

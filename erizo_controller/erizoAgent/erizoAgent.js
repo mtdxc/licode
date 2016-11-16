@@ -137,15 +137,16 @@ launchErizoJS = function() {
         erizoProcess = spawn('./launch.sh', ['./../erizoJS/erizoJS.js', id, privateIP, publicIP],
                              { detached: true, stdio: [ 'ignore', out, err ] });
     }else{
+        var short_id = id.substr(0,8);
         erizoProcess = spawn('./launch.sh', ['./../erizoJS/erizoJS.js', id, privateIP, publicIP],
                             { detached: true, stdio: [ 'ignore', 'pipe', 'pipe' ] });
         erizoProcess.stdout.setEncoding('utf8');
         erizoProcess.stdout.on('data', function (message) {
-            console.log('[erizo-' + id + ']',message.replace (/\n$/,''));
+            console.log('[erizo-' + short_id + ']', message.replace (/\n$/,''));
         });
         erizoProcess.stderr.setEncoding('utf8');
         erizoProcess.stderr.on('data', function (message) {
-            console.log('[erizo-' + id + ']',message.replace (/\n$/,''));
+            console.log('[erizo-' + short_id + ']', message.replace (/\n$/,''));
         });
     }
     erizoProcess.unref();
@@ -249,7 +250,7 @@ var api = {
     getErizoAgents: reporter.getErizoAgent
 };
 
-for (k in interfaces) {
+  for (k in interfaces) {
     if (interfaces.hasOwnProperty(k)) {
       if (!GLOBAL.config.erizoAgent.networkinterface ||
           GLOBAL.config.erizoAgent.networkinterface === k) {
@@ -265,7 +266,7 @@ for (k in interfaces) {
         }
       }
     }
-}
+  }
 
 privateIP = addresses[0];
 

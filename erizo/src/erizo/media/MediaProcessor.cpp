@@ -2,18 +2,14 @@
 
 extern "C" {
 #include <libavutil/mathematics.h>
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 }
-
-#include <string>
-#include <cstring>
 
 #include "rtp/RtpVP8Fragmenter.h"
 #include "rtp/RtpHeaders.h"
 #include "media/codecs/VideoCodec.h"
 #include "lib/Clock.h"
-#include "lib/ClockUtils.h"
-
-using std::memcpy;
 
 namespace erizo {
 
@@ -70,9 +66,9 @@ int InputProcessor::init(const MediaInfo& info, RawDataReceiver* receiver) {
   return 0;
 }
 
-int InputProcessor::deliverAudioData_(std::shared_ptr<dataPacket> audio_packet) {
+int InputProcessor::deliverAudioData_(packetPtr audio_packet) {
   if (audioDecoder && audioUnpackager) {
-    std::shared_ptr<dataPacket> copied_packet = std::make_shared<dataPacket>(*audio_packet);
+    packetPtr copied_packet = std::make_shared<dataPacket>(*audio_packet);
     ELOG_DEBUG("Decoding audio");
     int unp = unpackageAudio((unsigned char*) copied_packet->data, copied_packet->length,
         unpackagedAudioBuffer_);
@@ -87,9 +83,9 @@ int InputProcessor::deliverAudioData_(std::shared_ptr<dataPacket> audio_packet) 
   }
   return 0;
 }
-int InputProcessor::deliverVideoData_(std::shared_ptr<dataPacket> video_packet) {
+int InputProcessor::deliverVideoData_(packetPtr video_packet) {
   if (videoUnpackager && videoDecoder) {
-    std::shared_ptr<dataPacket> copied_packet = std::make_shared<dataPacket>(*video_packet);
+    packetPtr copied_packet = std::make_shared<dataPacket>(*video_packet);
     int ret = unpackageVideo(reinterpret_cast<unsigned char*>(copied_packet->data), copied_packet->length,
         unpackagedBufferPtr_, &gotUnpackagedFrame_);
     if (ret < 0)
@@ -442,7 +438,7 @@ int OutputProcessor::packageAudio(unsigned char* inBuff, int inBuffLen, unsigned
     return -1;
   }
 
-  // uint64_t millis = ClockUtils::timePointToMs(clock::now());
+  // uint64_t millis = ClockUtils::msNow();
 
   RtpHeader head;
   head.setSeqNumber(audioSeqnum_++);
@@ -480,7 +476,7 @@ int OutputProcessor::packageVideo(unsigned char* inBuff, int buffSize, unsigned 
   RtpVP8Fragmenter frag(inBuff, buffSize);
   bool lastFrame = false;
   unsigned int outlen = 0;
-  uint64_t millis = ClockUtils::timePointToMs(clock::now());
+  uint64_t millis = ClockUtils::msNow();
   // timestamp_ += 90000 / mediaInfo.videoCodec.frameRate;
   // int64_t pts = av_rescale(lastPts_, 1000000, (long int)video_time_base_);
 

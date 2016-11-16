@@ -11,11 +11,19 @@
 #include <vector>
 
 #include "lib/Clock.h"
-
 #include "thread/Scheduler.h"
 
 namespace erizo {
-
+/*
+任务类.
+- 利用Scheduler来触发执行
+- 实际任务在asio线程中执行.
+提供如下功能：
+- task
+- scheduleFromNow/unschedule
+- scheduleEvery 
+正常Scheduler只有一个，但可能会为多个Worker服务. 建议使用Worker类而不是Scheduler
+*/
 class Worker : public std::enable_shared_from_this<Worker> {
  public:
   typedef std::unique_ptr<boost::asio::io_service::work> asio_worker;
@@ -25,17 +33,18 @@ class Worker : public std::enable_shared_from_this<Worker> {
   explicit Worker(std::weak_ptr<Scheduler> scheduler,
                   std::shared_ptr<Clock> the_clock = std::make_shared<SteadyClock>());
   ~Worker();
-
+  // 将任务Task投递到asio队列中执行
   virtual void task(Task f);
 
   virtual void start();
   virtual void close();
 
+  // return schedule_id can bu use in unschedule
   virtual int scheduleFromNow(Task f, duration delta);
   virtual void unschedule(int uuid);
-
+  // 周期性执行任务
   virtual void scheduleEvery(ScheduledTask f, duration period);
-
+  boost::asio::io_service& io_service() {return service_;}
  protected:
   bool isCancelled(int uuid);
 
@@ -53,18 +62,22 @@ class Worker : public std::enable_shared_from_this<Worker> {
   asio_worker service_worker_;
   boost::thread_group group_;
   std::atomic<bool> closed_;
+  // cancel list
   std::vector<int> cancelled_;
   mutable std::mutex cancel_mutex_;
 };
 
+// 这类好像不大完善不建议使用..
 class SimulatedWorker : public Worker {
  public:
   explicit SimulatedWorker(std::shared_ptr<SimulatedClock> the_clock);
+
   void task(Task f) override;
   void start() override;
   void close() override;
   int scheduleFromNow(Task f, duration delta) override;
 
+  // 周期调用这两函数来执行Task
   void executeTasks();
   void executePastScheduledTasks();
 

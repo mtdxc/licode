@@ -6,7 +6,29 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_RTPHEADERS_H_
 #define ERIZO_SRC_ERIZO_RTP_RTPHEADERS_H_
 
+#ifdef WIN32
+//#include <winsock2.h>
+#include <stdint.h>
+extern "C" {
+  typedef unsigned short  u_short;
+  typedef unsigned long   u_long;
+	#define DECLSPEC_IMPORT __declspec(dllimport)
+  // fast build declare for winsocket2
+	DECLSPEC_IMPORT u_short __stdcall htons(u_short);
+	DECLSPEC_IMPORT u_short __stdcall ntohs(u_short);
+	DECLSPEC_IMPORT u_long __stdcall htonl(u_long);
+	DECLSPEC_IMPORT u_long __stdcall ntohl(u_long);
+
+  // port for win32
+  int usleep(int64_t usec);
+  int gettimeofday(struct timeval* tv, struct timezone* tz);
+}
+#else
 #include <netinet/in.h>
+#include <unistd.h>
+#endif
+// for RtcpAccessor
+#include "MediaDefinitions.h"
 
 namespace erizo {
 // Payload types
@@ -529,8 +551,42 @@ class RtcpHeader {
   inline void setFIRSequenceNumber(uint8_t seq_number) {
     report.fir.seqnumber = seq_number;
   }
+  inline int getPacketSize() {
+    return 4*(ntohs(length) + 1);
+  }
 };
-
+// 用于枚举多个RTCP复合包
+struct RtcpAccessor {
+  char* buffer_ = NULL;
+  int length_ = 0;
+  int pos_ = 0;
+  RtcpAccessor() = default;
+  RtcpAccessor(packetPtr ptr) {
+    reset(ptr->data, ptr->length);
+  }
+  RtcpAccessor(char* data, int len) {
+    reset(data, len);
+  }
+  bool reset(char* data, int len) {
+    RtcpHeader* rtcp = (RtcpHeader*)data;
+    if (!rtcp->isRtcp())
+      return false;
+    buffer_ = data;
+    length_ = len;
+    pos_ = 0;
+    return false;
+  }
+  RtcpHeader* nextRtcp() {
+    RtcpHeader* rtcp = NULL;
+    if (pos_ < length_ && buffer_) {
+      rtcp = (RtcpHeader*)(buffer_ + pos_);
+      pos_ += rtcp->getPacketSize();
+      if (length_ < pos_) // warning not a rtcp header
+        rtcp = NULL;
+    }
+    return rtcp;
+  }
+};
 
 //    0                   1                   2                   3
 //    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1

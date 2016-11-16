@@ -1,9 +1,9 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_SENDERBANDWIDTHESTIMATIONHANDLER_H_
 #define ERIZO_SRC_ERIZO_RTP_SENDERBANDWIDTHESTIMATIONHANDLER_H_
 #include "pipeline/Handler.h"
-#include "./logger.h"
-#include "./WebRtcConnection.h"
-#include "./rtp/RtcpProcessor.h"
+#include "logger.h"
+#include "WebRtcConnection.h"
+#include "rtp/RtcpProcessor.h"
 #include "lib/Clock.h"
 
 #include "webrtc/modules/bitrate_controller/send_side_bandwidth_estimation.h"
@@ -40,8 +40,8 @@ class SenderBandwidthEstimationHandler : public Handler,
     return "sender_bwe";
   }
 
-  void read(Context *ctx, std::shared_ptr<dataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
   void analyzeSr(RtcpHeader *head);

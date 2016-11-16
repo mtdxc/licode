@@ -1,26 +1,16 @@
 #ifndef ERIZO_SRC_ERIZO_MEDIA_MEDIAPROCESSOR_H_
 #define ERIZO_SRC_ERIZO_MEDIA_MEDIAPROCESSOR_H_
 
-#include <boost/cstdint.hpp>
-#include <sys/time.h>
-#include <arpa/inet.h>
-
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-}
-
-#include <string>
-
 #include "rtp/RtpVP8Parser.h"
-#include "./MediaDefinitions.h"
+#include "MediaDefinitions.h"
 #include "codecs/Codecs.h"
 #include "codecs/VideoCodec.h"
-#include "./logger.h"
-
+struct AVCodec;
+struct AVCodecContext;
+struct AVPacket;
 namespace erizo {
 struct RTPInfo {
-  enum AVCodecID codec;
+  int codec;
   unsigned int ssrc;
   unsigned int PT;
 };
@@ -53,13 +43,6 @@ struct MediaInfo {
 
 #define UNPACKAGED_BUFFER_SIZE 150000
 #define PACKAGED_BUFFER_SIZE 2000
-// class MediaProcessor{
-// MediaProcessor();
-// virtual ~Mediaprocessor();
-// private:
-// InputProcessor* input;
-// OutputProcessor* output;
-// };
 
 class RawDataReceiver {
  public:
@@ -84,9 +67,7 @@ class InputProcessor: public MediaSink {
 
   int init(const MediaInfo& info, RawDataReceiver* receiver);
 
-
   int unpackageVideo(unsigned char* inBuff, int inBuffLen, unsigned char* outBuff, int* gotFrame);
-
   int unpackageAudio(unsigned char* inBuff, int inBuffLen, unsigned char* outBuff);
 
   void closeSink();
@@ -126,11 +107,12 @@ class InputProcessor: public MediaSink {
 
   bool initAudioUnpackager();
   bool initVideoUnpackager();
-  int deliverAudioData_(std::shared_ptr<dataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<dataPacket> video_packet) override;
+  int deliverAudioData_(packetPtr audio_packet) override;
+  int deliverVideoData_(packetPtr video_packet) override;
 
   int decodeAudio(unsigned char* inBuff, int inBuffLen, unsigned char* outBuff);
 };
+
 class OutputProcessor: public RawDataReceiver {
   DECLARE_LOGGER();
 
@@ -142,7 +124,6 @@ class OutputProcessor: public RawDataReceiver {
   void receiveRawData(const RawDataPacket& packet);
 
   int packageAudio(unsigned char* inBuff, int inBuffLen, unsigned char* outBuff, long int pts = 0);  // NOLINT
-
   int packageVideo(unsigned char* inBuff, int buffSize, unsigned char* outBuff, long int pts = 0);  // NOLINT
 
  private:

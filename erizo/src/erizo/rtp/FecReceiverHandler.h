@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "./logger.h"
+#include "logger.h"
 #include "pipeline/Handler.h"
 #include "webrtc/modules/rtp_rtcp/include/ulpfec_receiver.h"
 
@@ -26,7 +26,7 @@ class FecReceiverHandler: public OutboundHandler, public webrtc::RtpData {
     return "fec-receiver";
   }
 
-  void write(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
   // webrtc::RtpHeader overrides.

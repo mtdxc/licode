@@ -8,10 +8,10 @@
 #include <map>
 #include <vector>
 
-#include "./MediaDefinitions.h"
+#include "MediaDefinitions.h"
 #include "media/MediaProcessor.h"
 
-#include "./logger.h"
+#include "logger.h"
 
 namespace erizo {
 class WebRtcConnection;
@@ -42,8 +42,8 @@ class VideoMixer : public MediaSink, public RawDataReceiver, public RTPDataRecei
   * @param peerId the peerId
   */
   void removePublisher(int peerSSRC);
-  int deliverAudioData_(std::shared_ptr<dataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<dataPacket> video_packet) override;
+  int deliverAudioData_(packetPtr audio_packet) override;
+  int deliverVideoData_(packetPtr video_packet) override;
 
   void receiveRawData(const RawDataPacket& packet) override;
   void receiveRtpData(unsigned char* rtpdata, int len) override;

@@ -1,0 +1,248 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A45F204C-A7A6-4C93-8E92-AE0FFBCB9A38}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>erizo</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="libnice.props" />
+    <Import Project="common.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="libnice.props" />
+    <Import Project="common.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0501;WIN32_LEAN_AND_MEAN;NOMINMAX;BOOST_REGEX_NO_LIB;WEBRTC_WIN;__STDC_CONSTANT_MACROS;_DEBUG;WIN32_LEAN_AND_MEAN;_CONSOLE;_LIB;HAVE_CONFIG_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>erizo;third_party\webrtc\src;..\..\third_party\ffmpeg\include;..\..\third_party\srtp\include;..\..\third_party\srtp\crypto\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <DisableSpecificWarnings>4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(OutDir);..\..\third_party\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libnice.lib;webrtc.lib;gtestd.lib;gmockd.lib;srtp.lib;avcodec.lib;avformat.lib;avutil.lib;libeay32MD.lib;ssleay32MD.lib;glib-2.0.lib;gobject-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0501;WIN32_LEAN_AND_MEAN;NOMINMAX;BOOST_REGEX_NO_LIB;WEBRTC_WIN;__STDC_CONSTANT_MACROS;NDEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>erizo;third_party\webrtc\src;..\..\third_party\ffmpeg\include;..\..\third_party\srtp\include;..\..\third_party\srtp\crypto\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DisableSpecificWarnings>4244</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>libnice.lib;webrtc.lib;gtest.lib;gmock.lib;srtp.lib;avcodec.lib;avformat.lib;avutil.lib;libeay32MD.lib;ssleay32MD.lib;glib-2.0.lib;gobject-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);..\..\third_party\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ItemGroup>
+    <ClCompile Include="erizo\DtlsTransport.cpp" />
+    <ClCompile Include="erizo\logger.cpp" />
+    <ClCompile Include="erizo\lib\TokenBucket.cpp" />
+    <ClCompile Include="erizo\MediaDefinitions.cpp" />
+    <ClCompile Include="erizo\media\SyntheticInput.cpp" />
+    <ClCompile Include="erizo\NiceConnection.cpp" />
+    <ClCompile Include="erizo\OneToManyProcessor.cpp" />
+    <ClCompile Include="erizo\rtp\BandwidthEstimationHandler.cpp" />
+    <ClCompile Include="erizo\rtp\FecReceiverHandler.cpp" />
+    <ClCompile Include="erizo\rtp\LayerBitrateCalculationHandler.cpp" />
+    <ClCompile Include="erizo\rtp\LayerDetectorHandler.cpp" />
+    <ClCompile Include="erizo\rtp\PacketBufferService.cpp" />
+    <ClCompile Include="erizo\rtp\PliPacerHandler.cpp" />
+    <ClCompile Include="erizo\rtp\QualityFilterHandler.cpp" />
+    <ClCompile Include="erizo\rtp\QualityManager.cpp" />
+    <ClCompile Include="erizo\rtp\RtcpAggregator.cpp" />
+    <ClCompile Include="erizo\rtp\RtcpFeedbackGenerationHandler.cpp" />
+    <ClCompile Include="erizo\rtp\RtcpForwarder.cpp" />
+    <ClCompile Include="erizo\rtp\RtcpNackGenerator.cpp" />
+    <ClCompile Include="erizo\rtp\RtcpProcessorHandler.cpp" />
+    <ClCompile Include="erizo\rtp\RtcpRrGenerator.cpp" />
+    <ClCompile Include="erizo\rtp\RtpAudioMuteHandler.cpp" />
+    <ClCompile Include="erizo\rtp\RtpExtensionProcessor.cpp" />
+    <ClCompile Include="erizo\rtp\RtpPacketQueue.cpp" />
+    <ClCompile Include="erizo\rtp\RtpPaddingGeneratorHandler.cpp" />
+    <ClCompile Include="erizo\rtp\RtpPaddingRemovalHandler.cpp" />
+    <ClCompile Include="erizo\rtp\RtpRetransmissionHandler.cpp" />
+    <ClCompile Include="erizo\rtp\RtpSink.cpp" />
+    <ClCompile Include="erizo\rtp\RtpSlideShowHandler.cpp" />
+    <ClCompile Include="erizo\rtp\RtpSource.cpp" />
+    <ClCompile Include="erizo\rtp\RtpUtils.cpp" />
+    <ClCompile Include="erizo\rtp\RtpVP8Fragmenter.cpp" />
+    <ClCompile Include="erizo\rtp\RtpVP8Parser.cpp" />
+    <ClCompile Include="erizo\rtp\RtpVP9Parser.cpp" />
+    <ClCompile Include="erizo\rtp\SenderBandwidthEstimantionHandler.cpp" />
+    <ClCompile Include="erizo\rtp\SequenceNumberTranslator.cpp" />
+    <ClCompile Include="erizo\rtp\SRPacketHandler.cpp" />
+    <ClCompile Include="erizo\rtp\StatsHandler.cpp" />
+    <ClCompile Include="erizo\SdpInfo.cpp" />
+    <ClCompile Include="erizo\SrtpChannel.cpp" />
+    <ClCompile Include="erizo\Stats.cpp" />
+    <ClCompile Include="erizo\stats\StatNode.cpp" />
+    <ClCompile Include="erizo\StringUtil.cpp" />
+    <ClCompile Include="erizo\WebRtcConnection.cpp" />
+    <ClCompile Include="erizo\dtls\bf_dwrap.c" />
+    <ClCompile Include="erizo\dtls\DtlsClient.cpp" />
+    <ClCompile Include="erizo\dtls\DtlsSocket.cpp" />
+    <ClCompile Include="erizo\lib\LibNiceInterfaceImpl.cpp" />
+    <ClCompile Include="erizo\media\ExternalInput.cpp" />
+    <ClCompile Include="erizo\media\ExternalOutput.cpp" />
+    <ClCompile Include="erizo\media\MediaProcessor.cpp" />
+    <ClCompile Include="erizo\media\OneToManyTranscoder.cpp" />
+    <ClCompile Include="erizo\media\codecs\AudioCodec.cpp" />
+    <ClCompile Include="erizo\media\codecs\VideoCodec.cpp" />
+    <ClCompile Include="erizo\media\mixers\VideoMixer.cpp" />
+    <ClCompile Include="erizo\media\mixers\VideoUtils.cpp" />
+    <ClCompile Include="erizo\pipeline\Pipeline.cpp" />
+    <ClCompile Include="erizo\thread\Scheduler.cpp" />
+    <ClCompile Include="erizo\thread\ThreadPool.cpp" />
+    <ClCompile Include="erizo\thread\Worker.cpp" />
+    <ClCompile Include="test\lib\TokenBucketTest.cpp" />
+    <ClCompile Include="test\main.cpp" />
+    <ClCompile Include="test\media\SyntheticInputTest.cpp" />
+    <ClCompile Include="test\NiceConnectionTest.cpp" />
+    <ClCompile Include="test\OneToManyProcessorTest.cpp" />
+    <ClCompile Include="test\PacketTest.cpp" />
+    <ClCompile Include="test\rtp\BandwidthEstimationHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\FecReceiverHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\LayerBitrateCalculationHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\LayerDetectorHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\PliPacerHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\QualityManagerTest.cpp" />
+    <ClCompile Include="test\rtp\RtcpFeedbackGenerationHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\RtcpNackGeneratorTest.cpp" />
+    <ClCompile Include="test\rtp\RtcpProcessorHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\RtcpRrGeneratorTest.cpp" />
+    <ClCompile Include="test\rtp\RtpAudioMuteHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\RtpExtensionProcessorTest.cpp" />
+    <ClCompile Include="test\rtp\RtpPaddingGeneratorHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\RtpRetransmissionHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\RtpSlideShowHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\SenderBandwidthEstimationTest.cpp" />
+    <ClCompile Include="test\rtp\SequenceNumberTranslatorTest.cpp" />
+    <ClCompile Include="test\rtp\SRPacketHandlerTest.cpp" />
+    <ClCompile Include="test\rtp\StatsHandlerTest.cpp" />
+    <ClCompile Include="test\SdpTest.cpp" />
+    <ClCompile Include="test\stats\MovingAverageStatTest.cpp" />
+    <ClCompile Include="test\stats\MovingIntervalRateStatTest.cpp" />
+    <ClCompile Include="test\stats\StatNodeTest.cpp" />
+    <ClCompile Include="test\thread\SchedulerTest.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="erizo\DtlsTransport.h" />
+    <ClInclude Include="erizo\lib\Clock.h" />
+    <ClInclude Include="erizo\lib\TokenBucket.h" />
+    <ClInclude Include="erizo\logger.h" />
+    <ClInclude Include="erizo\MediaDefinitions.h" />
+    <ClInclude Include="erizo\media\SyntheticInput.h" />
+    <ClInclude Include="erizo\NiceConnection.h" />
+    <ClInclude Include="erizo\OneToManyProcessor.h" />
+    <ClInclude Include="erizo\pipeline\Service.h" />
+    <ClInclude Include="erizo\pipeline\ServiceContext-inl.h" />
+    <ClInclude Include="erizo\pipeline\ServiceContext.h" />
+    <ClInclude Include="erizo\rtp\BandwidthEstimationHandler.h" />
+    <ClInclude Include="erizo\rtp\FecReceiverHandler.h" />
+    <ClInclude Include="erizo\rtp\LayerBitrateCalculationHandler.h" />
+    <ClInclude Include="erizo\rtp\LayerDetectorHandler.h" />
+    <ClInclude Include="erizo\rtp\PacketBufferService.h" />
+    <ClInclude Include="erizo\rtp\PliPacerHandler.h" />
+    <ClInclude Include="erizo\rtp\QualityFilterHandler.h" />
+    <ClInclude Include="erizo\rtp\QualityManager.h" />
+    <ClInclude Include="erizo\rtp\RtcpAggregator.h" />
+    <ClInclude Include="erizo\rtp\RtcpFeedbackGenerationHandler.h" />
+    <ClInclude Include="erizo\rtp\RtcpForwarder.h" />
+    <ClInclude Include="erizo\rtp\RtcpNackGenerator.h" />
+    <ClInclude Include="erizo\rtp\RtcpProcessor.h" />
+    <ClInclude Include="erizo\rtp\RtcpProcessorHandler.h" />
+    <ClInclude Include="erizo\rtp\RtcpRrGenerator.h" />
+    <ClInclude Include="erizo\rtp\RtpAudioMuteHandler.h" />
+    <ClInclude Include="erizo\rtp\RtpExtensionProcessor.h" />
+    <ClInclude Include="erizo\rtp\RtpHeaders.h" />
+    <ClInclude Include="erizo\rtp\RtpPacketQueue.h" />
+    <ClInclude Include="erizo\rtp\RtpPaddingGeneratorHandler.h" />
+    <ClInclude Include="erizo\rtp\RtpPaddingRemovalHandler.h" />
+    <ClInclude Include="erizo\rtp\RtpRetransmissionHandler.h" />
+    <ClInclude Include="erizo\rtp\RtpSink.h" />
+    <ClInclude Include="erizo\rtp\RtpSlideShowHandler.h" />
+    <ClInclude Include="erizo\rtp\RtpSource.h" />
+    <ClInclude Include="erizo\rtp\RtpUtils.h" />
+    <ClInclude Include="erizo\rtp\RtpVP8Fragmenter.h" />
+    <ClInclude Include="erizo\rtp\RtpVP8Parser.h" />
+    <ClInclude Include="erizo\rtp\RtpVP9Parser.h" />
+    <ClInclude Include="erizo\rtp\SenderBandwidthEstimationHandler.h" />
+    <ClInclude Include="erizo\rtp\SequenceNumberTranslator.h" />
+    <ClInclude Include="erizo\rtp\SRPacketHandler.h" />
+    <ClInclude Include="erizo\rtp\StatsHandler.h" />
+    <ClInclude Include="erizo\SdpInfo.h" />
+    <ClInclude Include="erizo\SrtpChannel.h" />
+    <ClInclude Include="erizo\Stats.h" />
+    <ClInclude Include="erizo\stats\StatNode.h" />
+    <ClInclude Include="erizo\StringUtil.h" />
+    <ClInclude Include="erizo\Transport.h" />
+    <ClInclude Include="erizo\WebRtcConnection.h" />
+    <ClInclude Include="erizo\dtls\bf_dwrap.h" />
+    <ClInclude Include="erizo\dtls\DtlsSocket.h" />
+    <ClInclude Include="erizo\lib\LibNiceInterface.h" />
+    <ClInclude Include="erizo\media\ExternalInput.h" />
+    <ClInclude Include="erizo\media\ExternalOutput.h" />
+    <ClInclude Include="erizo\media\MediaProcessor.h" />
+    <ClInclude Include="erizo\media\OneToManyTranscoder.h" />
+    <ClInclude Include="erizo\media\codecs\AudioCodec.h" />
+    <ClInclude Include="erizo\media\codecs\Codecs.h" />
+    <ClInclude Include="erizo\media\codecs\VideoCodec.h" />
+    <ClInclude Include="erizo\media\mixers\VideoMixer.h" />
+    <ClInclude Include="erizo\media\mixers\VideoUtils.h" />
+    <ClInclude Include="erizo\pipeline\Handler.h" />
+    <ClInclude Include="erizo\pipeline\HandlerContext-inl.h" />
+    <ClInclude Include="erizo\pipeline\HandlerContext.h" />
+    <ClInclude Include="erizo\pipeline\Pipeline-inl.h" />
+    <ClInclude Include="erizo\pipeline\Pipeline.h" />
+    <ClInclude Include="erizo\thread\Scheduler.h" />
+    <ClInclude Include="erizo\thread\ThreadPool.h" />
+    <ClInclude Include="erizo\thread\Worker.h" />
+  </ItemGroup>
+</Project>
