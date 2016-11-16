@@ -16,11 +16,12 @@ void RtpPaddingRemovalHandler::disable() {
   enabled_ = false;
 }
 
-void RtpPaddingRemovalHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtpPaddingRemovalHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
 
   if (!chead->isRtcp() && enabled_ && packet->type == VIDEO_PACKET) {
+    RtpHeader* rtp_header = (RtpHeader*)packet->data;
     uint32_t ssrc = rtp_header->getSSRC();
     std::shared_ptr<SequenceNumberTranslator> translator = getTranslatorForSsrc(ssrc, true);
     if (!removePaddingBytes(packet, translator)) {
@@ -40,7 +41,7 @@ void RtpPaddingRemovalHandler::read(Context *ctx, std::shared_ptr<dataPacket> pa
   ctx->fireRead(packet);
 }
 
-void RtpPaddingRemovalHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtpPaddingRemovalHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader* rtcp_head = reinterpret_cast<RtcpHeader*>(packet->data);
   if (!enabled_ || packet->type != VIDEO_PACKET || !rtcp_head->isFeedback()) {
     ctx->fireWrite(packet);
@@ -49,7 +50,7 @@ void RtpPaddingRemovalHandler::write(Context *ctx, std::shared_ptr<dataPacket> p
   uint32_t ssrc = rtcp_head->getSourceSSRC();
   std::shared_ptr<SequenceNumberTranslator> translator = getTranslatorForSsrc(ssrc, false);
   if (!translator) {
-    ELOG_DEBUG("No translator for ssrc %u, %s", ssrc, connection_->toLog());
+	connection_->Info("No translator for ssrc %u", ssrc);
     ctx->fireWrite(packet);
     return;
   }
@@ -65,7 +66,7 @@ void RtpPaddingRemovalHandler::write(Context *ctx, std::shared_ptr<dataPacket> p
           if (input_seq_num.type == SequenceNumberType::Valid) {
             seq_nums.push_back(input_seq_num.input);
           } else {
-            ELOG_DEBUG("Input is not valid for %u, ssrc %u, %s", seq_num, ssrc, connection_->toLog());
+			  connection_->Info("Input is not valid for %u, ssrc %u", seq_num, ssrc);
           }
           ELOG_DEBUG("Lost packet %u, input %u, ssrc %u", seq_num, input_seq_num.input, ssrc);
         }
@@ -78,7 +79,7 @@ void RtpPaddingRemovalHandler::write(Context *ctx, std::shared_ptr<dataPacket> p
           }
           nack_header->setNackPid(pid);
           nack_header->setNackBlp(blp);
-          ELOG_DEBUG("Translated pid %u, translated blp %u, ssrc %u, %s", pid, blp, ssrc, connection_->toLog());
+		  connection_->Info("Translated pid %u, translated blp %u, ssrc %u", pid, blp, ssrc);
         }
       });
     }
@@ -86,7 +87,7 @@ void RtpPaddingRemovalHandler::write(Context *ctx, std::shared_ptr<dataPacket> p
   ctx->fireWrite(packet);
 }
 
-bool RtpPaddingRemovalHandler::removePaddingBytes(std::shared_ptr<dataPacket> packet,
+bool RtpPaddingRemovalHandler::removePaddingBytes(packetPtr packet,
     std::shared_ptr<SequenceNumberTranslator> translator) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   int header_length = rtp_header->getHeaderLength();
@@ -95,7 +96,7 @@ bool RtpPaddingRemovalHandler::removePaddingBytes(std::shared_ptr<dataPacket> pa
   if (padding_length + header_length == packet->length) {
     uint16_t sequence_number = rtp_header->getSeqNumber();
     translator->get(sequence_number, true);
-    ELOG_DEBUG("Dropping packet %u, %s", sequence_number, connection_->toLog());
+	connection_->Info("Dropping packet %u", sequence_number);
     return false;
   }
   packet->length -= padding_length;
@@ -108,11 +109,10 @@ std::shared_ptr<SequenceNumberTranslator> RtpPaddingRemovalHandler::getTranslato
     auto translator_it = translator_map_.find(ssrc);
     std::shared_ptr<SequenceNumberTranslator> translator;
     if (translator_it != translator_map_.end()) {
-      ELOG_DEBUG("Found Translator for %u, %s", ssrc, connection_->toLog());
+      connection_->Info("Found Translator for %u", ssrc);
       translator = translator_it->second;
     } else if (should_create) {
-      ELOG_DEBUG("message: no Translator found creating a new one, ssrc: %u, %s", ssrc,
-      connection_->toLog());
+      connection_->Info("message: no Translator found creating a new one, ssrc: %u", ssrc);
       translator = std::make_shared<SequenceNumberTranslator>();
       translator_map_[ssrc] = translator;
     }

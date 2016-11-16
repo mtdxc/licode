@@ -5,7 +5,6 @@
 #ifndef ERIZO_SRC_ERIZO_LIBNICECONNECTION_H_
 #define ERIZO_SRC_ERIZO_LIBNICECONNECTION_H_
 
-#include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
 #include <string>
 #include <vector>
@@ -41,7 +40,7 @@ class LibNiceConnection : public IceConnection {
   DECLARE_LOGGER();
 
  public:
-  LibNiceConnection(boost::shared_ptr<LibNiceInterface> libnice, IceConnectionListener* listener,
+  LibNiceConnection(std::shared_ptr<LibNiceInterface> libnice, IceConnectionListener* listener,
     const IceConfig& ice_config);
 
   virtual ~LibNiceConnection();
@@ -67,7 +66,7 @@ class LibNiceConnection : public IceConnection {
   void mainLoop();
 
  private:
-  boost::shared_ptr<LibNiceInterface> lib_nice_;
+  std::shared_ptr<LibNiceInterface> lib_nice_;
   NiceAgent* agent_;
   GMainContext* context_;
   GMainLoop* loop_;
@@ -79,7 +78,6 @@ class LibNiceConnection : public IceConnection {
   boost::condition_variable cond_;
 
   bool receivedLastCandidate_;
-  boost::shared_ptr<std::vector<CandidateInfo> > local_candidates;
 };
 
 }  // namespace erizo

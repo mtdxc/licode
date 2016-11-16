@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "./MediaDefinitions.h"
-#include "./SdpInfo.h"
+#include "MediaDefinitions.h"
+#include "SdpInfo.h"
 #include "rtp/RtpHeaders.h"
 
 namespace erizo {
@@ -31,7 +31,7 @@ class RtpExtensionProcessor{
   virtual ~RtpExtensionProcessor();
 
   void setSdpInfo(const SdpInfo& theInfo);
-  uint32_t processRtpExtensions(std::shared_ptr<dataPacket> p);
+  uint32_t processRtpExtensions(packetPtr p);
 
   std::array<RTPExtensions, 10> getVideoExtensionMap() {
     return ext_map_video_;

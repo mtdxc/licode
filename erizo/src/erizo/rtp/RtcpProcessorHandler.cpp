@@ -1,6 +1,8 @@
 #include "rtp/RtcpProcessorHandler.h"
-#include "./MediaDefinitions.h"
-#include "./WebRtcConnection.h"
+#include "MediaDefinitions.h"
+#include "WebRtcConnection.h"
+#include "Stats.h"
+#include "rtp/RtcpProcessor.h"
 
 namespace erizo {
 
@@ -15,7 +17,7 @@ void RtcpProcessorHandler::enable() {
 void RtcpProcessorHandler::disable() {
 }
 
-void RtcpProcessorHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtcpProcessorHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (packet->data);
   if (chead->isRtcp()) {
     if (chead->packettype == RTCP_Sender_PT) {  // Sender Report
@@ -30,7 +32,7 @@ void RtcpProcessorHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet
   ctx->fireRead(packet);
 }
 
-void RtcpProcessorHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtcpProcessorHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (chead->isFeedback()) {
     int length = processor_->analyzeFeedback(packet->data, packet->length);

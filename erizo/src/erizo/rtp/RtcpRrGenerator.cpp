@@ -1,6 +1,6 @@
 #include "rtp/RtcpRrGenerator.h"
-#include "./WebRtcConnection.h"
-#include "lib/ClockUtils.h"
+#include "WebRtcConnection.h"
+#include "lib/Clock.h"
 #include "rtp/RtpUtils.h"
 
 namespace erizo {
@@ -16,7 +16,7 @@ RtcpRrGenerator::RtcpRrGenerator(const RtcpRrGenerator&& generator) :  // NOLINT
     ssrc_{generator.ssrc_},
     type_{generator.type_} {}
 
-bool RtcpRrGenerator::isRetransmitOfOldPacket(std::shared_ptr<dataPacket> packet) {
+bool RtcpRrGenerator::isRetransmitOfOldPacket(packetPtr packet) {
   RtpHeader *head = reinterpret_cast<RtpHeader*>(packet->data);
   if (!RtpUtils::sequenceNumberLessThan(head->getSeqNumber(), rr_info_.max_seq) || rr_info_.jitter.jitter == 0) {
     return false;
@@ -44,7 +44,7 @@ int RtcpRrGenerator::getVideoClockRate(uint8_t payload_type) {
   return 90;
 }
 
-bool RtcpRrGenerator::handleRtpPacket(std::shared_ptr<dataPacket> packet) {
+bool RtcpRrGenerator::handleRtpPacket(packetPtr packet) {
   RtpHeader *head = reinterpret_cast<RtpHeader*>(packet->data);
   if (ssrc_ != head->getSSRC()) {
     ELOG_DEBUG("message: handleRtpPacket ssrc not found, ssrc: %u", head->getSSRC());
@@ -93,7 +93,7 @@ bool RtcpRrGenerator::handleRtpPacket(std::shared_ptr<dataPacket> packet) {
   return false;
 }
 
-std::shared_ptr<dataPacket> RtcpRrGenerator::generateReceiverReport() {
+packetPtr RtcpRrGenerator::generateReceiverReport() {
   uint64_t now = ClockUtils::timePointToMs(clock_->now());
   uint64_t delay_since_last_sr = rr_info_.last_sr_ts == 0 ?
     0 : (now - rr_info_.last_sr_ts) * 65536 / 1000;
@@ -148,7 +148,7 @@ std::shared_ptr<dataPacket> RtcpRrGenerator::generateReceiverReport() {
 }
 
 
-void RtcpRrGenerator::handleSr(std::shared_ptr<dataPacket> packet) {
+void RtcpRrGenerator::handleSr(packetPtr packet) {
   RtcpHeader* chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (ssrc_ != chead->getSSRC()) {
     ELOG_DEBUG("message: handleRtpPacket ssrc not found, ssrc: %u", chead->getSSRC());

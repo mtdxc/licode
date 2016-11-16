@@ -23,7 +23,7 @@ SOFTWARE.
 
 #include <cassert>
 #include <iostream>
-
+#include <algorithm>
 namespace erizo {
 
 TokenBucket::TokenBucket(std::shared_ptr<erizo::Clock> the_clock)

@@ -1,9 +1,8 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_PACKETBUFFERSERVICE_H_
 #define ERIZO_SRC_ERIZO_RTP_PACKETBUFFERSERVICE_H_
 
-#include "./logger.h"
-#include "./MediaDefinitions.h"
-#include "rtp/RtpHeaders.h"
+#include "logger.h"
+#include "MediaDefinitions.h"
 #include "pipeline/Service.h"
 
 static constexpr uint16_t kServicePacketBufferSize = 256;
@@ -16,19 +15,21 @@ class PacketBufferService: public Service {
   PacketBufferService();
   ~PacketBufferService() {}
 
-  PacketBufferService(const PacketBufferService&& service);
+  void insertPacket(packetPtr packet);
 
-  void insertPacket(std::shared_ptr<dataPacket> packet);
-
-  std::shared_ptr<dataPacket> getVideoPacket(uint16_t seq_num);
-  std::shared_ptr<dataPacket> getAudioPacket(uint16_t seq_num);
+  packetPtr getVideoPacket(uint16_t seq_num);
+  packetPtr getAudioPacket(uint16_t seq_num);
 
  private:
-  uint16_t getIndexInBuffer(uint16_t seq_num);
+	PacketBufferService(const PacketBufferService&& service);
 
+  // 为性能考虑,不测试系列号是否相同
+  inline uint16_t getIndexInBuffer(uint16_t seq_num) {
+    return seq_num % kServicePacketBufferSize;
+  }
  private:
-  std::vector<std::shared_ptr<dataPacket>> audio_;
-  std::vector<std::shared_ptr<dataPacket>> video_;
+  std::vector<packetPtr> audio_;
+  std::vector<packetPtr> video_;
 };
 
 }  // namespace erizo

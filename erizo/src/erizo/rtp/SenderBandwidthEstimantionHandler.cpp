@@ -1,6 +1,6 @@
-#include "./MediaDefinitions.h"
+#include "MediaDefinitions.h"
 #include "rtp/SenderBandwidthEstimationHandler.h"
-
+#include "Stats.h"
 namespace erizo {
 
 DEFINE_LOGGER(SenderBandwidthEstimationHandler, "rtp.SenderBandwidthEstimationHandler");
@@ -55,7 +55,7 @@ void SenderBandwidthEstimationHandler::notifyUpdate() {
   initialized_ = true;
 }
 
-void SenderBandwidthEstimationHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void SenderBandwidthEstimationHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (chead->isFeedback() && chead->getSourceSSRC() == connection_->getVideoSinkSSRC()) {
     char* packet_pointer = packet->data;
@@ -68,16 +68,15 @@ void SenderBandwidthEstimationHandler::read(Context *ctx, std::shared_ptr<dataPa
       chead = reinterpret_cast<RtcpHeader*>(packet_pointer);
       rtcp_length = (ntohs(chead->length) + 1) * 4;
       total_length += rtcp_length;
-      ELOG_DEBUG("%s ssrc %u, sourceSSRC %u, PacketType %u", connection_->toLog(),
+      connection_->Info("ssrc %u, sourceSSRC %u, PacketType %u",
           chead->getSSRC(),
           chead->getSourceSSRC(),
           chead->getPacketType());
       switch (chead->packettype) {
         case RTCP_Receiver_PT:
           {
-            ELOG_DEBUG("%s, Analyzing Video RR: PacketLost %u, Ratio %u, current_block %d, blocks %d"
+            connection_->Info("Analyzing Video RR: PacketLost %u, Ratio %u, current_block %d, blocks %d"
                 ", sourceSSRC %u, ssrc %u",
-                connection_->toLog(),
                 chead->getLostPackets(),
                 chead->getFractionLost(),
                 current_block,
@@ -86,19 +85,19 @@ void SenderBandwidthEstimationHandler::read(Context *ctx, std::shared_ptr<dataPa
                 chead->getSSRC());
             // calculate RTT + Update receiver block
             uint32_t delay_since_last_ms = (chead->getDelaySinceLastSr() * 1000) / 65536;
-            int64_t now_ms = ClockUtils::timePointToMs(clock_->now());
+            int64_t now_ms = ClockUtils::msNow();
             uint32_t last_sr = chead->getLastSr();
 
             auto value = std::find_if(sr_delay_data_.begin(), sr_delay_data_.end(),
                 [last_sr](const std::shared_ptr<SrDelayData> sr_info) {
-                return sr_info->sr_ntp == last_sr;
+                  return sr_info->sr_ntp == last_sr;
                 });
             // TODO(pedro) Implement alternative when there are no REMBs
             if (received_remb_ && value != sr_delay_data_.end()) {
                 uint32_t delay = now_ms - (*value)->sr_send_time - delay_since_last_ms;
-                ELOG_DEBUG("%s message: Updating Estimate with RR, fraction_lost: %u, "
+                connection_->Info("Updating Estimate with RR, fraction_lost: %u, "
                     "delay: %u, period_packets_sent_: %u",
-                    connection_->toLog(), chead->getFractionLost(), delay, period_packets_sent_);
+                    chead->getFractionLost(), delay, period_packets_sent_);
                 sender_bwe_->UpdateReceiverBlock(chead->getFractionLost(),
                     delay, period_packets_sent_, now_ms);
                 period_packets_sent_ = 0;
@@ -112,14 +111,13 @@ void SenderBandwidthEstimationHandler::read(Context *ctx, std::shared_ptr<dataPa
               char *uniqueId = reinterpret_cast<char*>(&chead->report.rembPacket.uniqueid);
               if (!strncmp(uniqueId, "REMB", 4)) {
                 received_remb_ = true;
-                int64_t now_ms = ClockUtils::timePointToMs(clock_->now());
+                int64_t now_ms = ClockUtils::msNow();
                 uint64_t bitrate = chead->getBrMantis() << chead->getBrExp();
-                ELOG_DEBUG("%s message: Updating Estimate with REMB, bitrate %lu", connection_->toLog(),
-                    bitrate);
+                connection_->Info("Updating Estimate with REMB, bitrate %lu", bitrate);
                 sender_bwe_->UpdateReceiverEstimate(now_ms, bitrate);
                 updateEstimate();
               } else {
-                ELOG_DEBUG("%s message: Unsupported AFB Packet not REMB", connection_->toLog());
+                connection_->Info("Unsupported AFB Packet not REMB");
               }
             }
           }
@@ -129,11 +127,11 @@ void SenderBandwidthEstimationHandler::read(Context *ctx, std::shared_ptr<dataPa
       }
       current_block++;
     } while (total_length < packet->length);
-  }
+    }
   ctx->fireRead(packet);
 }
 
-void SenderBandwidthEstimationHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void SenderBandwidthEstimationHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (!chead->isRtcp() && packet->type == VIDEO_PACKET) {
     period_packets_sent_++;
@@ -151,10 +149,10 @@ void SenderBandwidthEstimationHandler::write(Context *ctx, std::shared_ptr<dataP
 }
 
 void SenderBandwidthEstimationHandler::analyzeSr(RtcpHeader* chead) {
-  uint64_t now = ClockUtils::timePointToMs(clock_->now());
+  uint64_t now = ClockUtils::msNow();
   uint32_t ntp;
   ntp = chead->get32MiddleNtp();
-  ELOG_DEBUG("%s message: adding incoming SR to list, ntp: %u", connection_->toLog(), ntp);
+  connection_->Info("adding incoming SR to list, ntp: %u", ntp);
   sr_delay_data_.push_back(std::shared_ptr<SrDelayData>( new SrDelayData(ntp, now)));
   if (sr_delay_data_.size() >= kMaxSrListSize) {
     sr_delay_data_.pop_front();
@@ -166,8 +164,8 @@ void SenderBandwidthEstimationHandler::updateEstimate() {
       &estimated_rtt_);
   stats_->getNode()["total"].insertStat("senderBitrateEstimation",
       CumulativeStat{static_cast<uint64_t>(estimated_bitrate_)});
-  ELOG_DEBUG("%s message: estimated bitrate %d, loss %u, rtt %ld",
-      connection_->toLog(), estimated_bitrate_, estimated_loss_, estimated_rtt_);
+  connection_->Info("estimated bitrate %d, loss %u, rtt %ld",
+    estimated_bitrate_, estimated_loss_, estimated_rtt_);
   if (bwe_listener_) {
     bwe_listener_->onBandwidthEstimate(estimated_bitrate_, estimated_loss_, estimated_rtt_);
   }

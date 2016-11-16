@@ -6,7 +6,7 @@
 #include <random>
 #include <map>
 
-#include "./logger.h"
+#include "logger.h"
 #include "pipeline/Handler.h"
 #include "rtp/RtpVP8Parser.h"
 #include "rtp/RtpVP9Parser.h"
@@ -16,11 +16,8 @@
 namespace erizo {
 
 class WebRtcConnection;
-
-
 class LayerDetectorHandler: public InboundHandler, public std::enable_shared_from_this<LayerDetectorHandler> {
   DECLARE_LOGGER();
-
 
  public:
   LayerDetectorHandler();
@@ -32,12 +29,12 @@ class LayerDetectorHandler: public InboundHandler, public std::enable_shared_fro
      return "layer_detector";
   }
 
-  void read(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:
-  void parseLayerInfoFromVP8(std::shared_ptr<dataPacket> packet);
-  void parseLayerInfoFromVP9(std::shared_ptr<dataPacket> packet);
+  void parseLayerInfoFromVP8(packetPtr packet);
+  void parseLayerInfoFromVP9(packetPtr packet);
   int getSsrcPosition(uint32_t ssrc);
 
  private:

@@ -5,7 +5,6 @@
 #ifndef ERIZO_SRC_ERIZO_ICECONNECTION_H_
 #define ERIZO_SRC_ERIZO_ICECONNECTION_H_
 
-#include <boost/scoped_ptr.hpp>
 #include <boost/thread.hpp>
 #include <string>
 #include <vector>
@@ -45,31 +44,17 @@ class IceConfig {
     MediaType media_type;
     std::string transport_name;
     std::string connection_id;
-    unsigned int ice_components;
-    std::string username, password;
+    unsigned int ice_components = 0;
+    //std::string username, password;
     std::string turn_server, turn_username, turn_pass;
     std::string stun_server, network_interface;
-    uint16_t stun_port, turn_port, min_port, max_port;
-    bool should_trickle;
-    bool use_nicer;
-    IceConfig()
-      : media_type{MediaType::OTHER},
-        transport_name{""},
-        connection_id{""},
-        ice_components{0},
-        username{""},
-        password{""},
-        turn_server{""},
-        turn_username{""},
-        turn_pass{""},
-        stun_server{""},
-        network_interface{""},
-        stun_port{0},
-        turn_port{0},
-        min_port{0},
-        max_port{0},
-        should_trickle{false},
-        use_nicer{false} {
+    uint16_t stun_port = 0;
+    uint16_t turn_port = 0;
+    uint16_t min_port = 0;
+    uint16_t max_port = 0;
+    bool should_trickle = false;
+    bool use_nicer = false;
+    IceConfig() : media_type{MediaType::OTHER}{
     }
 };
 
@@ -115,11 +100,6 @@ class IceConnection : public LogContext {
 
  private:
   virtual std::string iceStateToString(IceState state) const;
-
- protected:
-  inline const char* toLog() {
-    return ("id: " + ice_config_.connection_id + ", " + printLogContext()).c_str();
-  }
 
  protected:
   IceConnectionListener *listener_;

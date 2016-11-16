@@ -128,11 +128,7 @@ static long dwrap_ctrl(BIO *b, int cmd, long num, void *ptr) {  // NOLINT(runtim
 }
 
 static long dwrap_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp) {  // NOLINT(runtime/int)
-  long ret;  // NOLINT(runtime/int)
-
-  ret = BIO_callback_ctrl(b->next_bio, cmd, fp);
-
-  return ret;
+  return BIO_callback_ctrl(b->next_bio, cmd, fp);
 }
 
 

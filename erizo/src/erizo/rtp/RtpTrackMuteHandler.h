@@ -37,15 +37,15 @@ class RtpTrackMuteHandler: public Handler {
     return "track-mute";
   }
 
-  void read(Context *ctx, std::shared_ptr<dataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:
   void muteTrack(TrackMuteInfo *info, bool active);
-  void handleFeedback(const TrackMuteInfo &info, std::shared_ptr<dataPacket> packet);
-  void handlePacket(Context *ctx, TrackMuteInfo *info, std::shared_ptr<dataPacket> packet);
-  inline void setPacketSeqNumber(std::shared_ptr<dataPacket> packet, uint16_t seq_number);
+  void handleFeedback(const TrackMuteInfo &info, packetPtr packet);
+  void handlePacket(Context *ctx, TrackMuteInfo *info, packetPtr packet);
+  inline void setPacketSeqNumber(packetPtr packet, uint16_t seq_number);
 
  private:
   TrackMuteInfo audio_info_;

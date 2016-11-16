@@ -2,13 +2,12 @@
 #define ERIZO_SRC_ERIZO_RTP_LAYERBITRATECALCULATIONHANDLER_H_
 
 
-#include "./logger.h"
+#include "logger.h"
 #include "pipeline/Handler.h"
-#include "./Stats.h"
-#include "rtp/QualityManager.h"
-
+#include "lib/Clock.h"
 namespace erizo {
-
+class Stats;
+class QualityManager;
 class WebRtcConnection;
 
 constexpr duration kLayerRateStatIntervalSize = std::chrono::milliseconds(100);
@@ -28,7 +27,7 @@ class LayerBitrateCalculationHandler: public OutboundHandler {
      return "layer_bitrate_calculator";
   }
 
-  void write(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:

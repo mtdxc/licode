@@ -2,7 +2,6 @@
 #ifndef ERIZO_SRC_ERIZO_MEDIA_CODECS_CODECS_H_
 #define ERIZO_SRC_ERIZO_MEDIA_CODECS_CODECS_H_
 
-#include <boost/cstdint.hpp>
 namespace erizo {
 enum VideoCodecID{
   VIDEO_CODEC_VP8,

@@ -9,9 +9,9 @@
 #include <string>
 #include <vector>
 
-#include "./MediaDefinitions.h"
+#include "MediaDefinitions.h"
 #include "media/MediaProcessor.h"
-#include "./logger.h"
+#include "logger.h"
 
 namespace erizo {
 class WebRtcConnection;
@@ -62,8 +62,8 @@ class OneToManyTranscoder : public MediaSink, public RawDataReceiver, public RTP
   void sendHead(WebRtcConnection* conn);
   RtpVP8Parser pars;
   unsigned int sentPackets_;
-  int deliverAudioData_(std::shared_ptr<dataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<dataPacket> video_packet) override;
+  int deliverAudioData_(packetPtr audio_packet) override;
+  int deliverVideoData_(packetPtr video_packet) override;
   /**
   * Closes all the subscribers and the publisher, the object is useless after this
   */

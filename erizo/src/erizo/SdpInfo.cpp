@@ -14,12 +14,11 @@
 #include <vector>
 
 #include "rtp/RtpHeaders.h"
-#include "./StringUtil.h"
+#include "StringUtil.h"
 
 using std::endl;
 namespace erizo {
   DEFINE_LOGGER(SdpInfo, "SdpInfo");
-
 
   static const char *SDP_IDENTIFIER = "LicodeMCU";
   static const char *cand = "a=candidate:";
@@ -128,11 +127,11 @@ namespace erizo {
 
   void SdpInfo::setCredentials(const std::string& username, const std::string& password, MediaType media) {
     switch (media) {
-      case(VIDEO_TYPE):
+      case VIDEO_TYPE:
         iceVideoUsername_ = std::string(username);
         iceVideoPassword_ = std::string(password);
         break;
-      case(AUDIO_TYPE):
+      case AUDIO_TYPE:
         iceAudioUsername_ = std::string(username);
         iceAudioPassword_ = std::string(password);
         break;
@@ -166,18 +165,13 @@ namespace erizo {
     ELOG_DEBUG("Getting SDP");
 
     std::ostringstream sdp;
-    sdp << "v=0\n" << "o=- 0 0 IN IP4 127.0.0.1\n";
-    sdp << "s=" << SDP_IDENTIFIER << "\n";
-    sdp << "t=0 0\n";
+    sdp << "v=0\n" 
+		<< "o=- 0 0 IN IP4 127.0.0.1\n"
+		<< "s=" << SDP_IDENTIFIER << "\n"
+	    << "t=0 0\n";
 
     if (isBundle) {
       sdp << "a=group:BUNDLE";
-      /*
-         if (this->hasAudio)
-         sdp << " audio";
-         if (this->hasVideo)
-         sdp << " video";
-         */
       for (uint8_t i = 0; i < bundleTags.size(); i++) {
         sdp << " " << bundleTags[i].id;
       }
@@ -205,13 +199,13 @@ namespace erizo {
       }
 
       sdp << "\n"
-          << "c=IN IP4 0.0.0.0" << endl;
+          << "c=IN IP4 0.0.0.0\n";
       if (isRtcpMux) {
-        sdp << "a=rtcp:1 IN IP4 0.0.0.0" << endl;
+        sdp << "a=rtcp:1 IN IP4 0.0.0.0\n";
       }
       for (unsigned int it = 0; it < candidateVector_.size(); it++) {
         if (candidateVector_[it].mediaType == AUDIO_TYPE || isBundle)
-          sdp << this->stringifyCandidate(candidateVector_[it]) << endl;
+          sdp << stringifyCandidate(candidateVector_[it]) << endl;
       }
       if (iceAudioUsername_.size() > 0) {
         sdp << "a=ice-ufrag:" << iceAudioUsername_ << endl;
@@ -488,6 +482,7 @@ namespace erizo {
     if (audioEnabled)
       this->audioSdpMLine = 0;
 
+    audioCodecs = videoCodecs = 0;
     for (unsigned int it = 0; it < internalPayloadVector_.size(); it++) {
       RtpMap& rtp = internalPayloadVector_[it];
       if (rtp.media_type == VIDEO_TYPE) {

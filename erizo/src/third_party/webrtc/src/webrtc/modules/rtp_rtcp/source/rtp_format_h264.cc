@@ -62,6 +62,7 @@ bool ParseStapAStartOffsets(const uint8_t* nalu_ptr,
     // Buffer doesn't contain room for additional nalu length.
     if (length_remaining < sizeof(uint16_t))
       return false;
+    // 16bit length
     uint16_t nalu_size = ByteReader<uint16_t>::ReadBigEndian(nalu_ptr);
     nalu_ptr += sizeof(uint16_t);
     length_remaining -= sizeof(uint16_t);
@@ -69,7 +70,7 @@ bool ParseStapAStartOffsets(const uint8_t* nalu_ptr,
       return false;
     nalu_ptr += nalu_size;
     length_remaining -= nalu_size;
-
+    // skip first nal type
     offsets->push_back(offset + kStapAHeaderSize);
     offset += kLengthFieldSize + nalu_size;
   }
@@ -99,8 +100,7 @@ void RtpPacketizerH264::SetPayloadData(
   RTC_DCHECK(input_fragments_.empty());
   RTC_DCHECK(fragmentation);
   for (int i = 0; i < fragmentation->fragmentationVectorSize; ++i) {
-    const uint8_t* buffer =
-        &payload_data[fragmentation->fragmentationOffset[i]];
+    const uint8_t* buffer = &payload_data[fragmentation->fragmentationOffset[i]];
     size_t length = fragmentation->fragmentationLength[i];
 
     bool updated_sps = false;

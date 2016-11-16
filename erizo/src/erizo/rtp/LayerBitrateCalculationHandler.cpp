@@ -1,9 +1,8 @@
-#include "rtp/LayerBitrateCalculationHandler.h"
-
 #include <vector>
-
-#include "./WebRtcConnection.h"
-#include "lib/ClockUtils.h"
+#include "rtp/LayerBitrateCalculationHandler.h"
+#include "rtp/QualityManager.h"
+#include "WebRtcConnection.h"
+#include "Stats.h"
 
 namespace erizo {
 
@@ -20,7 +19,7 @@ void LayerBitrateCalculationHandler::disable() {
   enabled_ = false;
 }
 
-void LayerBitrateCalculationHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void LayerBitrateCalculationHandler::write(Context *ctx, packetPtr packet) {
   if (!enabled_ || !initialized_) {
     ctx->fireWrite(packet);
     return;

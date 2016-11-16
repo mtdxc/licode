@@ -3,11 +3,10 @@
 
 #include <string>
 #include <vector>
-#include <cstdio>
 #include "IceConnection.h"
 #include "thread/Worker.h"
 #include "thread/IOWorker.h"
-#include "./logger.h"
+#include "logger.h"
 
 /**
  * States of Transport
@@ -21,16 +20,15 @@ class Transport;
 
 class TransportListener {
  public:
-  virtual void onTransportData(std::shared_ptr<dataPacket> packet, Transport *transport) = 0;
+  virtual void onTransportData(packetPtr packet, Transport *transport) = 0;
   virtual void updateState(TransportState state, Transport *transport) = 0;
   virtual void onCandidate(const CandidateInfo& cand, Transport *transport) = 0;
 };
 
-class Transport : public std::enable_shared_from_this<Transport>, public IceConnectionListener, public LogContext {
- public:
-  std::shared_ptr<IceConnection> ice_;
-  MediaType mediaType;
-  std::string transport_name;
+class Transport : public IceConnectionListener,
+  public std::enable_shared_from_this<Transport>, public LogContext {
+public:
+
   Transport(MediaType med, const std::string& transport_name, const std::string& connection_id, bool bundle,
       bool rtcp_mux, std::weak_ptr<TransportListener> transport_listener, const IceConfig& iceConfig,
       std::shared_ptr<Worker> worker, std::shared_ptr<IOWorker> io_worker) :
@@ -59,6 +57,7 @@ class Transport : public std::enable_shared_from_this<Transport>, public IceConn
     if (state == state_) {
       return;
     }
+    //Log("updateTransportState %d->%d", state_, state);
     state_ = state;
     if (auto listener = getTransportListener().lock()) {
       listener->updateState(state, this);
@@ -74,6 +73,7 @@ class Transport : public std::enable_shared_from_this<Transport>, public IceConn
     return ice_->setRemoteCandidates(candidates, isBundle);
   }
 
+  // implement for NiceConnectionListener
   void onPacketReceived(packetPtr packet) {
     std::weak_ptr<Transport> weak_transport = Transport::shared_from_this();
     worker_->task([weak_transport, packet]() {
@@ -89,12 +89,6 @@ class Transport : public std::enable_shared_from_this<Transport>, public IceConn
     });
   }
 
-  bool rtcp_mux_;
-
-  inline const char* toLog() {
-    return ("id: " + connection_id_ + ", " + printLogContext()).c_str();
-  }
-
   std::shared_ptr<Worker> getWorker() {
     return worker_;
   }
@@ -103,6 +97,13 @@ class Transport : public std::enable_shared_from_this<Transport>, public IceConn
   std::weak_ptr<TransportListener> transport_listener_;
 
  protected:
+   // for access this two value
+   friend class WebRtcConnection;
+   MediaType mediaType;
+   std::string transport_name;
+
+   std::shared_ptr<IceConnection> ice_;
+  bool rtcp_mux_;
   std::string connection_id_;
   TransportState state_;
   IceConfig iceConfig_;

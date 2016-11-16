@@ -39,7 +39,6 @@ class RtpPacketizer {
   // otherwise (i.e., call the function again to get the next packet).
   // Returns true on success, false otherwise.
   virtual bool NextPacket(RtpPacketToSend* packet, bool* last_packet) = 0;
-
   virtual ProtectionType GetProtectionType() = 0;
 
   virtual StorageType GetStorageType(uint32_t retransmission_settings) = 0;

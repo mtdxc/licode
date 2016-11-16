@@ -132,10 +132,10 @@ PipelineBase& PipelineBase::addHelper(
     std::shared_ptr<Context>&& ctx,  // NOLINT
     bool front) {
   ctxs_.insert(front ? ctxs_.begin() : ctxs_.end(), ctx);
-  if (Context::dir == HandlerDir::BOTH || Context::dir == HandlerDir::IN) {
+  if (Context::dir == HandlerDir::BOTH || Context::dir == HandlerDir::In) {
     inCtxs_.insert(front ? inCtxs_.begin() : inCtxs_.end(), ctx.get());
   }
-  if (Context::dir == HandlerDir::BOTH || Context::dir == HandlerDir::OUT) {
+  if (Context::dir == HandlerDir::BOTH || Context::dir == HandlerDir::Out) {
     outCtxs_.insert(front ? outCtxs_.begin() : outCtxs_.end(), ctx.get());
   }
   return *this;

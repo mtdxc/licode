@@ -1,6 +1,6 @@
 #include "rtp/RtpTrackMuteHandler.h"
-#include "./MediaDefinitions.h"
-#include "./WebRtcConnection.h"
+#include "MediaDefinitions.h"
+#include "WebRtcConnection.h"
 #include "rtp/RtpUtils.h"
 
 namespace erizo {
@@ -24,7 +24,7 @@ void RtpTrackMuteHandler::notifyUpdate() {
   muteTrack(&video_info_, connection_->isVideoMuted());
 }
 
-void RtpTrackMuteHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtpTrackMuteHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
 
   if (connection_->getAudioSinkSSRC() == chead->getSourceSSRC()) {
@@ -36,7 +36,7 @@ void RtpTrackMuteHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet)
   ctx->fireRead(packet);
 }
 
-void RtpTrackMuteHandler::handleFeedback(const TrackMuteInfo &info, std::shared_ptr<dataPacket> packet) {
+void RtpTrackMuteHandler::handleFeedback(const TrackMuteInfo &info, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   uint16_t offset = info.seq_num_offset;
   if (offset > 0) {
@@ -68,7 +68,7 @@ void RtpTrackMuteHandler::handleFeedback(const TrackMuteInfo &info, std::shared_
   }
 }
 
-void RtpTrackMuteHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtpTrackMuteHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader *rtcp_header = reinterpret_cast<RtcpHeader*>(packet->data);
   if (rtcp_header->isRtcp()) {
     ctx->fireWrite(packet);
@@ -81,7 +81,7 @@ void RtpTrackMuteHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet
   }
 }
 
-void RtpTrackMuteHandler::handlePacket(Context *ctx, TrackMuteInfo *info, std::shared_ptr<dataPacket> packet) {
+void RtpTrackMuteHandler::handlePacket(Context *ctx, TrackMuteInfo *info, packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   uint16_t offset = info->seq_num_offset;
   info->last_original_seq_num = rtp_header->getSeqNumber();
@@ -107,11 +107,11 @@ void RtpTrackMuteHandler::muteTrack(TrackMuteInfo *info, bool active) {
     return;
   }
   info->mute_is_active = active;
-  ELOG_INFO("%s message: Mute %s, active: %d", info->label.c_str(), connection_->toLog(), active);
+  connection_->Info("Mute %s, active: %d", info->label.c_str(), active);
   if (!info->mute_is_active) {
     info->seq_num_offset = info->last_original_seq_num - info->last_sent_seq_num;
-    ELOG_DEBUG("%s message: Deactivated, original_seq_num: %u, last_sent_seq_num: %u, offset: %u",
-        connection_->toLog(), info->last_original_seq_num, info->last_sent_seq_num, info->seq_num_offset);
+    connection_->Info("Deactivated, original_seq_num: %u, last_sent_seq_num: %u, offset: %u",
+        info->last_original_seq_num, info->last_sent_seq_num, info->seq_num_offset);
   } else {
     if (info->label == "video") {
       getContext()->fireRead(RtpUtils::createPLI(connection_->getVideoSinkSSRC(), connection_->getVideoSourceSSRC()));
@@ -119,7 +119,7 @@ void RtpTrackMuteHandler::muteTrack(TrackMuteInfo *info, bool active) {
   }
 }
 
-inline void RtpTrackMuteHandler::setPacketSeqNumber(std::shared_ptr<dataPacket> packet, uint16_t seq_number) {
+inline void RtpTrackMuteHandler::setPacketSeqNumber(packetPtr packet, uint16_t seq_number) {
   RtpHeader *head = reinterpret_cast<RtpHeader*> (packet->data);
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (packet->data);
   if (chead->isRtcp()) {

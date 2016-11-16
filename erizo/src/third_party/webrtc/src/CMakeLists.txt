@@ -11,13 +11,17 @@ project (WEBRTC)
 
 set (WEBRTC_SOURCE ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11 -DWEBRTC_POSIX")
-
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fno-stack-protector -DWEBRTC_MAC")
-ELSE()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -DWEBRTC_LINUX")
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
+IF (WIN32)
+    #do something related to WIN32
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWEBRTC_WIN")
+ELSEIF (UNIX)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWEBRTC_POSIX -DWEBRTC_LINUX -fPIC")
+    #do something related to UNIX
+ELSEIF(APPLE)
+    #do something related to APPLE
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWEBRTC_POSIX -DWEBRTC_MAC -fno-stack-protector")
+ENDIF (WIN32)
 
 include_directories("${WEBRTC_SOURCE_DIR}" "${THIRD_PARTY_INCLUDE}")
 

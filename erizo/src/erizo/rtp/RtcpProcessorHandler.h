@@ -3,13 +3,12 @@
 
 #include <string>
 
-#include "./logger.h"
-#include "./Stats.h"
+#include "logger.h"
 #include "pipeline/Handler.h"
-#include "rtp/RtcpProcessor.h"
 
 namespace erizo {
-
+class RtcpProcessor;
+class Stats;
 class WebRtcConnection;
 
 class RtcpProcessorHandler: public Handler {
@@ -25,8 +24,8 @@ class RtcpProcessorHandler: public Handler {
     return "rtcp-processor";
   }
 
-  void read(Context *ctx, std::shared_ptr<dataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:

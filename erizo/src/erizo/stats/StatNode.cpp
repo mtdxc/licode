@@ -6,8 +6,7 @@
 #include <memory>
 #include <map>
 #include <iostream>
-
-#include "lib/ClockUtils.h"
+#include <algorithm>
 
 namespace erizo {
 

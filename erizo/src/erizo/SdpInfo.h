@@ -11,7 +11,7 @@
 #include <vector>
 #include <map>
 
-#include "./logger.h"
+#include "logger.h"
 
 namespace erizo {
 /**
@@ -46,13 +46,10 @@ enum DtlsRole {
  */
 class CryptoInfo {
  public:
-    CryptoInfo() :
-            tag(0) {
-    }
     /**
      * tag number
      */
-    int tag;
+    int tag = 0;
     /**
      * The cipher suite. Only AES_CM_128_HMAC_SHA1_80 is supported as of now.
      */
@@ -231,6 +228,7 @@ class SdpInfo {
    * The audio and video SSRCs for this particular SDP.
    */
   unsigned int audio_ssrc;
+
   std::vector<uint32_t> video_ssrc_list;
   std::map<uint32_t, uint32_t> video_rtx_ssrc_map;
   /**
@@ -250,7 +248,8 @@ class SdpInfo {
   */
   bool isRtcpMux;
 
-  StreamDirection videoDirection, audioDirection;
+  StreamDirection videoDirection;
+  StreamDirection audioDirection;
   /**
   * RTP Profile type
   */

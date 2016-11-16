@@ -19,118 +19,166 @@
 #ifndef ERIZO_SRC_ERIZO_LOGGER_H_
 #define ERIZO_SRC_ERIZO_LOGGER_H_
 
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <log4cxx/logger.h>
-#include <log4cxx/helpers/exception.h>
-
 #include <map>
 #include <string>
-#include <utility>
+#include <string.h>
 
-class LogContext {
- public:
-  LogContext() : context_log_{""} {
-  }
+#define ELOG_MAX_BUFFER_SIZE 8000
 
-  virtual ~LogContext() {}
-
-  void setLogContext(std::map<std::string, std::string> context) {
-    context_ = context;
-    context_log_ = "";
-    for (const std::pair<std::string, std::string> &item : context) {
-      context_log_ += item.first + ": " + item.second + ", ";
-    }
-  }
-
-  void copyLogContextFrom(LogContext *log_context) {
-    setLogContext(log_context->context_);
-  }
-
-  std::string printLogContext() {
-    return context_log_;
-  }
-
- private:
-  std::string context_log_;
-  std::map<std::string, std::string> context_;
+#ifdef WIN32
+#define snprintf sprintf_s
+#define strdup _strdup
+enum
+{
+	TRACE, DEBUG, INFO,  WARN, MERROR, FATAL
 };
-
+namespace log4cxx{
+  typedef const char* LoggerPtr;
+	class Logger {
+	public:
+		static LoggerPtr getLogger(const char* name) { return name; }
+	};
+}
+void LogOut(int level, const char* module, const char* fmt, ...);
+void LogOut2(int level, const char* module, const char* file, int line,  const char* fmt, ...);
+#define DECLARE_LOGGER() static const char* logger;
+#define DEFINE_LOGGER(namespace, logName) const char* namespace::logger = (logName);
+#define ELOG_DEBUG2(logger, fmt, ...) LogOut(DEBUG, logger, fmt, ##__VA_ARGS__);
+#define ELOG_WARN2(logger, fmt, ...) LogOut(WARN, logger, fmt, ##__VA_ARGS__);
+#define ELOG_TRACE(fmt, ...) LogOut(TRACE, logger, fmt, ##__VA_ARGS__);
+#define ELOG_DEBUG(fmt, ...) LogOut(DEBUG, logger, fmt, ##__VA_ARGS__);
+#define ELOG_INFO(fmt, ...) LogOut(INFO, logger, fmt, ##__VA_ARGS__);
+#define ELOG_WARN(fmt, ...) LogOut(WARN, logger, fmt, ##__VA_ARGS__);
+#define ELOG_ERROR(fmt, ...) LogOut(MERROR, logger, __FILE__, __LINE__, fmt, ##__VA_ARGS__);
+#define ELOG_FATAL(fmt, ...) LogOut(FATAL, logger, __FILE__, __LINE__, fmt, ##__VA_ARGS__);
+#else
+#include <stdio.h>
+#include <log4cxx/logger.h>
+#include <log4cxx/helpers/exception.h>
 #define DECLARE_LOGGER() \
 static log4cxx::LoggerPtr logger;
 
 #define DEFINE_LOGGER(namespace, logName) \
 log4cxx::LoggerPtr namespace::logger = log4cxx::Logger::getLogger(logName);
 
-#define ELOG_MAX_BUFFER_SIZE 10000
 
-#define SPRINTF_ELOG_MSG(buffer, fmt, args...) \
+#define SPRINTF_ELOG_MSG(buffer, fmt, ...) \
 char buffer[ELOG_MAX_BUFFER_SIZE]; \
-snprintf(buffer, ELOG_MAX_BUFFER_SIZE, fmt, ##args);
+snprintf(buffer, ELOG_MAX_BUFFER_SIZE, fmt, ##__VA_ARGS__);
 
 // older versions of log4cxx don't support tracing
 #ifdef LOG4CXX_TRACE
-#define ELOG_TRACE2(logger, fmt, args...) \
+#define ELOG_TRACE2(logger, fmt, ...) \
 if (logger->isTraceEnabled()) { \
-  SPRINTF_ELOG_MSG(__tmp, fmt, ##args); \
+  SPRINTF_ELOG_MSG(__tmp, fmt, ##__VA_ARGS__); \
   LOG4CXX_TRACE(logger, __tmp); \
 }
 #else
-#define ELOG_TRACE2(logger, fmt, args...) \
+#define ELOG_TRACE2(logger, fmt, ...) \
 if (logger->isDebugEnabled()) { \
-  SPRINTF_ELOG_MSG(__tmp, fmt, ##args); \
+  SPRINTF_ELOG_MSG(__tmp, fmt, ##__VA_ARGS__); \
   LOG4CXX_DEBUG(logger, __tmp); \
 }
 #endif
 
-#define ELOG_DEBUG2(logger, fmt, args...) \
+#define ELOG_DEBUG2(logger, fmt, ...) \
 if (logger->isDebugEnabled()) { \
-  SPRINTF_ELOG_MSG(__tmp, fmt, ##args); \
+  SPRINTF_ELOG_MSG(__tmp, fmt, ##__VA_ARGS__); \
   LOG4CXX_DEBUG(logger, __tmp); \
 }
 
-#define ELOG_INFO2(logger, fmt, args...) \
+#define ELOG_INFO2(logger, fmt, ...) \
 if (logger->isInfoEnabled()) { \
-  SPRINTF_ELOG_MSG(__tmp, fmt, ##args); \
+  SPRINTF_ELOG_MSG(__tmp, fmt, ##__VA_ARGS__); \
   LOG4CXX_INFO(logger, __tmp); \
 }
 
-#define ELOG_WARN2(logger, fmt, args...) \
+#define ELOG_WARN2(logger, fmt, ...) \
 if (logger->isWarnEnabled()) { \
-  SPRINTF_ELOG_MSG(__tmp, fmt, ##args); \
+  SPRINTF_ELOG_MSG(__tmp, fmt, ##__VA_ARGS__); \
   LOG4CXX_WARN(logger, __tmp); \
 }
 
-#define ELOG_ERROR2(logger, fmt, args...) \
+#define ELOG_ERROR2(logger, fmt, ...) \
 if (logger->isErrorEnabled()) { \
-  SPRINTF_ELOG_MSG(__tmp, fmt, ##args); \
+  SPRINTF_ELOG_MSG(__tmp, fmt, ##__VA_ARGS__); \
   LOG4CXX_ERROR(logger, __tmp); \
 }
 
-#define ELOG_FATAL2(logger, fmt, args...) \
+#define ELOG_FATAL2(logger, fmt, ...) \
 if (logger->isFatalEnabled()) { \
-  SPRINTF_ELOG_MSG(__tmp, fmt, ##args); \
+  SPRINTF_ELOG_MSG(__tmp, fmt, ##__VA_ARGS__); \
   LOG4CXX_FATAL(logger, __tmp); \
 }
 
 
-#define ELOG_TRACE(fmt, args...) \
-ELOG_TRACE2(logger, fmt, ##args);
+#define ELOG_TRACE(fmt, ...) \
+ELOG_TRACE2(logger, fmt, ##__VA_ARGS__);
 
-#define ELOG_DEBUG(fmt, args...) \
-ELOG_DEBUG2(logger, fmt, ##args);
+#define ELOG_DEBUG(fmt, ...) \
+ELOG_DEBUG2(logger, fmt, ##__VA_ARGS__);
 
-#define ELOG_INFO(fmt, args...) \
-ELOG_INFO2(logger, fmt, ##args);
+#define ELOG_INFO(fmt, ...) \
+ELOG_INFO2(logger, fmt, ##__VA_ARGS__);
 
-#define ELOG_WARN(fmt, args...) \
-ELOG_WARN2(logger, fmt, ##args);
+#define ELOG_WARN(fmt, ...) \
+ELOG_WARN2(logger, fmt, ##__VA_ARGS__);
 
-#define ELOG_ERROR(fmt, args...) \
-ELOG_ERROR2(logger, fmt, ##args);
+#define ELOG_ERROR(fmt, ...) \
+ELOG_ERROR2(logger, fmt, ##__VA_ARGS__);
 
-#define ELOG_FATAL(fmt, args...) \
-ELOG_FATAL2(logger, fmt, ##args);
+#define ELOG_FATAL(fmt, ...) \
+ELOG_FATAL2(logger, fmt, ##__VA_ARGS__);
+
+#endif
+
+class LogContext {
+public:
+  LogContext() : context_log_{ "" } {
+  }
+
+  virtual ~LogContext() {}
+
+  void setLogContext(std::map<std::string, std::string> context);
+
+  void copyLogContextFrom(LogContext *log_context) {
+    setLogContext(log_context->context_);
+  }
+
+  const char* printLogContext() {
+    return context_log_.c_str();
+  }
+
+  void set_log_context(const char* fmt, ...);
+  
+  void LogStr(log4cxx::LoggerPtr logger, const char* fmt, ...);
+  
+  #define Info(fmt, ...) LogStr(logger, fmt, ##__VA_ARGS__);
+  #define Warn(fmt, ...) LogStr(logger, fmt, ##__VA_ARGS__);
+private:
+  std::string context_log_;
+  std::map<std::string, std::string> context_;
+};
+/**
+* @brief Trace日志调试封装类.
+*
+* 用于调试输出函数调用所占用时间
+*/
+class LogTrace
+{
+public:
+	LogTrace();
+	LogTrace(const char* strModule, const char* strLog, unsigned long exp = 5000);
+	~LogTrace();
+
+private:
+	unsigned long	m_nTickCount;
+	std::string		m_strModule;
+	std::string		m_strLog;
+	unsigned long	m_msExpire;
+};
+//demo: DBG_INFO("module_name","module_log");
+#define DBG_TRACE	LogTrace(NAME) ____(logger, NAME);
+#define TRACE_FUNC	LogTrace(NAME) ____(logger, __FUNCTION__);
 
 #endif  // ERIZO_SRC_ERIZO_LOGGER_H_

@@ -1,11 +1,11 @@
 #include "thread/IOWorker.h"
-
+#ifdef USE_NICER
 extern "C" {
 #include <r_errors.h>
 #include <async_wait.h>
 #include <async_timer.h>
 }
-
+#endif
 #include <chrono>  // NOLINT
 
 using erizo::IOWorker;
@@ -26,7 +26,7 @@ void IOWorker::start(std::shared_ptr<std::promise<void>> start_promise) {
   if (started_.exchange(true)) {
     return;
   }
-
+#ifdef USE_NICER
   thread_ = std::unique_ptr<std::thread>(new std::thread([this, start_promise] {
     start_promise->set_value();
     while (!closed_) {
@@ -49,6 +49,7 @@ void IOWorker::start(std::shared_ptr<std::promise<void>> start_promise) {
       }
     }
   }));
+#endif
 }
 
 void IOWorker::task(Task f) {

@@ -21,6 +21,7 @@ using ::testing::Args;
 using ::testing::Return;
 using ::testing::AllOf;
 using erizo::dataPacket;
+using erizo::packetPtr;
 using erizo::packetType;
 using erizo::AUDIO_PACKET;
 using erizo::VIDEO_PACKET;
@@ -39,24 +40,17 @@ class RtcpNackGeneratorTest :public ::testing::Test {
     clock->advanceTime(std::chrono::milliseconds(time_ms));
   }
 
-  std::shared_ptr<dataPacket> generateRrWithNack() {
-    std::shared_ptr<dataPacket> new_receiver_report = erizo::PacketTools::createReceiverReport(erizo::kVideoSsrc,
+  packetPtr generateRrWithNack() {
+    packetPtr new_receiver_report = erizo::PacketTools::createReceiverReport(erizo::kVideoSsrc,
         erizo::kVideoSsrc, 0, VIDEO_PACKET);
     nack_generator.addNackPacketToRr(new_receiver_report);
     return new_receiver_report;
   }
 
-  bool RtcpPacketContainsNackSeqNum(std::shared_ptr<dataPacket> rtcp_packet, uint16_t lost_seq_num) {
-    char* moving_buf = rtcp_packet->data;
-    int rtcp_length = 0;
-    int total_length = 0;
+  bool RtcpPacketContainsNackSeqNum(packetPtr rtcp_packet, uint16_t lost_seq_num) {
     bool found_nack = false;
-    do {
-      moving_buf += rtcp_length;
-      RtcpHeader* chead = reinterpret_cast<RtcpHeader*>(moving_buf);
-      rtcp_length = (ntohs(chead->length) + 1) * 4;
-      total_length += rtcp_length;
-
+    erizo::RtcpAccessor acs(rtcp_packet);
+    while(RtcpHeader* chead = acs.nextRtcp()) {
       if (chead->packettype == RTCP_RTP_Feedback_PT) {
         erizo::RtpUtils::forEachNack(chead, [chead, lost_seq_num, &found_nack](uint16_t seq_num,
            uint16_t plb, RtcpHeader* nack_head) {
@@ -77,12 +71,12 @@ class RtcpNackGeneratorTest :public ::testing::Test {
           }
         });
       }
-    } while (total_length < rtcp_packet->length);
+    }
     return found_nack;
   }
 
   std::shared_ptr<SimulatedClock> clock;
-  std::shared_ptr<dataPacket> receiver_report;
+  packetPtr receiver_report;
   RtcpNackGenerator nack_generator;
   const uint16_t kMaxSeqnum = 65534;
 };

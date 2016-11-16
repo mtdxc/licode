@@ -1,17 +1,12 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_BANDWIDTHESTIMATIONHANDLER_H_
 #define ERIZO_SRC_ERIZO_RTP_BANDWIDTHESTIMATIONHANDLER_H_
 
-#include <array>
 #include <vector>
 #include <string>
-#include <atomic>
 
-#include "./logger.h"
-#include "./Stats.h"
+#include "logger.h"
 #include "pipeline/Handler.h"
 #include "rtp/RtpExtensionProcessor.h"
-
-#include "thread/Worker.h"
 
 #include "webrtc/common_types.h"
 #include "webrtc/modules/remote_bitrate_estimator/include/remote_bitrate_estimator.h"
@@ -21,7 +16,8 @@
 namespace erizo {
 
 class WebRtcConnection;
-
+class Stats;
+class Worker;
 using webrtc::RemoteBitrateEstimator;
 using webrtc::RemoteBitrateObserver;
 using webrtc::RtpHeaderExtensionMap;
@@ -52,8 +48,8 @@ class BandwidthEstimationHandler: public Handler, public RemoteBitrateObserver,
     return "bwe";
   }
 
-  void read(Context *ctx, std::shared_ptr<dataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
   void updateExtensionMaps(std::array<RTPExtensions, 10> video_map, std::array<RTPExtensions, 10> audio_map);
@@ -61,8 +57,8 @@ class BandwidthEstimationHandler: public Handler, public RemoteBitrateObserver,
  private:
   void process();
   void sendREMBPacket();
-  bool parsePacket(std::shared_ptr<dataPacket> packet);
-  RtpHeaderExtensionMap getHeaderExtensionMap(std::shared_ptr<dataPacket> packet) const;
+  bool parsePacket(packetPtr packet);
+  RtpHeaderExtensionMap getHeaderExtensionMap(packetPtr packet) const;
   void pickEstimatorFromHeader();
   void pickEstimator();
 

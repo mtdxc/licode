@@ -1,40 +1,41 @@
 #ifndef ERIZO_SRC_ERIZO_DTLSTRANSPORT_H_
 #define ERIZO_SRC_ERIZO_DTLSTRANSPORT_H_
 
-
-#include <boost/thread/mutex.hpp>
-#include <boost/asio/deadline_timer.hpp>
-#include <boost/asio.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <mutex>
+#include <memory>
 #include <string>
 #include "dtls/DtlsSocket.h"
-#include "./IceConnection.h"
-#include "./Transport.h"
-#include "./logger.h"
+#include "IceConnection.h"
+#include "Transport.h"
+#include "logger.h"
 
 namespace erizo {
 class SrtpChannel;
 class Resender;
+
 class DtlsTransport : dtls::DtlsReceiver, public Transport {
   DECLARE_LOGGER();
 
  public:
   DtlsTransport(MediaType med, const std::string& transport_name, const std::string& connection_id, bool bundle,
                 bool rtcp_mux, std::weak_ptr<TransportListener> transport_listener, const IceConfig& iceConfig,
-                std::string username, std::string password, bool isServer, std::shared_ptr<Worker> worker,
-                std::shared_ptr<IOWorker> io_worker);
+                bool isServer, std::shared_ptr<Worker> worker, std::shared_ptr<IOWorker> io_worker);
   virtual ~DtlsTransport();
-  void connectionStateChanged(IceState newState);
+
   std::string getMyFingerprint();
   static bool isDtlsPacket(const char* buf, int len);
+
+  // implement for Transport
   void start() override;
   void close() override;
   void onIceData(packetPtr packet) override;
   void onCandidate(const CandidateInfo &candidate, IceConnection *conn) override;
   void write(char* data, int len) override;
-  void onDtlsPacket(dtls::DtlsSocketContext *ctx, const unsigned char* data, unsigned int len) override;
+
+  // call by dtls render
   void writeDtlsPacket(dtls::DtlsSocketContext *ctx, packetPtr packet);
+  // implement for dtls::DtlsReceiver
+  void onDtlsPacket(dtls::DtlsSocketContext *ctx, const unsigned char* data, unsigned int len) override;
   void onHandshakeCompleted(dtls::DtlsSocketContext *ctx, std::string clientKey, std::string serverKey,
                             std::string srtp_profile) override;
   void onHandshakeFailed(dtls::DtlsSocketContext *ctx, const std::string error) override;
@@ -45,14 +46,13 @@ class DtlsTransport : dtls::DtlsReceiver, public Transport {
 
  private:
   char protectBuf_[5000];
-  std::shared_ptr<dataPacket> unprotect_packet_;
-  boost::scoped_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
-  boost::mutex writeMutex_, sessionMutex_;
-  boost::scoped_ptr<SrtpChannel> srtp_, srtcp_;
+  packetPtr unprotect_packet_;
+  std::unique_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
+  std::mutex writeMutex_, sessionMutex_;
+  std::unique_ptr<SrtpChannel> srtp_, srtcp_;
   bool readyRtp, readyRtcp;
-  bool isServer_;
   std::unique_ptr<Resender> rtcp_resender_, rtp_resender_;
-  packetPtr p_;
+  bool isServer_;
 };
 
 class Resender {
@@ -65,7 +65,7 @@ class Resender {
  public:
   Resender(DtlsTransport* transport, dtls::DtlsSocketContext* ctx);
   virtual ~Resender();
-  void scheduleResend(packetPtr packet);
+  void scheduleResend(packetPtr packet,unsigned int resend=6);
   void cancel();
 
  private:
@@ -80,5 +80,5 @@ class Resender {
   unsigned int max_resends_;
   int scheduled_task_ = -1;
 };
-}  // namespace erizo
+}  // namespace erizos
 #endif  // ERIZO_SRC_ERIZO_DTLSTRANSPORT_H_

@@ -1,20 +1,17 @@
 // #include <openssl/x509.h>
+#include <nice/nice.h>
 
-extern "C" {
-  #include <srtp/srtp.h>
-  #include <srtp/srtp_priv.h>
-}
-
-#include <boost/thread.hpp>
-#include <boost/lexical_cast.hpp>
-
+#include <webrtc/base/platform_thread.h>
 #include <openssl/x509v3.h>
-
+#include <openssl/err.h>
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <openssl/bn.h>
 #include <openssl/srtp.h>
 #include <openssl/opensslv.h>
+
+#include "DtlsSocket.h"
+#include "bf_dwrap.h"
 
 #include <nice/nice.h>
 
@@ -23,15 +20,13 @@ extern "C" {
 #include <string>
 #include <cstring>
 
-#include "./DtlsSocket.h"
-#include "./bf_dwrap.h"
 
 using dtls::DtlsSocketContext;
 using dtls::DtlsSocket;
 using std::memcpy;
 
 const char* DtlsSocketContext::DefaultSrtpProfile = "SRTP_AES128_CM_SHA1_80";
-
+// static member declare, init in static Init
 X509 *DtlsSocketContext::mCert = NULL;
 EVP_PKEY *DtlsSocketContext::privkey = NULL;
 
@@ -68,47 +63,35 @@ void SSLInfoCallback(const SSL* s, int where, int ret) {
 
 int SSLVerifyCallback(int ok, X509_STORE_CTX* store) {
   if (!ok) {
-    char data[256], data2[256];
+    char issuer[256], subject[256];
     X509* cert = X509_STORE_CTX_get_current_cert(store);
     int depth = X509_STORE_CTX_get_error_depth(store);
     int err = X509_STORE_CTX_get_error(store);
-    X509_NAME_oneline(X509_get_issuer_name(cert), data, sizeof(data));
-    X509_NAME_oneline(X509_get_subject_name(cert), data2, sizeof(data2));
+    X509_NAME_oneline(X509_get_issuer_name(cert), issuer, sizeof(issuer));
+    X509_NAME_oneline(X509_get_subject_name(cert), subject, sizeof(subject));
     ELOG_DEBUG2(sslLogger, "Error with certificate at depth: %d, issuer: %s, subject: %s, err: %d : %s",
-    depth,
-    data,
-    data2,
-    err,
-    X509_verify_cert_error_string(err));
-  }
-
-  // Get our SSL structure from the store
-  // SSL* ssl = reinterpret_cast<SSL*>(X509_STORE_CTX_get_ex_data(
-  //                                      store,
-  //                                      SSL_get_ex_data_X509_STORE_CTX_idx()));
+      depth,
+      issuer,
+      subject,
+      err,
+      X509_verify_cert_error_string(err));
 
 
-  // In peer-to-peer mode, no root cert / certificate authority was
-  // specified, so the libraries knows of no certificate to accept,
-  // and therefore it will necessarily call here on the first cert it
-  // tries to verify.
-  if (!ok) {
-    // X509* cert = X509_STORE_CTX_get_current_cert(store);
-    int err = X509_STORE_CTX_get_error(store);
-
-    ELOG_DEBUG2(sslLogger, "Error: %d", X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT);
+    // In peer-to-peer mode, no root cert / certificate authority was
+    // specified, so the libraries knows of no certificate to accept,
+    // and therefore it will necessarily call here on the first cert it
+    // tries to verify.
 
     // peer-to-peer mode: allow the certificate to be self-signed,
     // assuming it matches the digest that was specified.
     if (err == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) {
-      // unsigned char digest[EVP_MAX_MD_SIZE];
-      // std::size_t digest_length;
 
       ELOG_DEBUG2(sslLogger, "Accepted self-signed peer certificate authority");
       ok = 1;
 
       /* TODO(javier)
-
+      unsigned char digest[EVP_MAX_MD_SIZE];
+      std::size_t digest_length;
       if (OpenSSLCertificate::ComputeDigest(cert,
             stream->peer_certificate_digest_algorithm_,
             digest, sizeof(digest),
@@ -131,9 +114,7 @@ int SSLVerifyCallback(int ok, X509_STORE_CTX* store) {
 }
 
 int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCert, EVP_PKEY*& outKey) {  // NOLINT
-  std::ostringstream info;
-  info << "Generating new user cert for" << pAor;
-  ELOG_DEBUG2(sslLogger, "%s", info.str().c_str());
+  ELOG_DEBUG2(sslLogger, "Generating new user cert for %s", pAor.c_str());
   std::string aor = "sip:" + pAor;
 
   // Make sure that necessary algorithms exist:
@@ -142,13 +123,11 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
   EVP_PKEY* privkey = EVP_PKEY_new();
   assert(privkey);
 
-  RSA* rsa = RSA_new();
-
   BIGNUM* exponent = BN_new();
   BN_set_word(exponent, 0x10001);
 
+  RSA* rsa = RSA_new();
   RSA_generate_key_ex(rsa, KEY_LENGTH, exponent, NULL);
-
   // RSA* rsa = RSA_generate_key(keyLen, RSA_F4, NULL, NULL);
   assert(rsa);    // couldn't make key pair
 
@@ -163,17 +142,15 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
 
   // set version to X509v3 (starts from 0)
   // X509_set_version(cert, 0L);
-  std::string thread_id = boost::lexical_cast<std::string>(boost::this_thread::get_id());
-  unsigned int thread_number = 0;
-  sscanf(thread_id.c_str(), "%x", &thread_number);
-
+#ifdef WIN32
+  int serial = rand();  // get an int worth of randomness
+#else
+  unsigned int thread_number = rtc::CurrentThreadId();
   int serial = rand_r(&thread_number);  // get an int worth of randomness
+#endif
   assert(sizeof(int) == 4);
   ASN1_INTEGER_set(X509_get_serialNumber(cert), serial);
 
-  //    ret = X509_NAME_add_entry_by_txt( subject, "O",  MBSTRING_ASC,
-  //                                      (unsigned char *) domain.data(), domain.size(),
-  //                                      -1, 0);
   assert(ret);
   ret = X509_NAME_add_entry_by_txt(subject, "CN", MBSTRING_ASC, (unsigned char *) aor.data(), aor.size(), -1, 0);
   assert(ret);
@@ -194,48 +171,51 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
                                   + std::string(",URI:im:") + aor
                                   + std::string(",URI:pres:") + aor;
   ext = X509V3_EXT_conf_nid(NULL , NULL , NID_subject_alt_name, (char*)subjectAltNameStr.c_str());  // NOLINT
-    //   X509_add_ext( cert, ext, -1);
-    X509_EXTENSION_free(ext);
+  //   X509_add_ext( cert, ext, -1);
+  X509_EXTENSION_free(ext);
 
-    static char CA_FALSE[] = "CA:FALSE";
-    ext = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints, CA_FALSE);
-    ret = X509_add_ext(cert, ext, -1);
-    assert(ret);
-    X509_EXTENSION_free(ext);
+  static char CA_FALSE[] = "CA:FALSE";
+  ext = X509V3_EXT_conf_nid(NULL, NULL, NID_basic_constraints, CA_FALSE);
+  ret = X509_add_ext(cert, ext, -1);
+  assert(ret);
+  X509_EXTENSION_free(ext);
 
-    // TODO(javier) add extensions NID_subject_key_identifier and NID_authority_key_identifier
+  // TODO(javier) add extensions NID_subject_key_identifier and NID_authority_key_identifier
+  ret = X509_sign(cert, privkey, EVP_sha1());
+  assert(ret);
 
-    ret = X509_sign(cert, privkey, EVP_sha1());
-    assert(ret);
+  // output two value
+  outCert = cert;
+  outKey = privkey;
+  return ret;
+}
 
-    outCert = cert;
-    outKey = privkey;
-    return ret;
-  }
-
+namespace dtls{
   // memory is only valid for duration of callback; must be copied if queueing
   // is required
   DtlsSocketContext::DtlsSocketContext() {
-    started = false;
-    DtlsSocketContext::Init();
+      started = false;
+      mSocket = NULL;
+      receiver = NULL;
+      DtlsSocketContext::Init();
 
-    ELOG_DEBUG("Creating Dtls factory, Openssl v %s", OPENSSL_VERSION_TEXT);
+      ELOG_DEBUG("Creating Dtls factory, Openssl v %s", OPENSSL_VERSION_TEXT);
 
-    mContext = SSL_CTX_new(DTLSv1_method());
-    assert(mContext);
+      mContext = SSL_CTX_new(DTLSv1_method());
+      assert(mContext);
 
-    int r = SSL_CTX_use_certificate(mContext, mCert);
-    assert(r == 1);
+      int r = SSL_CTX_use_certificate(mContext, mCert);
+      assert(r == 1);
 
-    r = SSL_CTX_use_PrivateKey(mContext, privkey);
-    assert(r == 1);
+      r = SSL_CTX_use_PrivateKey(mContext, privkey);
+      assert(r == 1);
 
-    SSL_CTX_set_cipher_list(mContext, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+      SSL_CTX_set_cipher_list(mContext, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
 
-    SSL_CTX_set_info_callback(mContext, SSLInfoCallback);
+      SSL_CTX_set_info_callback(mContext, SSLInfoCallback);
 
-    SSL_CTX_set_verify(mContext, SSL_VERIFY_PEER |SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
-      SSLVerifyCallback);
+      SSL_CTX_set_verify(mContext, SSL_VERIFY_PEER |SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+        SSLVerifyCallback);
 
       // SSL_CTX_set_session_cache_mode(mContext, SSL_SESS_CACHE_OFF);
       // SSL_CTX_set_options(mContext, SSL_OP_NO_TICKET);
@@ -246,13 +226,15 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
       SSL_CTX_set_verify_depth(mContext, 2);
       SSL_CTX_set_read_ahead(mContext, 1);
 
-      ELOG_DEBUG("DtlsSocketContext created");
+      ELOG_DEBUG("DtlsSocketContext %p created", this);
     }
 
     DtlsSocketContext::~DtlsSocketContext() {
-      mSocket->close();
-      delete mSocket;
-      mSocket = NULL;
+	  if(mSocket){
+        mSocket->close();
+        delete mSocket;
+        mSocket = NULL;
+      }
       SSL_CTX_free(mContext);
     }
 
@@ -285,11 +267,13 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
 
     void DtlsSocketContext::setSrtpProfiles(const char *str) {
       int r = SSL_CTX_set_tlsext_use_srtp(mContext, str);
+      ELOG_DEBUG("setSrtpProfiles %s return %d", str, r);
       assert(r == 0);
     }
 
     void DtlsSocketContext::setCipherSuites(const char *str) {
       int r = SSL_CTX_set_cipher_list(mContext, str);
+      ELOG_DEBUG("setCipherSuites %s return %d", str, r);
       assert(r == 1);
     }
 
@@ -301,11 +285,11 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
       assert(len >= 1);
 
       if ((data[0] == 0)   || (data[0] == 1))
-      return stun;
+        return stun;
       if ((data[0] >= 128) && (data[0] <= 191))
-      return rtp;
+        return rtp;
       if ((data[0] >= 20)  && (data[0] <= 64))
-      return dtls;
+        return dtls;
 
       return unknown;
     }
@@ -322,12 +306,12 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
       mSocket->startClient();
     }
 
-    void DtlsSocketContext::read(const unsigned char* data, unsigned int len) {
-      mSocket->handlePacketMaybe(data, len);
-    }
-
     void DtlsSocketContext::setDtlsReceiver(DtlsReceiver *recv) {
       receiver = recv;
+    }
+
+    void DtlsSocketContext::read(const unsigned char* data, unsigned int len) {
+      mSocket->handlePacketMaybe(data, len);
     }
 
     void DtlsSocketContext::write(const unsigned char* data, unsigned int len) {
@@ -341,29 +325,28 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
       SRTP_PROTECTION_PROFILE *srtp_profile;
 
       if (mSocket->getRemoteFingerprint(fprint)) {
-        ELOG_TRACE("Remote fingerprint == %s", fprint);
-
         bool check = mSocket->checkFingerprint(fprint, strlen(fprint));
-        ELOG_DEBUG("Fingerprint check == %d", check);
+        ELOG_DEBUG("Remote fingerprint %s, check == %d", fprint,  check);
 
-        SrtpSessionKeys* keys = mSocket->getSrtpSessionKeys();
+        SrtpSessionKeys keys;
+        mSocket->getSrtpSessionKeys(&keys);
 
-        unsigned char* cKey = (unsigned char*)malloc(keys->clientMasterKeyLen + keys->clientMasterSaltLen);
-        unsigned char* sKey = (unsigned char*)malloc(keys->serverMasterKeyLen + keys->serverMasterSaltLen);
+        unsigned char* cKey = (unsigned char*)malloc(keys.clientMasterKeyLen + keys.clientMasterSaltLen);
+        unsigned char* sKey = (unsigned char*)malloc(keys.serverMasterKeyLen + keys.serverMasterSaltLen);
 
-        memcpy(cKey, keys->clientMasterKey, keys->clientMasterKeyLen);
-        memcpy(cKey + keys->clientMasterKeyLen, keys->clientMasterSalt, keys->clientMasterSaltLen);
+        memcpy(cKey, keys.clientMasterKey, keys.clientMasterKeyLen);
+        memcpy(cKey + keys.clientMasterKeyLen, keys.clientMasterSalt, keys.clientMasterSaltLen);
 
-        memcpy(sKey, keys->serverMasterKey, keys->serverMasterKeyLen);
-        memcpy(sKey + keys->serverMasterKeyLen, keys->serverMasterSalt, keys->serverMasterSaltLen);
+        memcpy(sKey, keys.serverMasterKey, keys.serverMasterKeyLen);
+        memcpy(sKey + keys.serverMasterKeyLen, keys.serverMasterSalt, keys.serverMasterSaltLen);
 
         // g_base64_encode must be free'd with g_free.  Also, std::string's assignment operator does *not* take
         // ownership of the passed in ptr; under the hood it copies up to the first null character.
-        gchar* temp = g_base64_encode((const guchar*)cKey, keys->clientMasterKeyLen + keys->clientMasterSaltLen);
+        gchar* temp = g_base64_encode((const guchar*)cKey, keys.clientMasterKeyLen + keys.clientMasterSaltLen);
         std::string clientKey = temp;
         g_free(temp); temp = NULL;
 
-        temp = g_base64_encode((const guchar*)sKey, keys->serverMasterKeyLen + keys->serverMasterSaltLen);
+        temp = g_base64_encode((const guchar*)sKey, keys.serverMasterKeyLen + keys.serverMasterSaltLen);
         std::string serverKey = temp;
         g_free(temp); temp = NULL;
 
@@ -372,10 +355,8 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
 
         free(cKey);
         free(sKey);
-        delete keys;
 
         srtp_profile = mSocket->getSrtpProfile();
-
         if (srtp_profile) {
           ELOG_DEBUG("SRTP Extension negotiated profile=%s", srtp_profile->name);
         }
@@ -392,3 +373,4 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
       ELOG_WARN("DTLS Handshake Failure %s", err);
       receiver->onHandshakeFailed(this, std::string(err));
     }
+}

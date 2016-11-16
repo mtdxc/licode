@@ -59,20 +59,20 @@ std::string IceConnection::iceStateToString(IceState state) const {
 void IceConnection::updateIceState(IceState state) {
   if (state <= ice_state_) {
     if (state != IceState::READY)
-      ELOG_WARN("%s message: unexpected ice state transition, iceState: %s,  newIceState: %s",
-                 toLog(), iceStateToString(ice_state_).c_str(), iceStateToString(state).c_str());
+      Info("unexpected ice state transition, iceState: %s,  newIceState: %s",
+                iceStateToString(ice_state_).c_str(), iceStateToString(state).c_str());
     return;
   }
 
-  ELOG_INFO("%s message: iceState transition, ice_config_.transport_name: %s, iceState: %s, newIceState: %s, this: %p",
-             toLog(), ice_config_.transport_name.c_str(),
+  Info("iceState transition, ice_config_.transport_name: %s, iceState: %s, newIceState: %s, this: %p",
+             ice_config_.transport_name.c_str(),
              iceStateToString(ice_state_).c_str(), iceStateToString(state).c_str(), this);
   this->ice_state_ = state;
   switch (ice_state_) {
     case IceState::FINISHED:
       return;
     case IceState::FAILED:
-      ELOG_WARN("%s message: Ice Failed", toLog());
+      Info("Ice Failed");
       break;
 
     case IceState::READY:

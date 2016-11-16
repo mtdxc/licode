@@ -1,7 +1,6 @@
 #ifndef ERIZO_SRC_ERIZO_THREAD_SCHEDULER_H_
 #define ERIZO_SRC_ERIZO_THREAD_SCHEDULER_H_
 
-#include <boost/function.hpp>
 #include <boost/thread.hpp>
 
 #include <chrono>  // NOLINT
@@ -10,16 +9,16 @@
 #include <condition_variable>  // NOLINT
 #include <atomic>
 
-//
+// 提供定时执行任何Function功能. 
 // Simple class for background tasks that should be run
 // periodically or once "after a while"
 
 class Scheduler {
  public:
-  explicit Scheduler(int n_threads_servicing_queue);
+  explicit Scheduler(int thread_count);
   ~Scheduler();
 
-  typedef boost::function<void(void)> Function;
+  typedef std::function<void(void)> Function;
 
   void schedule(Function f, std::chrono::system_clock::time_point t);
 
@@ -39,7 +38,7 @@ class Scheduler {
   std::multimap<std::chrono::system_clock::time_point, Function> task_queue_;
   std::condition_variable new_task_scheduled_;
   mutable std::mutex new_task_mutex_;
-  std::atomic<int> n_threads_servicing_queue_;
+  std::atomic<int> thread_count_;
   bool stop_requested_;
   bool stop_when_empty_;
   boost::thread_group group_;

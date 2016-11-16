@@ -1,10 +1,10 @@
 #ifndef ERIZO_SRC_TEST_UTILS_MOCKS_H_
 #define ERIZO_SRC_TEST_UTILS_MOCKS_H_
-
 #include <WebRtcConnection.h>
 #include <pipeline/Handler.h>
 #include <rtp/RtcpProcessor.h>
 #include <rtp/QualityManager.h>
+#include <rtp/PacketBufferService.h>
 #include <rtp/FecReceiverHandler.h>
 #include <rtp/BandwidthEstimationHandler.h>
 #include <rtp/SenderBandwidthEstimationHandler.h>

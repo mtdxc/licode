@@ -7,7 +7,7 @@
 #include <map>
 #include <string>
 
-#include "./WebRtcConnection.h"
+#include "WebRtcConnection.h"
 #include "rtp/RtpHeaders.h"
 
 namespace erizo {
@@ -19,15 +19,15 @@ namespace erizo {
   OneToManyProcessor::~OneToManyProcessor() {
   }
 
-  int OneToManyProcessor::deliverAudioData_(std::shared_ptr<dataPacket> audio_packet) {
+  int OneToManyProcessor::deliverAudioData_(packetPtr audio_packet) {
     if (audio_packet->length <= 0)
       return 0;
 
-    boost::unique_lock<boost::mutex> lock(monitor_mutex_);
+    std::unique_lock<std::mutex> lock(monitor_mutex_);
     if (subscribers.empty())
       return 0;
 
-    std::map<std::string, std::shared_ptr<MediaSink>>::iterator it;
+    std::map<std::string, sink_ptr>::iterator it;
     for (it = subscribers.begin(); it != subscribers.end(); ++it) {
       if ((*it).second != nullptr) {
         (*it).second->deliverAudioData(audio_packet);
@@ -37,7 +37,7 @@ namespace erizo {
     return 0;
   }
 
-  int OneToManyProcessor::deliverVideoData_(std::shared_ptr<dataPacket> video_packet) {
+  int OneToManyProcessor::deliverVideoData_(packetPtr video_packet) {
     if (video_packet->length <= 0)
       return 0;
     RtcpHeader* head = reinterpret_cast<RtcpHeader*>(video_packet->data);
@@ -49,10 +49,10 @@ namespace erizo {
       }
       return 0;
     }
-    boost::unique_lock<boost::mutex> lock(monitor_mutex_);
+    std::unique_lock<std::mutex> lock(monitor_mutex_);
     if (subscribers.empty())
       return 0;
-    std::map<std::string, std::shared_ptr<MediaSink>>::iterator it;
+    std::map<std::string, sink_ptr>::iterator it;
     for (it = subscribers.begin(); it != subscribers.end(); ++it) {
       if ((*it).second != nullptr) {
         (*it).second->deliverVideoData(video_packet);
@@ -62,12 +62,12 @@ namespace erizo {
   }
 
   void OneToManyProcessor::setPublisher(std::shared_ptr<MediaSource> webRtcConn) {
-    boost::mutex::scoped_lock lock(monitor_mutex_);
+    std::unique_lock<std::mutex> lock(monitor_mutex_);
     this->publisher = webRtcConn;
     feedbackSink_ = publisher->getFeedbackSink();
   }
 
-  int OneToManyProcessor::deliverFeedback_(std::shared_ptr<dataPacket> fb_packet) {
+  int OneToManyProcessor::deliverFeedback_(packetPtr fb_packet) {
     if (feedbackSink_ != nullptr) {
       feedbackSink_->deliverFeedback(fb_packet);
     }
@@ -76,30 +76,33 @@ namespace erizo {
 
   void OneToManyProcessor::addSubscriber(std::shared_ptr<MediaSink> webRtcConn,
       const std::string& peerId) {
-    ELOG_DEBUG("Adding subscriber");
-    boost::mutex::scoped_lock lock(monitor_mutex_);
-    ELOG_DEBUG("From %u, %u ", publisher->getAudioSourceSSRC(), publisher->getVideoSourceSSRC());
-    webRtcConn->setAudioSinkSSRC(this->publisher->getAudioSourceSSRC());
-    webRtcConn->setVideoSinkSSRC(this->publisher->getVideoSourceSSRC());
+    std::unique_lock<std::mutex> lock(monitor_mutex_);
+    if (!publisher) {
+      ELOG_WARN("without publisher can't addSubscriber %s, call setPublisher first", peerId.c_str());
+      return;
+    }
+    ELOG_DEBUG("Adding subscriber %s", peerId.c_str());
+    webRtcConn->setAudioSinkSSRC(publisher->getAudioSourceSSRC());
+    webRtcConn->setVideoSinkSSRC(publisher->getVideoSourceSSRC());
     ELOG_DEBUG("Subscribers ssrcs: Audio %u, video, %u from %u, %u ",
                webRtcConn->getAudioSinkSSRC(), webRtcConn->getVideoSinkSSRC(),
-               this->publisher->getAudioSourceSSRC() , this->publisher->getVideoSourceSSRC());
-    FeedbackSource* fbsource = webRtcConn->getFeedbackSource();
+               publisher->getAudioSourceSSRC() , publisher->getVideoSourceSSRC());
 
+    FeedbackSource* fbsource = webRtcConn->getFeedbackSource();
     if (fbsource != nullptr) {
       ELOG_DEBUG("adding fbsource");
       fbsource->setFeedbackSink(this);
     }
-    if (this->subscribers.find(peerId) != subscribers.end()) {
+    if (subscribers.find(peerId) != subscribers.end()) {
         ELOG_WARN("This OTM already has a subscriber with peerId %s, substituting it", peerId.c_str());
-        this->subscribers.erase(peerId);
+        subscribers.erase(peerId);
     }
-    this->subscribers[peerId] = webRtcConn;
+    subscribers[peerId] = webRtcConn;
   }
 
   void OneToManyProcessor::removeSubscriber(const std::string& peerId) {
     ELOG_DEBUG("Remove subscriber %s", peerId.c_str());
-    boost::mutex::scoped_lock lock(monitor_mutex_);
+	std::unique_lock<std::mutex> lock(monitor_mutex_);
     if (this->subscribers.find(peerId) != subscribers.end()) {
       deleteAsync(std::dynamic_pointer_cast<WebRtcConnection>(subscribers.find(peerId)->second));
       this->subscribers.erase(peerId);
@@ -131,16 +134,12 @@ namespace erizo {
       future.wait();
     }
     publisher.reset();
-    boost::unique_lock<boost::mutex> lock(monitor_mutex_);
-    std::map<std::string, std::shared_ptr<MediaSink>>::iterator it = subscribers.begin();
+    std::unique_lock<std::mutex> lock(monitor_mutex_);
+    std::map<std::string, sink_ptr>::iterator it = subscribers.begin();
     while (it != subscribers.end()) {
       if ((*it).second != nullptr) {
-        FeedbackSource* fbsource = (*it).second->getFeedbackSource();
         std::future<void> future = deleteAsync(std::dynamic_pointer_cast<WebRtcConnection>((*it).second));
         future.wait();
-        if (fbsource != nullptr) {
-          fbsource->setFeedbackSink(nullptr);
-        }
       }
       subscribers.erase(it++);
     }

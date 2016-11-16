@@ -1,9 +1,8 @@
 #include "rtp/QualityFilterHandler.h"
 
-#include "./WebRtcConnection.h"
-#include "lib/ClockUtils.h"
+#include "WebRtcConnection.h"
 #include "rtp/RtpUtils.h"
-
+#include "RtcpProcessor.h"
 namespace erizo {
 
 DEFINE_LOGGER(QualityFilterHandler, "rtp.QualityFilterHandler");
@@ -26,7 +25,7 @@ void QualityFilterHandler::disable() {
   enabled_ = false;
 }
 
-void QualityFilterHandler::handleFeedbackPackets(std::shared_ptr<dataPacket> packet) {
+void QualityFilterHandler::handleFeedbackPackets(packetPtr packet) {
   RtpUtils::forEachRRBlock(packet, [this](RtcpHeader *chead) {
     if (chead->packettype == RTCP_PS_Feedback_PT &&
           (chead->getBlockCount() == RTCP_PLI_FMT ||
@@ -37,7 +36,7 @@ void QualityFilterHandler::handleFeedbackPackets(std::shared_ptr<dataPacket> pac
   });
 }
 
-void QualityFilterHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void QualityFilterHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (chead->isFeedback() && enabled_ && is_scalable_) {
     handleFeedbackPackets(packet);
@@ -72,7 +71,7 @@ void QualityFilterHandler::sendPLI() {
   getContext()->fireRead(RtpUtils::createPLI(video_sink_ssrc_, video_source_ssrc_));
 }
 
-void QualityFilterHandler::changeSpatialLayerOnKeyframeReceived(std::shared_ptr<dataPacket> packet) {
+void QualityFilterHandler::changeSpatialLayerOnKeyframeReceived(packetPtr packet) {
   if (future_spatial_layer_ == -1) {
     return;
   }
@@ -91,7 +90,7 @@ void QualityFilterHandler::changeSpatialLayerOnKeyframeReceived(std::shared_ptr<
   }
 }
 
-void QualityFilterHandler::detectVideoScalability(std::shared_ptr<dataPacket> packet) {
+void QualityFilterHandler::detectVideoScalability(packetPtr packet) {
   if (is_scalable_ || packet->type != VIDEO_PACKET) {
     return;
   }
@@ -101,7 +100,7 @@ void QualityFilterHandler::detectVideoScalability(std::shared_ptr<dataPacket> pa
   }
 }
 
-void QualityFilterHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void QualityFilterHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
 
   detectVideoScalability(packet);

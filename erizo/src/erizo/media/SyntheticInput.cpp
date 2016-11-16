@@ -1,9 +1,6 @@
-#include "media/SyntheticInput.h"
-
 #include <algorithm>
-
+#include "SyntheticInput.h"
 #include "lib/Clock.h"
-#include "lib/ClockUtils.h"
 #include "rtp/RtpHeaders.h"
 
 static constexpr auto kPeriod = std::chrono::milliseconds(20);
@@ -175,7 +172,7 @@ void SyntheticInput::calculateSizeAndPeriod(uint32_t video_bitrate, uint32_t aud
   audio_frame_size_ = audio_period.count() * audio_bitrate / 8000;
 }
 
-int SyntheticInput::deliverFeedback_(std::shared_ptr<dataPacket> fb_packet) {
+int SyntheticInput::deliverFeedback_(packetPtr fb_packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(fb_packet->data);
   if (chead->isFeedback()) {
     if (chead->getBlockCount() == 0 && (chead->getLength()+1) * 4  == fb_packet->length) {

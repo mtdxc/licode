@@ -10,6 +10,7 @@ using testing::_;
 using testing::Return;
 using testing::Eq;
 using erizo::dataPacket;
+using erizo::packetPtr;
 
 static const char kArbitraryPeerId[] = "111";
 
@@ -23,11 +24,11 @@ class MockPublisher: public erizo::MediaSource, public erizo::FeedbackSink {
   ~MockPublisher() {}
   void close() override {}
   int sendPLI() override { return 0; }
-  int deliverFeedback_(std::shared_ptr<dataPacket> packet) override {
+  int deliverFeedback_(packetPtr packet) override {
     return internalDeliverFeedback_(packet);
   }
 
-  MOCK_METHOD1(internalDeliverFeedback_, int(std::shared_ptr<dataPacket>));
+  MOCK_METHOD1(internalDeliverFeedback_, int(packetPtr));
 };
 
 class MockSubscriber: public erizo::MediaSink, public erizo::FeedbackSource {
@@ -37,15 +38,15 @@ class MockSubscriber: public erizo::MediaSink, public erizo::FeedbackSource {
   }
   ~MockSubscriber() {}
   void close() override {}
-  int deliverAudioData_(std::shared_ptr<dataPacket> packet) override {
+  int deliverAudioData_(packetPtr packet) override {
     return internalDeliverAudioData_(packet);
   }
-  int deliverVideoData_(std::shared_ptr<dataPacket> packet) override {
+  int deliverVideoData_(packetPtr packet) override {
     return internalDeliverVideoData_(packet);
   }
 
-  MOCK_METHOD1(internalDeliverAudioData_, int(std::shared_ptr<dataPacket>));
-  MOCK_METHOD1(internalDeliverVideoData_, int(std::shared_ptr<dataPacket>));
+  MOCK_METHOD1(internalDeliverAudioData_, int(packetPtr));
+  MOCK_METHOD1(internalDeliverVideoData_, int(packetPtr));
 };
 
 class OneToManyProcessorTest : public ::testing::Test {
