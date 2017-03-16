@@ -67,7 +67,7 @@ TEST_F(StatNodeTest, shouldWriteAJsonWithCumulativeStats) {
 
   EXPECT_THAT(root.toString(), Eq("{\"sum\":30}"));
 
-  root["sum"]++;
+  ++root["sum"];
 
   EXPECT_THAT(root.toString(), Eq("{\"sum\":31}"));
 }

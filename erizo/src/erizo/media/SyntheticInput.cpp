@@ -25,7 +25,7 @@ SyntheticInput::SyntheticInput(SyntheticInputConfig config,
                                std::shared_ptr<Worker> worker,
                                std::shared_ptr<Clock> the_clock)
     : clock_{the_clock},
-      config_{config},
+      config_(config),
       worker_{worker},
       video_avg_frame_size_{0},
       video_dev_frame_size_{0},
@@ -97,7 +97,8 @@ void SyntheticInput::tick() {
     next_video_frame_time_ += video_period_;
   }
   now = clock_->now();
-  if ((next_video_frame_time_ <= now || next_audio_frame_time_ <= now) && consecutive_ticks_ < kMaxConsecutiveTicks) {
+  if ((next_video_frame_time_ <= now || next_audio_frame_time_ <= now) 
+    && consecutive_ticks_ < kMaxConsecutiveTicks) {
     consecutive_ticks_++;
     tick();
   } else {
@@ -111,19 +112,16 @@ int SyntheticInput::sendPLI() {
 }
 
 void SyntheticInput::sendVideoframe(bool is_keyframe, bool is_marker, uint32_t size) {
-  erizo::RtpHeader *header = new erizo::RtpHeader();
+  char packet_buffer[kMaxPacketSize];
+  memset(packet_buffer, 0, size);
+  erizo::RtpHeader *header = (erizo::RtpHeader *)packet_buffer;
   header->setSeqNumber(video_seq_number_++);
-  header->setTimestamp(ClockUtils::timePointToMs(clock_->now()) * kVideoSampleRate / 1000);
+  header->setTimestamp(ClockUtils::msNow() * kVideoSampleRate / 1000);
   header->setSSRC(video_ssrc_);
   header->setMarker(is_marker);
   header->setPayloadType(video_pt_);
-  char packet_buffer[kMaxPacketSize];
-  memset(packet_buffer, 0, size);
-  char* data_pointer;
-  char* parsing_pointer;
-  memcpy(packet_buffer, reinterpret_cast<char*>(header), header->getHeaderLength());
-  data_pointer = packet_buffer + header->getHeaderLength();
-  parsing_pointer = data_pointer;
+  char* data_pointer = packet_buffer + header->getHeaderLength();
+  char* parsing_pointer = data_pointer;
   *parsing_pointer = 0x10;
   parsing_pointer++;
   *parsing_pointer = is_keyframe ? 0x00 : 0x01;
@@ -135,23 +133,20 @@ void SyntheticInput::sendVideoframe(bool is_keyframe, bool is_marker, uint32_t s
   if (video_sink_) {
     video_sink_->deliverVideoData(std::make_shared<dataPacket>(0, packet_buffer, size, VIDEO_PACKET));
   }
-  delete header;
 }
 
 void SyntheticInput::sendAudioFrame(uint32_t size) {
-  erizo::RtpHeader *header = new erizo::RtpHeader();
+  char packet_buffer[kMaxPacketSize];
+  memset(packet_buffer, 0, size);
+  erizo::RtpHeader *header = (erizo::RtpHeader*)packet_buffer;
   header->setSeqNumber(audio_seq_number_++);
-  header->setTimestamp(ClockUtils::timePointToMs(clock_->now()) * (kAudioSampleRate / 1000));
+  header->setTimestamp(ClockUtils::msNow() * (kAudioSampleRate / 1000));
   header->setSSRC(audio_ssrc_);
   header->setMarker(true);
   header->setPayloadType(audio_pt_);
-  char packet_buffer[kMaxPacketSize];
-  memset(packet_buffer, 0, size);
-  memcpy(packet_buffer, reinterpret_cast<char*>(header), header->getHeaderLength());
   if (audio_sink_) {
     audio_sink_->deliverAudioData(std::make_shared<dataPacket>(0, packet_buffer, size, AUDIO_PACKET));
   }
-  delete header;
 }
 
 void SyntheticInput::close() {
@@ -159,8 +154,8 @@ void SyntheticInput::close() {
 }
 
 void SyntheticInput::calculateSizeAndPeriod(uint32_t video_bitrate, uint32_t audio_bitrate) {
-  video_bitrate = std::min(video_bitrate, config_.getMaxVideoBitrate());
-  video_bitrate = std::max(video_bitrate, config_.getMinVideoBitrate());
+  video_bitrate = std::min(video_bitrate, config_.max_video_bitrate);
+  video_bitrate = std::max(video_bitrate, config_.min_video_bitrate);
 
   auto video_period = std::chrono::duration_cast<std::chrono::milliseconds>(video_period_);
   auto audio_period = std::chrono::duration_cast<std::chrono::milliseconds>(audio_period_);
@@ -175,17 +170,12 @@ void SyntheticInput::calculateSizeAndPeriod(uint32_t video_bitrate, uint32_t aud
 int SyntheticInput::deliverFeedback_(std::shared_ptr<dataPacket> fb_packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(fb_packet->data);
   if (chead->isFeedback()) {
-    if (chead->getBlockCount() == 0 && (chead->getLength()+1) * 4  == fb_packet->length) {
+    if (chead->getBlockCount() == 0 && chead->getPacketSize() == fb_packet->length) {
       return 0;
     }
-    char* moving_buf = fb_packet->data;
-    int rtcp_length = 0;
-    int total_length = 0;
-    do {
-      moving_buf += rtcp_length;
-      chead = reinterpret_cast<RtcpHeader*>(moving_buf);
-      rtcp_length = (ntohs(chead->length) + 1) * 4;
-      total_length += rtcp_length;
+    RtcpAccessor acs(fb_packet);
+    while (chead = acs.nextRtcp())
+    {
       switch (chead->packettype) {
         case RTCP_RTP_Feedback_PT:
           // NACKs are already handled by WebRtcConnection. RRs won't be handled.
@@ -206,7 +196,7 @@ int SyntheticInput::deliverFeedback_(std::shared_ptr<dataPacket> fb_packet) {
               break;
           }
       }
-    } while (total_length < fb_packet->length);
+    }
   }
   return 0;
 }

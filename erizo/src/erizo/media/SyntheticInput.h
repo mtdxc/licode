@@ -1,4 +1,4 @@
-#ifndef ERIZO_SRC_ERIZO_MEDIA_SYNTHETICINPUT_H_
+﻿#ifndef ERIZO_SRC_ERIZO_MEDIA_SYNTHETICINPUT_H_
 #define ERIZO_SRC_ERIZO_MEDIA_SYNTHETICINPUT_H_
 
 #include <chrono>  // NOLINT
@@ -11,30 +11,15 @@
 
 namespace erizo {
 
-class SyntheticInputConfig {
- public:
-  SyntheticInputConfig(uint32_t audio_bitrate, uint32_t min_video_bitrate, uint32_t max_video_bitrate) :
-      audio_bitrate_{audio_bitrate}, min_video_bitrate_{min_video_bitrate}, max_video_bitrate_{max_video_bitrate} {}
-
-  uint32_t getMinVideoBitrate() {
-    return min_video_bitrate_;
-  }
-
-  uint32_t getMaxVideoBitrate() {
-    return max_video_bitrate_;
-  }
-
-  uint32_t getAudioBitrate() {
-    return audio_bitrate_;
-  }
-
- private:
-  uint32_t audio_bitrate_;
-  uint32_t min_video_bitrate_;
-  uint32_t max_video_bitrate_;
+struct SyntheticInputConfig {
+  uint32_t audio_bitrate;
+  uint32_t min_video_bitrate;
+  uint32_t max_video_bitrate;
 };
 
-class SyntheticInput : public MediaSource, public FeedbackSink, public std::enable_shared_from_this<SyntheticInput> {
+// 模拟音视频发送的媒体源
+class SyntheticInput : public MediaSource, public FeedbackSink, 
+  public std::enable_shared_from_this<SyntheticInput> {
   DECLARE_LOGGER();
 
  public:
@@ -52,7 +37,6 @@ class SyntheticInput : public MediaSource, public FeedbackSink, public std::enab
   void sendVideoframe(bool is_keyframe, bool is_marker, uint32_t size);
   void sendAudioFrame(uint32_t size);
   uint32_t getRandomValue(uint32_t average, uint32_t variation);
-  void scheduleEvery(duration period);
 
  private:
   std::shared_ptr<Clock> clock_;
