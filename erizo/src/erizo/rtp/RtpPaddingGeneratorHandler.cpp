@@ -105,7 +105,7 @@ void RtpPaddingGeneratorHandler::sendPaddingPacket(packetPtr packet, uint8_t pad
 }
 
 void RtpPaddingGeneratorHandler::onPacketWithMarkerSet(packetPtr packet) {
-  marker_rate_++;
+  ++marker_rate_;
 
   for (uint i = 0; i < number_of_full_padding_packets_; i++) {
     sendPaddingPacket(packet, kMaxPaddingSize);

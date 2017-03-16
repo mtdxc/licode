@@ -63,7 +63,7 @@ void StatsCalculator::incrStat(uint32_t ssrc, std::string stat) {
     getStatsInfo()[ssrc].insertStat(stat, CumulativeStat{1});
     return;
   }
-  getStatsInfo()[ssrc][stat]++;
+  ++getStatsInfo()[ssrc][stat];
 }
 
 void StatsCalculator::processRtcpPacket(packetPtr packet) {
