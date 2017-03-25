@@ -94,21 +94,21 @@ ejsController.keepAlive = function(callback) {
     callback('callback', true);
 };
 
+// ['./../erizoJS/erizoJS.js', id, privateIP, publicIP],
 ejsController.privateRegexp = new RegExp(process.argv[3], 'g');
 ejsController.publicIP = process.argv[4];
 
 amqper.connect(function () {
     try {
         amqper.setPublicRPC(ejsController);
-
+        // args passed from erizoAgent:
         var rpcID = process.argv[2];
 
         log.info('Started, erizoId: ' + rpcID);
-
+        // bind this id to listen for PublicRPC (ejsController)
         amqper.bindBroadcast('ErizoJS');
         amqper.bind('ErizoJS_' + rpcID, function() {
             log.debug('bound to amqp queue, queueId: ErizoJS_' + rpcID );
-
         });
     } catch (err) {
         log.error('AMQP connection error, ' + logger.objectToLog(err));

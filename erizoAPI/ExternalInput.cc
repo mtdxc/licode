@@ -62,17 +62,22 @@ NAN_METHOD(ExternalInput::New) {
 
   ExternalInput* obj = new ExternalInput();
   obj->me = std::make_shared<erizo::ExternalInput>(url);
-
+  // Wrap and Holder
   obj->Wrap(info.This());
   info.GetReturnValue().Set(info.This());
 }
-
+/*
+info 携带参数数组，参数索引从0开始
+- Holder()可以得到this指针.
+- GetReturnValue().Set() 可设置返回值
+*/
 NAN_METHOD(ExternalInput::close) {
   ExternalInput* obj = ObjectWrap::Unwrap<ExternalInput>(info.Holder());
   std::shared_ptr<erizo::ExternalInput> me = obj->me;
 
   Nan::Callback *callback;
   if (info.Length() >= 1) {
+    // 获取js回调函数
     callback = new Nan::Callback(info[0].As<Function>());
   } else {
     callback = NULL;
@@ -94,11 +99,12 @@ NAN_METHOD(ExternalInput::init) {
 NAN_METHOD(ExternalInput::setAudioReceiver) {
   ExternalInput* obj = ObjectWrap::Unwrap<ExternalInput>(info.Holder());
   std::shared_ptr<erizo::ExternalInput> me = obj->me;
-
+  // js的强制转型
   MediaSink* param = ObjectWrap::Unwrap<MediaSink>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
-  erizo::MediaSink *mr = param->msink;
-
-  me->setAudioSink(mr);
+  if(param && param->msink){
+    //erizo::MediaSink *mr = param->msink;
+    me->setAudioSink(param->msink);
+  }
 }
 
 NAN_METHOD(ExternalInput::setVideoReceiver) {
@@ -106,7 +112,8 @@ NAN_METHOD(ExternalInput::setVideoReceiver) {
   std::shared_ptr<erizo::ExternalInput> me = obj->me;
 
   MediaSink* param = ObjectWrap::Unwrap<MediaSink>(Nan::To<v8::Object>(info[0]).ToLocalChecked());
-  erizo::MediaSink *mr = param->msink;
-
-  me->setVideoSink(mr);
+  if(param && param->msink){
+    //erizo::MediaSink *mr = param->msink;
+    me->setVideoSink(param->msink);
+  }
 }

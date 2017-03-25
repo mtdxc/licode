@@ -16,7 +16,7 @@ var TIMEOUT = 5000;
 var REMOVAL_TIMEOUT = 300000;
 
 var corrID = 0;
-var map = {};   //{corrID: {fn: callback, to: timeout}}
+var rpc_map = {};   //{corrID: {fn: callback, to: timeout}}
 var connection, clientQueue;
 var rpcExc, broadcastExc;
 
@@ -60,18 +60,18 @@ exports.connect = function(callback) {
                         try {
                             log.debug('queue ' + clientQueue.name  + ' message received: ' + logger.objectToLog(message));
 
-                            if(map[message.corrID] !== undefined) {
+                            if(rpc_map[message.corrID] !== undefined) {
                                 log.debug('queue ' + clientQueue.name + ' callback ' +
                                           'type: ' + message.type + ',  ' + logger.objectToLog(message.data));
-                                clearTimeout(map[message.corrID].to);
+                                clearTimeout(rpc_map[message.corrID].to);
                                 if (message.type === 'onReady') {
-                                  map[message.corrID].fn[message.type].call({});
+                                  rpc_map[message.corrID].fn[message.type].call({});
                                 } else  {
-                                  map[message.corrID].fn[message.type].call({}, message.data);
+                                  rpc_map[message.corrID].fn[message.type].call({}, message.data);
                                 }
                                 setTimeout(function() {
-                                    if (map[message.corrID] !== undefined) {
-                                      delete map[message.corrID];
+                                    if (rpc_map[message.corrID] !== undefined) {
+                                      delete rpc_map[message.corrID];
                                     }
                                 }, REMOVAL_TIMEOUT);
                             }
@@ -83,7 +83,7 @@ exports.connect = function(callback) {
 
                 });
             } catch (err) {
-                log.error('exchange ' + exchange.name + ' error ' + logger.objectToLog(err));
+                log.error('message: exchange error, exchangeName: ' + exchange.name + ', ' + logger.objectToLog(err));
             }
         });
 
@@ -113,10 +113,12 @@ exports.bind = function(id, callback) {
                 try {
                     log.debug('queue '+ q.name +' message received: ' + logger.objectToLog(message));
                     message.args = message.args || [];
+                    // 最后加一个回调函数参数,负责进行RPC Resopnse
                     message.args.push(function(type, result) {
                         rpcExc.publish(message.replyTo,
                                        {data: result, corrID: message.corrID, type: type});
                     });
+                    // 调用Public函数
                     rpcPublic[message.method].apply(rpcPublic, message.args);
                 } catch (error) {
                     log.error('queue '+ q.name + ' error processing call:' + logger.objectToLog(error));
@@ -164,10 +166,10 @@ exports.bindBroadcast = function(id, callback) {
 };
 
 var callbackError = function(corrID) {
-    for (var i in map[corrID].fn) {
-        map[corrID].fn[i]('timeout');
+    for (var i in rpc_map[corrID].fn) {
+        rpc_map[corrID].fn[i]('timeout');
     }
-    delete map[corrID];
+    delete rpc_map[corrID];
 };
 
 /*
@@ -179,9 +181,9 @@ exports.broadcast = function(topic, message, callback) {
 
     if (callback) {
         corrID ++;
-        map[corrID] = {};
-        map[corrID].fn = {callback: callback};
-        map[corrID].to = setTimeout(callbackError, TIMEOUT, corrID);
+        rpc_map[corrID] = {};
+        rpc_map[corrID].fn = {callback: callback};
+        rpc_map[corrID].to = setTimeout(callbackError, TIMEOUT, corrID);
 
         body.corrID = corrID;
         body.replyTo = clientQueue.name;
@@ -194,8 +196,8 @@ exports.broadcast = function(topic, message, callback) {
  */
 exports.callRpc = function(to, method, args, callbacks) {
     corrID ++;
-    map[corrID] = {};
-    map[corrID].fn = callbacks;
-    map[corrID].to = setTimeout(callbackError, TIMEOUT, corrID);
+    rpc_map[corrID] = {};
+    rpc_map[corrID].fn = callbacks;
+    rpc_map[corrID].to = setTimeout(callbackError, TIMEOUT, corrID);
     rpcExc.publish(to, {method: method, args: args, corrID: corrID, replyTo: clientQueue.name});
 };

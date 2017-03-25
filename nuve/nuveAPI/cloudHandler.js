@@ -125,6 +125,7 @@ var addNewPrivateErizoController = function (ip, hostname, port, ssl, callback) 
     erizoControllerRegistry.addErizoController(erizoController, function (erizoController) {
         var id = erizoController._id;
         log.info('New erizocontroller (', id, ') in: ', erizoController.ip);
+        // publicIp和ip不同,故意的么？
         callback({id: id, publicIP: ip, hostname: hostname, port: port, ssl: ssl});
     });
 };
@@ -135,6 +136,7 @@ var addNewAmazonErizoController = function(privateIP, hostname, port, ssl, callb
     if (AWS === undefined) {
         AWS = require('aws-sdk');
     }
+    // 调用亚马逊的API将内网地址换成公网地址
     log.info('private ip ', privateIP);
     new AWS.MetadataService({
         httpOptions: {
@@ -166,6 +168,7 @@ exports.keepAlive = function (id, callback) {
     erizoControllerRegistry.getErizoController(id, function (erizoController) {
 
         if (erizoController) {
+          // 将keepAlive值改成0
           erizoControllerRegistry.updateErizoController(id, {keepAlive: 0});
           result = 'ok';
           //log.info('KA: ', id);
@@ -177,7 +180,7 @@ exports.keepAlive = function (id, callback) {
     });
 };
 
-exports.setInfo = function (params) {
+exports.setInfo = function (params) { // params.id params.state
     log.info('Received info ', params, '. Recalculating erizoControllers priority');
     erizoControllerRegistry.updateErizoController(params.id, {state: params.state});
 };
@@ -215,10 +218,9 @@ var getErizoControllerForRoom = exports.getErizoControllerForRoom = function (ro
                 } else {
                     erizoController = ecQueue[0];
                 }
+
                 var id = erizoController ? erizoController._id : undefined;
-
                 if (id !== undefined) {
-
                     assignErizoController(id, room, function (erizoController) {
                         callback(erizoController);
                         clearInterval(intervalId);
@@ -240,10 +242,11 @@ var getErizoControllerForRoom = exports.getErizoControllerForRoom = function (ro
 exports.getUsersInRoom = function (roomId, callback) {
     roomRegistry.getRoom(roomId, function (room) {
         if (room && room.erizoControllerId) {
-            var rpcID = 'erizoController_' + room.erizoControllerId;
-            rpc.callRpc(rpcID, 'getUsersInRoom', [roomId], {'callback': function (users) {
-                callback(users);
-            }});
+        // 管room所在的erizoController发送getUsersInRoom
+        var rpcID = 'erizoController_' + room.erizoControllerId;
+        rpc.callRpc(rpcID, 'getUsersInRoom', [roomId], {'callback': function (users) {
+            callback(users);
+        }});
 
         } else {
             callback([]);
@@ -255,10 +258,10 @@ exports.getUsersInRoom = function (roomId, callback) {
 exports.deleteRoom = function (roomId, callback) {
     roomRegistry.getRoom(roomId, function (room) {
         if (room && room.erizoControllerId) {
-            var rpcID = 'erizoController_' + room.erizoControllerId;
-            rpc.callRpc(rpcID, 'deleteRoom', [roomId], {'callback': function (result) {
-                callback(result);
-            }});
+        var rpcID = 'erizoController_' + room.erizoControllerId;
+        rpc.callRpc(rpcID, 'deleteRoom', [roomId], {'callback': function (result) {
+            callback(result);
+        }});
         } else {
             callback('Success');
         }
@@ -268,13 +271,13 @@ exports.deleteRoom = function (roomId, callback) {
 exports.deleteUser = function (user, roomId, callback) {
     roomRegistry.getRoom(roomId, function (room) {
         if (room && room.erizoControllerId) {
-            var rpcID = 'erizoController_' + room.erizoControllerId;
-            rpc.callRpc(rpcID,
-                        'deleteUser',
-                        [{user: user, roomId:roomId}],
-                        {'callback': function (result) {
-                            callback(result);
-                        }});
+        var rpcID = 'erizoController_' + room.erizoControllerId;
+        rpc.callRpc(rpcID,
+                    'deleteUser',
+                    [{user: user, roomId:roomId}],
+                    {'callback': function (result) {
+            callback(result);
+        }});
         } else {
             callback('Room does not exist or the user is not connected');
         }

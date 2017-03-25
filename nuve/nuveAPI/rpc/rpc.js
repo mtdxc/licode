@@ -16,7 +16,7 @@ config.rabbit.port = config.rabbit.port || 5672;
 var TIMEOUT = 3000;
 
 var corrID = 0;
-var map = {};   //{corrID: {fn: callback, to: timeout}}
+var rpc_map = {};   //{corrID: {fn: callback, to: timeout}}
 var clientQueue;
 var connection;
 var exc;
@@ -53,9 +53,10 @@ exports.connect = function (callback) {
 
                   q.bind('rpcExchange', 'nuve');
                   q.subscribe(function (message) {
-
+                      // map mqtt request message to rpcPublic
+                      // {method: method, args: args, corrID: corrID, replyTo: clientQueue.name};
                       rpcPublic[message.method](message.args, function (type, result) {
-                          exc.publish(message.replyTo,
+                          exc.publish(message.replyTo, // send response
                                       {data: result, corrID: message.corrID, type: type});
                       });
 
@@ -66,19 +67,16 @@ exports.connect = function (callback) {
               });
             };
 
-            //Create the queue for send messages
+            //Create the queue for send messages(recv message?)
             clientQueue = connection.queue('', function (q) {
                 log.info('clientQueue open, queueName: ' + q.name);
-
                 clientQueue.bind('rpcExchange', clientQueue.name);
-
                 clientQueue.subscribe(function (message) {
-
-                    if (map[message.corrID] !== undefined) {
-
-                        map[message.corrID].fn[message.type](message.data);
-                        clearTimeout(map[message.corrID].to);
-                        delete map[message.corrID];
+                    if (rpc_map[message.corrID] !== undefined) {
+                        // call callback with response
+                        rpc_map[message.corrID].fn[message.type](message.data);
+                        clearTimeout(rpc_map[message.corrID].to);
+                        delete rpc_map[message.corrID];
                     }
                 });
                 next();
@@ -94,10 +92,10 @@ exports.connect = function (callback) {
 };
 
 var callbackError = function (corrID) {
-    for (var i in map[corrID].fn) {
-        map[corrID].fn[i]('timeout');
+    for (var i in rpc_map[corrID].fn) {
+        rpc_map[corrID].fn[i]('timeout');
     }
-    delete map[corrID];
+    delete rpc_map[corrID];
 };
 
 /*
@@ -105,9 +103,9 @@ var callbackError = function (corrID) {
  */
 exports.callRpc = function (to, method, args, callbacks) {
     corrID += 1;
-    map[corrID] = {};
-    map[corrID].fn = callbacks;
-    map[corrID].to = setTimeout(callbackError, TIMEOUT, corrID);
+    rpc_map[corrID] = {};
+    rpc_map[corrID].fn = callbacks;
+    rpc_map[corrID].to = setTimeout(callbackError, TIMEOUT, corrID);
 
     var send = {method: method, args: args, corrID: corrID, replyTo: clientQueue.name};
 

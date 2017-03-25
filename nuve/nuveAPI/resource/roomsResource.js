@@ -15,7 +15,6 @@ exports.createRoom = function (req, res) {
     var room;
 
     var currentService = req.service;
-
     if (currentService === undefined) {
         res.status(404).send('Service not found');
         return;
@@ -33,6 +32,7 @@ exports.createRoom = function (req, res) {
             log.info('testRoom already exists, serviceId: ' + currentService.name);
             res.send(currentService.testRoom);
         } else {
+            //add and return test room
             room = {name: 'testRoom'};
             roomRegistry.addRoom(room, function (result) {
                 currentService.testRoom = result;
