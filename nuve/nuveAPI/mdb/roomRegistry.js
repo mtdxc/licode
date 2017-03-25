@@ -55,14 +55,14 @@ exports.assignErizoControllerToRoom = function(room, erizoControllerId, callback
     if (!room) {
       return erizoController;
     }
-
+    // 找到room对象，如有设置erizoControllerId则返回，
     if (room.erizoControllerId) {
       erizoController = db.erizoControllers.findOne({_id: room.erizoControllerId});
       if (erizoController) {
         return erizoController;
       }
     }
-
+    // 否则 查找erizoControllerId并更新room，然后返回
     erizoController = db.erizoControllers.findOne({_id: new ObjectId(erizoControllerId)});
 
     if (erizoController) {

@@ -37,7 +37,7 @@ exports.Reporter = function (spec) {
 
     lastTotal = total;
     lastIdle = idle;
-
+    // 汇报cpu和内存状态
     var data = {
       perc_cpu: cpu,  // jshint ignore:line
       perc_mem: mem  // jshint ignore:line
@@ -45,7 +45,7 @@ exports.Reporter = function (spec) {
 
     return data;
   };
-
+  // 对外导出函数
   that.getErizoAgent = function (callback) {
     var data = {
       info: {

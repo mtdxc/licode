@@ -8,11 +8,12 @@ var logger = require('./../logger').logger;
 // Logger
 var log = logger.getLogger('NuveAuthenticator');
 
+// server cache
 var cache = {};
 
 var checkTimestamp = function (ser, params) {
-    var lastParams = cache[ser.name],
-        lastTS,
+    var lastParams = cache[ser.name];
+    var lastTS,
         newTS,
         lastC,
         newC;
@@ -60,7 +61,7 @@ exports.authenticate = function (req, res, next) {
         params;
 
     if (authHeader !== undefined) {
-
+        // string to param map
         params = mauthParser.parseHeader(authHeader);
 
         // Get the service from the data base.
@@ -82,13 +83,14 @@ exports.authenticate = function (req, res, next) {
 
             // Check if the signature is valid.
             if (checkSignature(params, key)) {
-
                 if (params.username !== undefined && params.role !== undefined) {
+                    // add user info context to request
                     req.user = params.username;
                     req.role = params.role;
                 }
-
+                // cache last request...
                 cache[serv.name] =  params;
+                // add service context support
                 req.service = serv;
 
                 // If everything in the authentication is valid continue with the request.

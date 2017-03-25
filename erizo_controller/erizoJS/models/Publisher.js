@@ -23,14 +23,18 @@ function createWrtc(id, threadPool) {
   return wrtc;
 }
 
+// 管理一个媒体源及其发布订阅关系
 class Source {
   constructor(id, threadPool) {
-    this.id = id;
+    this.id = id; // id就是webrtc id
     this.threadPool = threadPool;
+    // pc列表
     this.subscribers = {};
+    // ExternalOuput列表 RTSP或本地Record等
     this.externalOutputs = {};
     this.muteAudio = false;
     this.muteVideo = false;
+    // 一对多转发器
     this.muxer = new addon.OneToManyProcessor();
   }
 
@@ -41,15 +45,14 @@ class Source {
   addSubscriber(id, options) {
     var wrtcId = id + '_' + this.id;
     log.info('Adding subscriber, id: ' + wrtcId + ', ' +
-             logger.objectToLog(options)+
-              ', ' + logger.objectToLog(options.metadata));
+             logger.objectToLog(options)+ ', ' + logger.objectToLog(options.metadata));
     var wrtc = createWrtc(wrtcId, this.threadPool);
     wrtc.wrtcId = wrtcId;
     this.subscribers[id] = wrtc;
     this.muxer.addSubscriber(wrtc, id);
     wrtc.minVideoBW = this.minVideoBW;
     log.debug('Setting scheme from publisher to subscriber, ' +
-              'id: ' + wrtcId + ', scheme: ' + this.scheme+
+              'id: ' + wrtcId + ', scheme: ' + this.scheme +
                ', ' + logger.objectToLog(options.metadata));
     wrtc.scheme = this.scheme;
     this.muteSubscriberStream(id, false, false);
@@ -82,7 +85,7 @@ class Source {
     var self = this;
     this.muxer.removeSubscriber(url);
     this.externalOutputs[url].close(function() {
-      log.info('ExternalOutput closed');
+      log.info('ExternalOutput closed', url);
       delete self.externalOutputs[url];
     });
   }
@@ -106,8 +109,7 @@ class Source {
 
   setQualityLayer(id, spatialLayer, temporalLayer) {
     var subscriber = this.getSubscriber(id);
-    log.info('setQualityLayer, spatialLayer: ', spatialLayer,
-                                     ', temporalLayer: ', temporalLayer);
+    log.info('setQualityLayer, spatialLayer: ', spatialLayer, ', temporalLayer: ', temporalLayer);
     subscriber.setQualityLayer(spatialLayer, temporalLayer);
   }
 
@@ -116,7 +118,7 @@ class Source {
     subscriber.muteVideo = muteVideo;
     subscriber.muteAudio = muteAudio;
     log.info('Mute Stream, video: ', this.muteVideo || muteVideo,
-                                 ', audio: ', this.muteAudio || muteAudio);
+                        ', audio: ', this.muteAudio || muteAudio);
     subscriber.muteStream(this.muteVideo || muteVideo,
                           this.muteAudio || muteAudio);
   }
@@ -162,6 +164,7 @@ class Publisher extends Source {
 
   resetWrtc() {
     if (this.numSubscribers > 0) {
+      log.info('has stream ', this.numSubscribers, 'skip resetWrtc');
       return;
     }
     this.wrtc = createWrtc(this.id, this.threadPool);

@@ -7,14 +7,13 @@ var log = logger.getLogger('RoomController');
 
 exports.RoomController = function (spec) {
     var that = {},
-        // {id: array of subscribers}
-        subscribers = {},
-        // {id: erizoJS_id}
-        publishers = {},
         // {erizoJS_id: {publishers: [ids], kaCount: count}}
         erizos = {},
-
-        // {id: ExternalOutput}
+        // {pubid: erizoJS_id}
+        publishers = {}, // erizoJS和publishers是一对多关系, 通过这个map来保存publisher到erizoJS id的映射
+        // {pubid: array of subscribers}
+        subscribers = {}, // 每个publisher可能有多个订阅,此处只保留订阅id
+        // {url: pubid}
         externalOutputs = {};
 
     var amqper = spec.amqper;
@@ -25,12 +24,13 @@ exports.RoomController = function (spec) {
     var MAX_ERIZOJS_RETRIES = 0;
 
     var eventListeners = [];
-
+    that.addEventListener = function(eventListener) {
+        eventListeners.push(eventListener);
+    };
     var dispatchEvent = function(type, evt) {
         for (var eventId in eventListeners) {
             eventListeners[eventId](type, evt);
         }
-
     };
 
     var callbackFor = function(erizoId) {
@@ -43,15 +43,14 @@ exports.RoomController = function (spec) {
 
                 if (erizos[erizoId].kaCount > TIMEOUT_LIMIT) {
                     if (erizos[erizoId].publishers.length > 0){
-                        log.error('ErizoJS timed out will be removed, ' +
-                                  'erizoId: ' + erizoId + ', ' +
+                        log.error('ErizoJS '+erizoId +' timed out will be removed, ' +
                                   'publishersAffected: ' + erizos[erizoId].publishers.length);
+                        // 将心跳不OK的erizoJS下的publisher全部置下线
                         for (var p in erizos[erizoId].publishers) {
                             dispatchEvent('unpublish', erizos[erizoId].publishers[p]);
                         }
-
                     } else {
-                        log.debug('empty erizoJS removed, erizoId: ' + erizoId);
+                        log.debug('empty erizoJS ' + erizoId +' removed');
                     }
                     ecch.deleteErizoJS(erizoId);
                     delete erizos[erizoId];
@@ -67,7 +66,7 @@ exports.RoomController = function (spec) {
             amqper.callRpc('ErizoJS_' + e, 'keepAlive', [], {callback: callbackFor(e)});
         }
     };
-
+    // 对所有的erizoJS进行周期性心跳
     setInterval(sendKeepAlive, KEEPALIVE_INTERVAL);
 
     var getErizoJS = function(callback) {
@@ -83,15 +82,11 @@ exports.RoomController = function (spec) {
         return 'ErizoJS_' + publishers[publisherId];
     };
 
-    that.addEventListener = function(eventListener) {
-        eventListeners.push(eventListener);
-    };
-
     that.addExternalInput = function (publisherId, url, callback) {
 
         if (publishers[publisherId] === undefined) {
 
-            log.info('addExternalInput,  streamId: ' + publisherId + ', url:' + url);
+            log.info('addExternalInput streamId: ' + publisherId + ' url:' + url);
 
             getErizoJS(function(erizoId) {
                 // then we call its addPublisher method.
@@ -108,8 +103,7 @@ exports.RoomController = function (spec) {
 
             });
         } else {
-            log.info('addExternalInput publisher already set, ' +
-                     'streamId: ' + publisherId + ', url: ' + url);
+            log.info('addExternalInput streamId: ' + publisherId + ' already set, url: ' + url);
         }
     };
 
@@ -118,7 +112,6 @@ exports.RoomController = function (spec) {
             log.info('addExternalOuput, streamId: ' + publisherId + ', url:' + url);
 
             var args = [publisherId, url];
-
             amqper.callRpc(getErizoQueue(publisherId), 'addExternalOutput', args, undefined);
 
             // Track external outputs
@@ -153,7 +146,6 @@ exports.RoomController = function (spec) {
         if (publishers[streamId] !== undefined) {
             var args = [streamId, peerId, msg];
             amqper.callRpc(getErizoQueue(streamId), 'processSignaling', args, {});
-
         }
     };
 
@@ -169,8 +161,7 @@ exports.RoomController = function (spec) {
 
         if (publishers[publisherId] === undefined) {
 
-            log.info('addPublisher, ' +
-                     'streamId: ' + publisherId + ', ' +
+            log.info('addPublisher, streamId: ' + publisherId + ', ' +
                      logger.objectToLog(options) + ', ' +
                      logger.objectToLog(options.metadata));
 
@@ -204,19 +195,18 @@ exports.RoomController = function (spec) {
                             publishers[publisherId] = undefined;
                             retries++;
                             that.addPublisher(publisherId, options, callback, retries);
-                            return;
+                        } else {
+                            log.warn('addPublisher ErizoJS timeout no retry, ' +
+                                    'streamId: ' + publisherId + ', ' +
+                                    'erizoId: ' + getErizoQueue(publisherId) + ', ' +
+                                    logger.objectToLog(options.metadata));
+                            var erizo = erizos[publishers[publisherId]];
+                            if (erizo !== undefined) {
+                                var index = erizo.publishers.indexOf(publisherId);
+                                erizo.publishers.splice(index, 1);
+                            }
+                            callback('timeout-erizojs');
                         }
-                        log.warn('addPublisher ErizoJS timeout no retry, ' +
-                                 'streamId: ' + publisherId + ', ' +
-                                 'erizoId: ' + getErizoQueue(publisherId) + ', ' +
-                                 logger.objectToLog(options.metadata));
-                        var erizo = erizos[publishers[publisherId]];
-                        if (erizo !== undefined) {
-                           var index = erizo.publishers.indexOf(publisherId);
-                           erizo.publishers.splice(index, 1);
-                        }
-                        callback('timeout-erizojs');
-                        return;
                     } else {
                         if (data.type === 'initializing') {
                             data.agentId = agentId;
@@ -260,13 +250,12 @@ exports.RoomController = function (spec) {
 
             var args = [subscriberId, publisherId, options];
 
-            amqper.callRpc(getErizoQueue(publisherId, undefined), 'addSubscriber', args,
+            amqper.callRpc(getErizoQueue(publisherId), 'addSubscriber', args,
                            {callback: function (data){
                 if (!publishers[publisherId] && !subscribers[publisherId]){
-                    log.warn('addSubscriber rpc callback has arrived after ' +
-                             'publisher is removed, ' +
-                             'streamId: ' + publisherId + ', ' +
+                    log.warn('addSubscriber rpc callback has arrived after publisher is removed, ' +
                              'clientId: ' + subscriberId + ', ' +
+                             'streamId: ' + publisherId + ', ' +
                              logger.objectToLog(options.metadata));
                     callback('timeout');
                     return;
@@ -281,16 +270,16 @@ exports.RoomController = function (spec) {
                                  'retries: ' + retries + ', ' +
                                  logger.objectToLog(options.metadata));
                         that.addSubscriber(subscriberId, publisherId, options, callback, retries);
-                        return;
+                    } else {
+                        log.warn('addSubscriber ErizoJS timeout no retry, ' +
+                                 'clientId: ' + subscriberId + ', ' +
+                                 'streamId: ' + publisherId + ', ' +
+                                 'erizoId: ' + getErizoQueue(publisherId) + ', ' +
+                                 logger.objectToLog(options.metadata));
+                        callback('timeout');
                     }
-                    log.warn('addSubscriber ErizoJS timeout no retry, ' +
-                             'clientId: ' + subscriberId + ', ' +
-                             'streamId: ' + publisherId + ', ' +
-                             'erizoId: ' + getErizoQueue(publisherId) + ', ' +
-                             logger.objectToLog(options.metadata));
-                    callback('timeout');
                     return;
-                }else if (data.type === 'initializing'){
+                } else if (data.type === 'initializing') {
                     subscribers[publisherId].push(subscriberId);
                 }
                 callback(data);
@@ -304,26 +293,22 @@ exports.RoomController = function (spec) {
     that.removePublisher = function (publisherId) {
 
         if (subscribers[publisherId] !== undefined && publishers[publisherId]!== undefined) {
-            log.info('removePublisher, ' +
-                     'publisherId: ' + publisherId + ', ' +
-                     'erizoId: ' + getErizoQueue(publisherId));
-
+            log.info('removePublisher ' + publisherId + ', erizoId: ' + getErizoQueue(publisherId));
             var args = [publisherId];
             amqper.callRpc(getErizoQueue(publisherId), 'removePublisher', args, undefined);
 
-            if (erizos[publishers[publisherId]] !== undefined) {
-                var index = erizos[publishers[publisherId]].publishers.indexOf(publisherId);
-                erizos[publishers[publisherId]].publishers.splice(index, 1);
+            var erizoId = publishers[publisherId];
+            if (erizos[erizoId] !== undefined) {
+                var index = erizos[erizoId].publishers.indexOf(publisherId);
+                if(index !== -1)
+                    erizos[erizoId].publishers.splice(index, 1);
             } else {
-                log.warn('removePublisher was already removed, ' +
-                         'publisherId: ' + publisherId + ', ' +
-                         'erizoId: ' + getErizoQueue(publisherId));
+                log.warn('removePublisher ' + publisherId+ ' was already removed, erizoId: ' + getErizoQueue(publisherId));
             }
 
             delete subscribers[publisherId];
             delete publishers[publisherId];
-            log.debug('removedPublisher, ' +
-                      'publisherId: ' + publisherId + ', ' +
+            log.debug('removedPublisher ' + publisherId + ', ' +
                       'publishersLeft: ' + Object.keys(publishers).length );
         }
     };
@@ -360,8 +345,6 @@ exports.RoomController = function (spec) {
         var publisherId, index;
 
         log.info('removeSubscriptions, clientId: ' + subscriberId);
-
-
         for (publisherId in subscribers) {
             if (subscribers.hasOwnProperty(publisherId)) {
                 index = subscribers[publisherId].indexOf(subscriberId);
@@ -383,8 +366,7 @@ exports.RoomController = function (spec) {
     that.getStreamStats = function (streamId, callback) {
         if (publishers[streamId]) {
             var args = [streamId];
-            var theId = getErizoQueue(streamId);
-            log.debug('Get stats for publisher ', streamId, 'theId', theId);
+            log.debug('Get stats for publisher ', streamId, 'theId', getErizoQueue(streamId));
             amqper.callRpc(getErizoQueue(streamId), 'getStreamStats', args, {
               callback: function(data) {
                 callback(data);

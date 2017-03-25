@@ -1,9 +1,7 @@
 /*global require*/
 'use strict';
 var Getopt = require('node-getopt');
-
 var spawn = require('child_process').spawn;
-
 var config = require('./../../licode_config');
 
 // Configuration default values
@@ -11,12 +9,10 @@ GLOBAL.config = config || {};
 GLOBAL.config.erizoAgent = GLOBAL.config.erizoAgent || {};
 GLOBAL.config.erizoAgent.maxProcesses = GLOBAL.config.erizoAgent.maxProcesses || 1;
 GLOBAL.config.erizoAgent.prerunProcesses =
-    GLOBAL.config.erizoAgent.prerunProcesses === undefined ?
-        1 : GLOBAL.config.erizoAgent.prerunProcesses;
+    GLOBAL.config.erizoAgent.prerunProcesses === undefined ? 1 : GLOBAL.config.erizoAgent.prerunProcesses;
 GLOBAL.config.erizoAgent.publicIP = GLOBAL.config.erizoAgent.publicIP || '';
 GLOBAL.config.erizoAgent.instanceLogDir = GLOBAL.config.erizoAgent.instanceLogDir || '.';
-GLOBAL.config.erizoAgent.useIndividualLogFiles =
-    GLOBAL.config.erizoAgent.useIndividualLogFiles|| false;
+GLOBAL.config.erizoAgent.useIndividualLogFiles = GLOBAL.config.erizoAgent.useIndividualLogFiles || false;
 
 var BINDED_INTERFACE_NAME = GLOBAL.config.erizoAgent.networkInterface;
 
@@ -26,15 +22,15 @@ var getopt = new Getopt([
   ['g' , 'rabbit-port=ARG'            , 'RabbitMQ Port'],
   ['b' , 'rabbit-heartbeat=ARG'       , 'RabbitMQ AMQP Heartbeat Timeout'],
   ['l' , 'logging-config-file=ARG'    , 'Logging Config File'],
-  ['M' , 'max-processes=ARG'           , 'Stun Server URL'],
-  ['P' , 'prerun-processes=ARG'        , 'Default video Bandwidth'],
+  ['M' , 'max-processes=ARG'           , 'max process count (max pool size)'],
+  ['P' , 'prerun-processes=ARG'        , 'pre run processes count (init pool size)'],
   ['I' , 'individual-logs'             , 'Use individual log files for ErizoJS processes'],
   ['m' , 'metadata=ARG'               , 'JSON metadata'],
   ['h' , 'help'                       , 'display this help']
 ]);
 
-var interfaces = require('os').networkInterfaces(),
-    addresses = [],
+
+var addresses = [],
     k,
     k2,
     address,
@@ -89,23 +85,21 @@ for (var prop in opt.options) {
 }
 
 // Load submodules with updated config
-var logger = require('./../common/logger').logger;
-var amqper = require('./../common/amqper');
+var logger = require('../common/logger').logger;
+var amqper = require('../common/amqper');
 
 // Logger
 var log = logger.getLogger('ErizoAgent');
-
+// 空闲guid列表
 var idleErizos = [];
-
+//  可用guid列表
 var erizos = [];
-
+// 实际node进程列表 {guid:process,...}
 var processes = {};
 
 var guid = (function() {
   function s4() {
-    return Math.floor((1 + Math.random()) * 0x10000)
-               .toString(16)
-               .substring(1);
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
   }
   return function() {
     return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
@@ -116,10 +110,10 @@ var guid = (function() {
 var myErizoAgentId = guid();
 
 var launchErizoJS;
-
+// 递归调用来维护进程池的高低水位
 var fillErizos = function () {
     if (erizos.length + idleErizos.length < GLOBAL.config.erizoAgent.maxProcesses) {
-        if (idleErizos.length < GLOBAL.config.erizoAgent.prerunProcesses) {
+        if (idleErizos.length < GLOBAL.config.erizoAgent.prerunProcesses) { // 低水位
             launchErizoJS();
             fillErizos();
         }
@@ -180,6 +174,7 @@ launchErizoJS = function() {
     });
 
     log.info('launched new ErizoJS, erizoId: ' + id);
+    // add to map and  idle list
     processes[id] = erizoProcess;
     idleErizos.push(id);
 };
@@ -205,9 +200,7 @@ var cleanErizos = function () {
 };
 
 var getErizo = function () {
-
     var erizoId = idleErizos.shift();
-
     if (!erizoId) {
         if (erizos.length < GLOBAL.config.erizoAgent.maxProcesses) {
             launchErizoJS();
@@ -228,7 +221,7 @@ var api = {
         try {
 
             var erizoId = getErizo();
-            log.debug('createErizoJS returning, erizoId: ' + erizoId);
+            log.debug('createErizoJS returning erizoId: ' + erizoId);
             callback('callback', {erizoId: erizoId, agentId: myErizoAgentId});
 
             erizos.push(erizoId);
@@ -248,6 +241,9 @@ var api = {
     getErizoAgents: reporter.getErizoAgent
 };
 
+// check this
+try{
+  var interfaces = require('os').networkInterfaces();
   for (k in interfaces) {
     if (interfaces.hasOwnProperty(k)) {
       if (!GLOBAL.config.erizoAgent.networkinterface ||
@@ -265,6 +261,9 @@ var api = {
       }
     }
   }
+} catch(err) {
+    log.error('message: networkInterfaces error');
+}
 
 privateIP = addresses[0];
 

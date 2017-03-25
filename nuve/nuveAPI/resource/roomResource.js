@@ -60,8 +60,6 @@ exports.updateRoom = function (req, res) {
 
             room.name = req.body.name;
             var options = req.body.options || {};
-
-
             if (options.p2p) {
                 room.p2p = true;
             }
@@ -77,7 +75,6 @@ exports.updateRoom = function (req, res) {
                 }
             }
             if (index !== -1) {
-
                 req.service.rooms[index] = room;
                 serviceRegistry.updateService(req.service);
                 log.info('updateRoom  successful, roomId: ' + id + ', serviceId: ' + req.service._id);
@@ -108,7 +105,8 @@ exports.patchRoom = function (req, res) {
 
             if (req.body.name) room.name = req.body.name;
             if (req.body.options) {
-              if (req.body.options.p2p) room.p2p = req.body.options.p2p;
+              if (req.body.options.p2p) 
+                  room.p2p = req.body.options.p2p;
               if (req.body.options.data) {
                   for (var d in req.body.options.data) {
                       room.data[d] = req.body.options.data[d];

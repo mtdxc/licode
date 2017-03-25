@@ -10,8 +10,8 @@ var log = logger.getLogger('ErizoJSController');
 
 exports.ErizoJSController = function (threadPool) {
     var that = {},
-        // {id1: Publisher, id2: Publisher}
-        publishers = {},
+        // {id1: Publisher, id2: Publisher} 
+        publishers = {}, //发布者列表
 
         MIN_SLIDESHOW_PERIOD = 2000,
         MAX_SLIDESHOW_PERIOD = 10000,
@@ -37,10 +37,10 @@ exports.ErizoJSController = function (threadPool) {
 
     /*
      * Given a WebRtcConnection waits for the state CANDIDATES_GATHERED for set remote SDP.
+     * callback can be invoke much times!!!!
      */
     initWebRtcConnection = function (wrtc, callback, idPub, idSub, options) {
-        log.debug('Init WebRtcConnection, id: ' + wrtc.wrtcId + ', ' +
-                  logger.objectToLog(options));
+        log.debug('Init WebRtcConnection, id: ' + wrtc.wrtcId + ' with option ' + logger.objectToLog(options));
 
         if (options.metadata) {
             wrtc.setMetadata(JSON.stringify(options.metadata));
@@ -51,8 +51,7 @@ exports.ErizoJSController = function (threadPool) {
             var monitorMinVideoBw = {};
             if (wrtc.scheme) {
                 try{
-                    monitorMinVideoBw = require('./adapt_schemes/' + wrtc.scheme)
-                                          .MonitorSubscriber(log);
+                    monitorMinVideoBw = require('./adapt_schemes/' + wrtc.scheme).MonitorSubscriber(log);
                 } catch (e) {
                     log.warn('could not find custom adapt scheme, ' +
                              'code: ' + WARN_PRECOND_FAILED + ', ' +
@@ -79,8 +78,7 @@ exports.ErizoJSController = function (threadPool) {
         }
 
         wrtc.init(function (newStatus, mess) {
-            log.info('WebRtcConnection status update, ' +
-                     'id: ' + wrtc.wrtcId + ', status: ' + newStatus +
+            log.info('WebRtcConnection '+wrtc.wrtcId +' status update: ' + newStatus +
                       ', ' + logger.objectToLog(options.metadata));
             if (GLOBAL.config.erizoController.report.connection_events) {  //jshint ignore:line
                 var timeStamp = new Date();
@@ -111,15 +109,12 @@ exports.ErizoJSController = function (threadPool) {
                     break;
 
                 case CONN_FAILED:
-                    log.warn('failed the ICE process, ' +
-                             'code: ' + WARN_BAD_CONNECTION + ', id: ' + wrtc.wrtcId);
+                    log.warn(wrtc.wrtcId, 'failed the ICE process code ' + WARN_BAD_CONNECTION);
                     callback('callback', {type: 'failed', sdp: mess});
                     break;
 
                 case CONN_READY:
-                    log.debug('connection ready, ' +
-                              'id: ' + wrtc.wrtcId + ', ' +
-                              'status: ' + newStatus);
+                    log.debug(wrtc.wrtcId, 'connection ready, status: ' + newStatus);
                     // If I'm a subscriber and I'm bowser, I ask for a PLI
                     if (idSub && options.browser === 'bowser') {
                         publishers[idPub].wrtc.generatePLIPacket();
@@ -145,8 +140,7 @@ exports.ErizoJSController = function (threadPool) {
     closeWebRtcConnection = function (wrtc) {
         var associatedMetadata = wrtc.metadata || {};
         wrtc.close();
-        log.info('WebRtcConnection status update, ' +
-            'id: ' + wrtc.wrtcId + ', status: ' + CONN_FINISHED + ', ' +
+        log.info('WebRtcConnection ' + wrtc.wrtcId + ' status update :' + CONN_FINISHED + ', ' +
                 logger.objectToLog(associatedMetadata));
     };
 
@@ -175,17 +169,17 @@ exports.ErizoJSController = function (threadPool) {
             answererSessionId = '106',
             answer = ('\n{\n \"messageType\":\"ANSWER\",\n');
 
-                sdp = sdp.replace(reg1, '\\r\\n');
+        sdp = sdp.replace(reg1, '\\r\\n');
 
-                //var reg2 = new RegExp(/^.*offererSessionId\":(...).*$/);
-                //var offererSessionId = offerRoap.match(reg2)[1];
+        //var reg2 = new RegExp(/^.*offererSessionId\":(...).*$/);
+        //var offererSessionId = offerRoap.match(reg2)[1];
 
-                answer += ' \"sdp\":\"' + sdp + '\",\n';
-                //answer += ' \"offererSessionId\":' + offererSessionId + ',\n';
-                answer += ' ' + offererSessionId + '\n';
-                answer += ' \"answererSessionId\":' + answererSessionId + ',\n \"seq\" : 1\n}\n';
+        answer += ' \"sdp\":\"' + sdp + '\",\n';
+        //answer += ' \"offererSessionId\":' + offererSessionId + ',\n';
+        answer += ' ' + offererSessionId + '\n';
+        answer += ' \"answererSessionId\":' + answererSessionId + ',\n \"seq\" : 1\n}\n';
 
-                return answer;
+        return answer;
     };
 
     that.addExternalInput = function (from, url, callback) {
@@ -198,7 +192,7 @@ exports.ErizoJSController = function (threadPool) {
                 callback('callback', answer);
             }
         } else {
-            log.warn('Publisher already set, code: ' + WARN_CONFLICT + ', id: ' + from);
+            log.warn('Publisher '+ from +' already set, code: ' + WARN_CONFLICT);
         }
     };
 
@@ -208,13 +202,13 @@ exports.ErizoJSController = function (threadPool) {
 
     that.removeExternalOutput = function (to, url) {
         if (publishers[to] !== undefined) {
-            log.info('Stopping ExternalOutput, id: ' + 
-                publishers[to].getExternalOutput(url).wrtcId);
+            log.info('Stopping ExternalOutput, id: ' + publishers[to].getExternalOutput(url).wrtcId + ",url " + url);
             publishers[to].removeExternalOutput(url);
         }
     };
 
     var processControlMessage = function(publisher, subscriberId, action) {
+      // 判断是publish的控制消息还是subscribe的
       var publisherSide = subscriberId === undefined || action.publisherSide;
       switch(action.name) {
         case 'controlhandlers':
@@ -233,7 +227,8 @@ exports.ErizoJSController = function (threadPool) {
         wrtc.disableHandler(disabledHandlers[index]);
       }
     };
-
+    
+    // 通过这个来设置sdp的
     that.processSignaling = function (streamId, peerId, msg) {
         log.info('Process Signaling message, ' +
                  'streamId: ' + streamId + ', peerId: ' + peerId);
@@ -249,17 +244,17 @@ exports.ErizoJSController = function (threadPool) {
                                                   msg.candidate.sdpMLineIndex,
                                                   msg.candidate.candidate);
                 } else if (msg.type === 'updatestream') {
-                    if(msg.sdp)
+                    if(msg.sdp) // plan b?
                         subscriber.setRemoteSdp(msg.sdp);
                     if (msg.config) {
                         if (msg.config.slideShowMode !== undefined) {
                             that.setSlideShow(msg.config.slideShowMode, peerId, streamId);
                         }
                         if (msg.config.muteStream !== undefined) {
-                            that.muteStream (msg.config.muteStream, peerId, streamId);
+                            that.muteStream(msg.config.muteStream, peerId, streamId);
                         }
                         if (msg.config.qualityLayer !== undefined) {
-                            that.setQualityLayer (msg.config.qualityLayer, peerId, streamId);
+                            that.setQualityLayer(msg.config.qualityLayer, peerId, streamId);
                         }
                     }
                 } else if (msg.type === 'control') {
@@ -271,10 +266,10 @@ exports.ErizoJSController = function (threadPool) {
                     disableDefaultHandlers(publisher.wrtc);
                 } else if (msg.type === 'candidate') {
                     publisher.wrtc.addRemoteCandidate(msg.candidate.sdpMid,
-                                                                 msg.candidate.sdpMLineIndex,
-                                                                 msg.candidate.candidate);
+                                                      msg.candidate.sdpMLineIndex,
+                                                      msg.candidate.candidate);
                 } else if (msg.type === 'updatestream') {
-                    if (msg.sdp) {
+                    if (msg.sdp) {//plan b?
                         publisher.wrtc.setRemoteSdp(msg.sdp);
                     }
                     if (msg.config) {
@@ -291,7 +286,7 @@ exports.ErizoJSController = function (threadPool) {
                             }
                         }
                         if (msg.config.muteStream !== undefined) {
-                            that.muteStream (msg.config.muteStream, peerId, streamId);
+                            that.muteStream(msg.config.muteStream, peerId, streamId);
                         }
                     }
                 } else if (msg.type === 'control') {
@@ -312,13 +307,11 @@ exports.ErizoJSController = function (threadPool) {
 
         if (publishers[from] === undefined) {
 
-            log.info('Adding publisher, ' +
-                     'streamId: ' + from + ', ' +
-                     logger.objectToLog(options) + ', ' +
-                     logger.objectToLog(options.metadata));
+            log.info('Adding publisher, streamId: ' + from + ', ' +
+                     logger.objectToLog(options) + ', ' + logger.objectToLog(options.metadata));
             publisher = new Publisher(from, threadPool, options);
             publishers[from] = publisher;
-
+            // 直接透传回调
             initWebRtcConnection(publisher.wrtc, callback, from, undefined, options);
 
         } else {
@@ -328,9 +321,7 @@ exports.ErizoJSController = function (threadPool) {
                          'code: ' + WARN_CONFLICT + ', streamId: ' + from + ', ' +
                          logger.objectToLog(options.metadata));
 
-
                 publisher.resetWrtc();
-
                 initWebRtcConnection(publisher.wrtc, callback, from, undefined, options);
             } else {
                 log.warn('publisher already set has subscribers will ignore, ' +
@@ -347,17 +338,15 @@ exports.ErizoJSController = function (threadPool) {
     that.addSubscriber = function (from, to, options, callback) {
         var publisher = publishers[to];
         if (publisher === undefined) {
-            log.warn('addSubscriber to unknown publisher, ' +
-                     'code: ' + WARN_NOT_FOUND + ', streamId: ' + to + ', clientId: ' + from +
-                      ', ' + logger.objectToLog(options.metadata));
+            log.warn('addSubscriber to unknown publisher, code: ' + WARN_NOT_FOUND + 
+                ', streamId: ' + to + ', clientId: ' + from + ', ' + logger.objectToLog(options.metadata));
             //We may need to notify the clients
             return;
         }
         var subscriber = publisher.getSubscriber(from);
         if (subscriber !== undefined) {
-            log.warn('Duplicated subscription will resubscribe, ' +
-                     'code: ' + WARN_CONFLICT + ', streamId: ' + to + ', clientId: ' + from+
-                      ', ' + logger.objectToLog(options.metadata));
+            log.warn('Duplicated subscription will resubscribe, code: ' + WARN_CONFLICT + 
+                     ', streamId: ' + to + ', clientId: ' + from + ', ' + logger.objectToLog(options.metadata));
             that.removeSubscriber(from,to);
         }
         publisher.addSubscriber(from, options);
@@ -373,7 +362,7 @@ exports.ErizoJSController = function (threadPool) {
             log.info('Removing publisher, id: ' + from);
             if (publisher.periodicPlis !== undefined) {
                 log.debug('clearing periodic PLIs for publisher, id: ' + from);
-                clearInterval (publisher.periodicPlis);
+                clearInterval(publisher.periodicPlis);
             }
             for (var key in publisher.subscribers) {
                 var subscriber = publisher.getSubscriber(key);
@@ -382,11 +371,9 @@ exports.ErizoJSController = function (threadPool) {
             }
             closeWebRtcConnection(publisher.wrtc);
             publisher.muxer.close(function(message) {
-                log.info('muxer closed succesfully, ' +
-                         'id: ' + from + ', ' +
-                         logger.objectToLog(message));
+                log.info('muxer closed succesfully, id: ' + from + ', ' + logger.objectToLog(message));
                 delete publishers[from];
-                var count = 0;
+                var count = 0; //Object.keys(publishers).length;
                 for (var k in publishers) {
                     if (publishers.hasOwnProperty(k)) {
                         ++count;
@@ -424,8 +411,7 @@ exports.ErizoJSController = function (threadPool) {
                     return;
                 }
             }
-            log.debug('clearing Pli interval as no more ' +
-                      'slideshows subscribers are present');
+            log.debug('clearing Pli interval as no more slideshows subscribers are present');
             clearInterval(publisher.wrtc.periodicPlis);
             publisher.wrtc.periodicPlis = undefined;
         }
@@ -441,8 +427,7 @@ exports.ErizoJSController = function (threadPool) {
                 var publisher = publishers[to];
                 var subscriber = publisher.getSubscriber(from);
                 if (subscriber) {
-                    log.debug('removing subscription, ' +
-                              'id:', subscriber.wrtcId);
+                    log.debug('removing subscription id:', subscriber.wrtcId);
                     closeWebRtcConnection(subscriber);
                     publisher.removeSubscriber(from);
                 }
@@ -463,8 +448,7 @@ exports.ErizoJSController = function (threadPool) {
             return;
         }
 
-        log.debug('setting SlideShow, id: ' + theWrtc.wrtcId +
-                  ', slideShowMode: ' + slideShowMode);
+        log.debug('setting SlideShow, id: ' + theWrtc.wrtcId + ', slideShowMode: ' + slideShowMode);
         var period =  slideShowMode === true ? MIN_SLIDESHOW_PERIOD : slideShowMode;
         if (Number.isSafeInteger(period)) {
             period = period < MIN_SLIDESHOW_PERIOD ? MIN_SLIDESHOW_PERIOD : period;
@@ -494,8 +478,7 @@ exports.ErizoJSController = function (threadPool) {
                         return;
                     }
                 }
-                log.debug('clearing PLI interval for publisher slideShow, ' +
-                          'id: ' + publisher.wrtc.wrtcId);
+                log.debug('clearing PLI interval for publisher slideShow id: ' + publisher.wrtc.wrtcId);
                 clearInterval(publisher.wrtc.periodicPlis);
                 publisher.wrtc.periodicPlis = undefined;
             }

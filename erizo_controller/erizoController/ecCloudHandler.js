@@ -9,6 +9,7 @@ var EA_TIMEOUT = 30000;
 var GET_EA_INTERVAL = 5000;
 var AGENTS_ATTEMPTS = 5;
 var WARN_UNAVAILABLE = 503, WARN_TIMEOUT = 504;
+// 通过RPC与erizoAgent进行广播通讯,负责创建erizoJS的创建和释放，类似代理
 exports.EcCloudHandler = function (spec) {
   var that = {},
   amqper = spec.amqper,
@@ -51,7 +52,7 @@ exports.EcCloudHandler = function (spec) {
       }
     }
   };
-
+  // agent的心跳检测
   setInterval(that.getErizoAgents, GET_EA_INTERVAL);
 
   var getErizoAgent;
@@ -61,20 +62,24 @@ exports.EcCloudHandler = function (spec) {
                       GLOBAL.config.erizoController.cloudHandlerPolicy).getErizoAgent;
   }
 
-  var tryAgain = function (count, agentId, callback) {
+  var createErizoJS = function (count, agentId, callback) {
     if (count >= AGENTS_ATTEMPTS) {
       callback('timeout');
       return;
     }
 
-    log.warn('agent selected timed out trying again, ' +
+    if(count!=0)
+      log.warn('agent selected timed out trying again, ' +
              'code: ' + WARN_TIMEOUT + ', agentId: ' + agentId);
 
-    amqper.callRpc('ErizoAgent', 'createErizoJS', [], {callback: function(erizoId) {
+    amqper.callRpc(agentId, 'createErizoJS', [], {callback: function(resp) {
       if (erizoId === 'timeout') {
-        tryAgain(++count, agentId ,callback);
+        createErizoJS(++count, agentId ,callback);
       } else {
-        callback(erizoId);
+        var erizoId = resp.erizoId;
+        var agentId = resp.agentId;
+        log.info('createErizoJS success, erizoId: ' + erizoId + ', agentId: ' + agentId);
+        callback(erizoId, agentId);
       }
     }});
   };
@@ -82,24 +87,12 @@ exports.EcCloudHandler = function (spec) {
   that.getErizoJS = function(callback) {
 
     var agentQueue = 'ErizoAgent';
-
     if (getErizoAgent) {
       agentQueue = getErizoAgent(agents);
     }
 
     log.info('createErizoJS, agentId: ' + agentQueue);
-
-    amqper.callRpc(agentQueue, 'createErizoJS', [], {callback: function(resp) {
-      var erizoId = resp.erizoId;
-      var agentId = resp.agentId;
-      log.info('createErizoJS success, erizoId: ' + erizoId + ', agentId: ' + agentId);
-
-      if (resp === 'timeout') {
-        tryAgain(0, agentId, callback);
-      } else {
-        callback(erizoId, agentId);
-      }
-    }});
+    createErizoJS(0, agentQueue, callback);
   };
 
   that.deleteErizoJS = function(erizoId) {

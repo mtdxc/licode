@@ -21,12 +21,12 @@ exports.parseHeader = function (header) {
 
         for (j = 1; j < array.length; j += 1) {
             if (array[j] === '') {
-                val += '=';
+                val += '='; // 把=符号重新加回去
             } else {
                 val += array[j];
             }
         }
-
+        // 去掉 mauth_
         params[array[0].slice(6)] = val;
 
     }
@@ -41,10 +41,9 @@ exports.makeHeader = function (params) {
         return undefined;
     }
 
-    var header = 'MAuth realm=' + params.realm,
-        key;
+    var header = 'MAuth realm=' + params.realm;
 
-    for (key in params) {
+    for (var key in params) {
         if (params.hasOwnProperty(key)) {
             if (key !== 'realm') {
                 header += ',mauth_' + key + '=' + params[key];
