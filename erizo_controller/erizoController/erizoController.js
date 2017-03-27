@@ -159,7 +159,7 @@ var checkSignature = function (token, key) {
     var calculatedSignature = calculateSignature(token, key);
 
     if (calculatedSignature !== token.signature) {
-        log.info('message: invalid token signature');
+        log.info('invalid token signature');
         return false;
     } else {
         return true;
@@ -174,7 +174,7 @@ var sendMsgToRoom = function (room, type, arg) {
         id;
     for (id in sockets) {
         if (sockets.hasOwnProperty(id)) {
-            log.debug('message: sendMsgToRoom, ' +
+            log.debug('sendMsgToRoom, ' +
                       'clientId: ' + sockets[id] + ', ' +
                       'roomId: ' + room.id + ', ' +
                       logger.objectToLog(type));
@@ -222,7 +222,7 @@ var addToCloudHandler = function (callback) {
 
     var addECToCloudHandler = function(attempt) {
         if (attempt <= 0) {
-            log.error('message: addECtoCloudHandler cloudHandler does not respond - fatal');
+            log.error('addECtoCloudHandler cloudHandler does not respond - fatal');
             return;
         }
 
@@ -236,7 +236,7 @@ var addToCloudHandler = function (callback) {
         amqper.callRpc('nuve', 'addNewErizoController', controller, {callback: function (msg) {
 
             if (msg === 'timeout') {
-                log.warn('message: addECToCloudHandler cloudHandler does not respondr, ' +
+                log.warn('addECToCloudHandler cloudHandler does not respondr, ' +
                          'attemptsLeft: ' + attempt );
 
                 // We'll try it more!
@@ -247,11 +247,11 @@ var addToCloudHandler = function (callback) {
                 return;
             }
             if (msg === 'error') {
-                log.error('message: cannot contact cloudHandler');
+                log.error('cannot contact cloudHandler');
                 return;
             }
 
-            log.info('message: succesfully added to cloudHandler');
+            log.info('succesfully added to cloudHandler');
 
             publicIP = msg.publicIP;
             myId = msg.id;
@@ -264,7 +264,7 @@ var addToCloudHandler = function (callback) {
 
                         // TODO: It should try to register again in Cloud Handler.
                         // But taking into account current rooms, users, ...
-                        log.error('message: This ErizoController does not exist in cloudHandler ' +
+                        log.error('This ErizoController does not exist in cloudHandler ' +
                                   'to avoid unexpected behavior this ErizoController will die');
                         clearInterval(intervarId);
                         amqper.callRpc('nuve', 'killMe', publicIP, {callback: function () {}});
@@ -301,10 +301,10 @@ var updateMyState = function () {
     if (nRooms < WARNING_N_ROOMS) {
         newState = 2;
     } else if (nRooms > LIMIT_N_ROOMS) {
-        log.warn('message: reached Room Limit, roomLimit:' + LIMIT_N_ROOMS);
+        log.warn('reached Room Limit, roomLimit:' + LIMIT_N_ROOMS);
         newState = 0;
     } else {
-        log.warn('message: reached Warning room limit, ' +
+        log.warn('reached Warning room limit, ' +
                  'warningRoomLimit: ' + WARNING_N_ROOMS + ', ' +
                  'roomLimit: ' + LIMIT_N_ROOMS);
         newState = 1;
@@ -322,7 +322,7 @@ var updateMyState = function () {
 
 var listen = function () {
     io.sockets.on('connection', function (socket) {
-        log.info('message: erizoClient connected, clientId: ' + socket.id);
+        log.info('erizoClient connected, clientId: ' + socket.id);
 
         // Gets 'token' messages on the socket. Checks the signature and ask nuve if it is valid.
         // Then registers it in the room and callback to the client.
@@ -335,13 +335,13 @@ var listen = function () {
 
                 amqper.callRpc('nuve', 'deleteToken', token.tokenId, {callback: function (resp) {
                     if (resp === 'error') {
-                        log.warn('message: Trying to use token that does not exist - ' +
+                        log.warn('Trying to use token that does not exist - ' +
                                  'disconnecting Client, clientId: ' + socket.id);
                         callback('error', 'Token does not exist');
                         socket.disconnect();
 
                     } else if (resp === 'timeout') {
-                        log.warn('message: Nuve does not respond token check - ' +
+                        log.warn('Nuve does not respond token check - ' +
                                  'disconnecting client, clientId: ' + socket.id);
                         callback('error', 'Nuve does not respond');
                         socket.disconnect();
@@ -356,7 +356,7 @@ var listen = function () {
                             room.sockets.push(socket.id);
                             room.streams = {}; //streamId: Stream
                             if (tokenDB.p2p) {
-                                log.debug('message: Requested token for p2p room');
+                                log.debug('Requested token for p2p room');
                                 room.p2p = true;
                             } else {
                                 room.controller = controller.RoomController({amqper: amqper,
@@ -365,7 +365,7 @@ var listen = function () {
                                     if (type === 'unpublish') {
                                         // It's supposed to be an integer.
                                         var streamId = parseInt(event);
-                                        log.warn('message: Triggering removal of stream ' +
+                                        log.warn('Triggering removal of stream ' +
                                                  'because of ErizoJS timeout, ' +
                                                  'streamId: ' + streamId);
                                         sendMsgToRoom(room, 'onRemoveStream', {id: streamId});
@@ -405,7 +405,7 @@ var listen = function () {
                         socket.streams = []; //[list of streamIds]
                         socket.state = 'sleeping';
 
-                        log.debug('message: Token approved, clientId: ' + socket.id);
+                        log.debug('Token approved, clientId: ' + socket.id);
 
                         if (!tokenDB.p2p &&
                             GLOBAL.config.erizoController.report.session_events) {  // jshint ignore:line
@@ -434,14 +434,14 @@ var listen = function () {
                                             });
 
                     } else {
-                        log.warn('message: Token has invalid host, clientId: ' + socket.id);
+                        log.warn('Token has invalid host, clientId: ' + socket.id);
                         callback('error', 'Invalid host');
                         socket.disconnect();
                     }
                 }});
 
             } else {
-                log.warn('message: Token authentication error, clientId: ' + socket.id);
+                log.warn('Token authentication error, clientId: ' + socket.id);
                 callback('error', 'Authentication error');
                 socket.disconnect();
             }
@@ -450,7 +450,7 @@ var listen = function () {
         //Gets 'sendDataStream' messages on the socket in order to write a message in a dataStream.
         socket.on('sendDataStream', function (msg) {
             if  (socket.room.streams[msg.id] === undefined){
-              log.warn('message: Trying to send Data from a non-initialized stream, ' +
+              log.warn('Trying to send Data from a non-initialized stream, ' +
                        'clientId: ' + socket.id + ', ' +
                        logger.objectToLog(msg));
               return;
@@ -458,7 +458,7 @@ var listen = function () {
             var sockets = socket.room.streams[msg.id].getDataSubscribers(), id;
             for (id in sockets) {
                 if (sockets.hasOwnProperty(id)) {
-                    log.debug('message: sending dataStream, ' +
+                    log.debug('sending dataStream, ' +
                     'clientId: ' + sockets[id] + ', dataStream: ' + msg.id);
                     io.sockets.socket(sockets[id]).emit('onDataStream', msg);
                 }
@@ -479,7 +479,7 @@ var listen = function () {
                     (isControlMessage && hasPermission(socket.user, msg.msg.action.name))) {
                   socket.room.controller.processSignaling(msg.streamId, socket.id, msg.msg);
                 } else {
-                  log.info('message: User unauthorized to execute action on stream, action: ' +
+                  log.info('User unauthorized to execute action on stream, action: ' + 
                     msg.msg.action.name + ', streamId: ' + msg.streamId);
                 }
             }
@@ -489,7 +489,7 @@ var listen = function () {
         // in order to update attributes from the stream.
         socket.on('updateStreamAttributes', function (msg) {
             if  (socket.room.streams[msg.id] === undefined){
-              log.warn('message: Update attributes to a uninitialized stream, ' +
+              log.warn('Update attributes to a uninitialized stream, ' +
                        logger.objectToLog(msg));
               return;
             }
@@ -497,7 +497,7 @@ var listen = function () {
             socket.room.streams[msg.id].setAttributes(msg.attrs);
             for (id in sockets) {
                 if (sockets.hasOwnProperty(id)) {
-                    log.debug('message: Sending new attributes, ' +
+                    log.debug('Sending new attributes, ' +
                               'clientId: ' + sockets[id] + ', streamId: ' + msg.id);
                     io.sockets.socket(sockets[id]).emit('onUpdateAttributeStream', msg);
                 }
@@ -520,7 +520,7 @@ var listen = function () {
                 }
             }
 
-            // generate a 18 digits safe integer
+            // generate a 18 digits safe integer            
             id = Math.floor(100000000000000000 + Math.random() * 900000000000000000);
 
             if (options.state === 'url' || options.state === 'recording') {
@@ -550,7 +550,7 @@ var listen = function () {
                     }
                 });
             } else if (options.state === 'erizo') {
-                log.info('message: addPublisher requested, ' +
+                log.info('addPublisher requested, ' +
                          'streamId: ' + id + ', clientId: ' + socket.id + ', ' +
                          logger.objectToLog(options) + ', ' +
                          logger.objectToLog(options.attributes));
@@ -567,7 +567,7 @@ var listen = function () {
                         socket.streams.push(id);
                         socket.room.streams[id] = st;
                         st.status = PUBLISHER_INITAL;
-                        log.info('message: addPublisher, ' +
+                        log.info('addPublisher, ' +
                                  'state: PUBLISHER_INITIAL, ' +
                                  'clientId: ' + socket.id + ', ' +
                                  'streamId: ' + id);
@@ -585,7 +585,7 @@ var listen = function () {
                         }
                         return;
                     } else if (signMess.type === 'failed'){
-                        log.warn('message: addPublisher ICE Failed, ' +
+                        log.warn('addPublisher ICE Failed, ' +
                                  'state: PUBLISHER_FAILED, ' +
                                  'streamId: ' + id + ', ' +
                                  'clientId: ' + socket.id);
@@ -620,22 +620,22 @@ var listen = function () {
                     } else if (signMess.type === 'ready') {
                         st.status = PUBLISHER_READY;
                         sendMsgToRoom(socket.room, 'onAddStream', st.getPublicStream());
-                        log.info('message: addPublisher, ' +
+                        log.info('addPublisher, ' +
                                  'state: PUBLISHER_READY, ' +
                                  'streamId: ' + id + ', ' +
                                  'clientId: ' + socket.id);
                     } else if (signMess === 'timeout-erizojs') {
-                        log.error('message: addPublisher timeout when contacting ErizoJS, ' +
+                        log.error('addPublisher timeout when contacting ErizoJS, ' +
                                   'streamId: ' + id + ', clientId: ' + socket.id);
                         callback(null, 'ErizoJS is not reachable');
                         return;
                     } else if (signMess === 'timeout-agent'){
-                        log.error('message: addPublisher timeout when contacting Agent, ' +
+                        log.error('addPublisher timeout when contacting Agent, ' +
                                   'streamId: ' + id + ', clientId: ' + socket.id);
                         callback(null, 'ErizoAgent is not reachable');
                         return;
                     } else if (signMess === 'timeout'){
-                        log.error('message: addPublisher Undefined RPC Timeout, ' +
+                        log.error('addPublisher Undefined RPC Timeout, ' +
                                   'streamId: ' + id + ', clientId: ' + socket.id);
                         callback(null, 'ErizoAgent or ErizoJS is not reachable');
                         return;
@@ -695,13 +695,13 @@ var listen = function () {
                                                              peerSocket: socket.id});
 
                 } else {
-                    log.info('message: addSubscriber requested, ' +
+                    log.info('addSubscriber requested, ' +
                              'streamId: ' + options.streamId + ', ' +
                              'clientId: ' + socket.id);
                     socket.room.controller.addSubscriber(socket.id, options.streamId, options,
                                                          function (signMess) {
                         if (signMess.type === 'initializing') {
-                            log.info('message: addSubscriber, ' +
+                            log.info('addSubscriber, ' +
                                      'state: SUBSCRIBER_INITIAL, ' +
                                      'clientId: ' + socket.id + ', ' +
                                      'streamId: ' + options.streamId);
@@ -719,7 +719,7 @@ var listen = function () {
                             return;
                         } else if (signMess.type === 'failed'){
                             //TODO: Add Stats event
-                            log.warn('message: addSubscriber ICE Failed, ' +
+                            log.warn('addSubscriber ICE Failed, ' +
                                      'state: SUBSCRIBER_FAILED, ' +
                                      'streamId: ' + options.streamId + ', ' +
                                      'clientId: ' + socket.id);
@@ -727,7 +727,7 @@ var listen = function () {
                                                               streamId: options.streamId});
                             return;
                         } else if (signMess.type === 'ready') {
-                            log.info('message: addSubscriber, ' +
+                            log.info('addSubscriber, ' +
                                      'state: SUBSCRIBER_READY, ' +
                                      'streamId: ' + options.streamId + ', ' +
                                      'clientId: ' + socket.id);
@@ -737,7 +737,7 @@ var listen = function () {
                                                              message: signMess.message,
                                                              bandwidth: signMess.bandwidth});
                         } else if (signMess === 'timeout') {
-                            log.error('message: addSubscriber timeout when contacting ErizoJS, ' +
+                            log.error('addSubscriber timeout when contacting ErizoJS, ' +
                                       'streamId: ', options.streamId, ', ' +
                                       'clientId: ' + socket.id);
                             callback(null, 'ErizoJS is not reachable');
@@ -771,7 +771,7 @@ var listen = function () {
                 url = '/tmp/' + recordingId + '.mkv';
             }
 
-            log.info('message: startRecorder, ' +
+            log.info('startRecorder, ' +
                      'state: RECORD_REQUESTED, ' +
                      'streamId: ' + streamId + ', ' +
                      'url: ' + url);
@@ -786,13 +786,13 @@ var listen = function () {
 
                 socket.room.controller.addExternalOutput(streamId, url, function (result) {
                     if (result === 'success') {
-                        log.info('message: startRecorder, ' +
+                        log.info('startRecorder, ' +
                                  'state: RECORD_STARTED, ' +
                                  'streamId: ' + streamId + ', ' +
                                  'url: ' + url);
                         callback(recordingId);
                     } else {
-                        log.warn('message: startRecorder stream not found, ' +
+                        log.warn('startRecorder stream not found, ' +
                                  'state: RECORD_FAILED, ' +
                                  'streamId: ' + streamId + ', ' +
                                  'url: ' + url);
@@ -802,7 +802,7 @@ var listen = function () {
                 });
 
             } else {
-                log.warn('message: startRecorder stream cannot be recorded, ' +
+                log.warn('startRecorder stream cannot be recorded, ' +
                          'state: RECORD_FAILED, ' +
                          'streamId: ' + streamId + ', ' +
                          'url: ' + url);
@@ -826,7 +826,7 @@ var listen = function () {
                 url = '/tmp/' + recordingId + '.mkv';
             }
 
-            log.info('message: startRecorder, ' +
+            log.info('startRecorder, ' +
                      'state: RECORD_STOPPED, ' +
                      'streamId: ' + options.id + ', ' +
                      'url: ' + url);
@@ -916,7 +916,7 @@ var listen = function () {
 
             var timeStamp = new Date();
 
-            log.info('message: Socket disconnect, clientId: ' + socket.id);
+            log.info('Socket disconnect, clientId: ' + socket.id);
 
             for (i in socket.streams) {
                 if (socket.streams.hasOwnProperty(i)) {
@@ -978,7 +978,7 @@ var listen = function () {
             }
 
             if (socket.room !== undefined && socket.room.sockets.length === 0) {
-                log.debug('message: deleting empty room, roomId: ' + socket.room.id);
+                log.debug('deleting empty room, roomId: ' + socket.room.id);
                 delete rooms[socket.room.id];
                 updateMyState();
             }
@@ -987,12 +987,12 @@ var listen = function () {
         socket.on('getStreamStats', function (streamId, callback) {
             log.debug('Getting stats for streamId ' + streamId);
             if (socket.user === undefined || !socket.user.permissions[Permission.STATS]) {
-                log.info('message: unauthorized getStreamStats request');
+                log.info('unauthorized getStreamStats request');
                 if (callback) callback(null, 'Unauthorized');
                 return;
             }
             if (socket.room.streams[streamId] === undefined) {
-                log.info('message: bad getStreamStats request');
+                log.info('bad getStreamStats request');
                 return;
             }
             if (socket.room !== undefined && !socket.room.p2p) {
@@ -1050,7 +1050,7 @@ exports.deleteUser = function (user, room, callback) {
 
     for (var s in socketsToDelete) {
 
-        log.info('message: deleteUser, user: ' + io.sockets.socket(socketsToDelete[s]).user.name);
+        log.info('deleteUser, user: ' + io.sockets.socket(socketsToDelete[s]).user.name);
         io.sockets.socket(socketsToDelete[s]).disconnect();
     }
 
@@ -1074,7 +1074,7 @@ exports.deleteUser = function (user, room, callback) {
 exports.deleteRoom = function (room, callback) {
     var sockets, streams, id, j;
 
-    log.info('message: deleteRoom, roomId: ' + room);
+    log.info('deleteRoom, roomId: ' + room);
 
     if (rooms[room] === undefined) {
         callback('Success');
@@ -1113,6 +1113,6 @@ amqper.connect(function () {
 
         });
     } catch (error) {
-        log.info('message: Error in Erizo Controller, ' + logger.objectToLog(error));
+        log.info('Error in Erizo Controller, ' + logger.objectToLog(error));
     }
 });

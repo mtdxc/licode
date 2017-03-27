@@ -85,7 +85,7 @@ var generateToken = function (req, callback) {
             token.use = 0;
             token.host = dataBase.testErizoController;
 
-            log.info('message: generateTestToken');
+            log.info('generateTestToken');
 
             tokenRegistry.addToken(token, function (id) {
 
@@ -102,7 +102,7 @@ var generateToken = function (req, callback) {
 
             token = currentService.testToken;
 
-            log.info('message: generateTestToken already generated - returning, ' +
+            log.info('generateTestToken already generated - returning, ' +
                 logger.objectToLog(token));
 
             tokenS = getTokenString(token._id, token);
@@ -142,11 +142,11 @@ var generateToken = function (req, callback) {
 exports.create = function (req, res) {
     doInit(req, function (currentService, currentRoom) {
         if (currentService === undefined) {
-            log.warn('message: createToken - service not found');
+            log.warn('createToken - service not found');
             res.status(404).send('Service not found');
             return;
         } else if (currentRoom === undefined) {
-            log.warn('message: createToken - room not found, roomId: ' + req.params.room);
+            log.warn('createToken - room not found, roomId: ' + req.params.room);
             res.status(404).send('Room does not exist');
             return;
         }
@@ -158,11 +158,11 @@ exports.create = function (req, res) {
                 return;
             }
             if (tokenS === 'error') {
-                log.error('message: createToken error, errorMgs: No Erizo Controller available');
+                log.error('createToken error, errorMgs: No Erizo Controller available');
                 res.status(404).send('No Erizo Controller found');
                 return;
             }
-            log.info('message: createToken success, roomId: ' + currentRoom._id +
+            log.info('createToken success, roomId: ' + currentRoom._id +
                      ', serviceId: ' + currentService._id);
             res.send(tokenS);
         });

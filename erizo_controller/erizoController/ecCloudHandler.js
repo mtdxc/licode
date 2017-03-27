@@ -18,7 +18,7 @@ exports.EcCloudHandler = function (spec) {
   that.getErizoAgents = function () {
     amqper.broadcast('ErizoAgent', {method: 'getErizoAgents', args: []}, function (agent) {
       if (agent === 'timeout') {
-        log.warn('message: no agents available, code: ' + WARN_UNAVAILABLE );
+        log.warn('no agents available, code: ' + WARN_UNAVAILABLE );
         return;
       }
 
@@ -45,7 +45,7 @@ exports.EcCloudHandler = function (spec) {
     for (var a in agents) {
       agents[a].timeout ++;
       if (agents[a].timeout > EA_TIMEOUT / GET_EA_INTERVAL) {
-        log.warn('message: agent timed out is being removed, ' +
+        log.warn('agent timed out is being removed, ' +
                  'code: ' + WARN_TIMEOUT + ', agentId: ' + agents[a].info.id);
         delete agents[a];
       }
@@ -67,7 +67,7 @@ exports.EcCloudHandler = function (spec) {
       return;
     }
 
-    log.warn('message: agent selected timed out trying again, ' +
+    log.warn('agent selected timed out trying again, ' +
              'code: ' + WARN_TIMEOUT + ', agentId: ' + agentId);
 
     amqper.callRpc('ErizoAgent', 'createErizoJS', [], {callback: function(erizoId) {
@@ -87,12 +87,12 @@ exports.EcCloudHandler = function (spec) {
       agentQueue = getErizoAgent(agents);
     }
 
-    log.info('message: createErizoJS, agentId: ' + agentQueue);
+    log.info('createErizoJS, agentId: ' + agentQueue);
 
     amqper.callRpc(agentQueue, 'createErizoJS', [], {callback: function(resp) {
       var erizoId = resp.erizoId;
       var agentId = resp.agentId;
-      log.info('message: createErizoJS success, erizoId: ' + erizoId + ', agentId: ' + agentId);
+      log.info('createErizoJS success, erizoId: ' + erizoId + ', agentId: ' + agentId);
 
       if (resp === 'timeout') {
         tryAgain(0, agentId, callback);
@@ -103,7 +103,7 @@ exports.EcCloudHandler = function (spec) {
   };
 
   that.deleteErizoJS = function(erizoId) {
-    log.info ('message: deleting erizoJS, erizoId: ' + erizoId);
+    log.info ('deleting erizoJS, erizoId: ' + erizoId);
     amqper.broadcast('ErizoAgent', {method: 'deleteErizoJS', args: [erizoId]}, function(){});
   };
 

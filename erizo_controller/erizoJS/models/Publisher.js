@@ -42,7 +42,7 @@ class Source {
 
   addSubscriber(id, options) {
     var wrtcId = id + '_' + this.id;
-    log.info('message: Adding subscriber, id: ' + wrtcId + ', ' +
+    log.info('Adding subscriber, id: ' + wrtcId + ', ' +
              logger.objectToLog(options)+
               ', ' + logger.objectToLog(options.metadata));
     var wrtc = createWrtc(wrtcId, this.threadPool, this.ioThreadPool);
@@ -50,7 +50,7 @@ class Source {
     this.subscribers[id] = wrtc;
     this.muxer.addSubscriber(wrtc, id);
     wrtc.minVideoBW = this.minVideoBW;
-    log.debug('message: Setting scheme from publisher to subscriber, ' +
+    log.debug('Setting scheme from publisher to subscriber, ' +
               'id: ' + wrtcId + ', scheme: ' + this.scheme+
                ', ' + logger.objectToLog(options.metadata));
     wrtc.scheme = this.scheme;
@@ -72,7 +72,7 @@ class Source {
 
   addExternalOutput(url) {
     var eoId = url + '_' + this.id;
-    log.info('message: Adding ExternalOutput, id: ' + eoId);
+    log.info('Adding ExternalOutput, id: ' + eoId);
     var externalOutput = new addon.ExternalOutput(url);
     externalOutput.wrtcId = eoId;
     externalOutput.init();
@@ -84,7 +84,7 @@ class Source {
     var self = this;
     this.muxer.removeSubscriber(url);
     this.externalOutputs[url].close(function() {
-      log.info('message: ExternalOutput closed');
+      log.info('ExternalOutput closed');
       delete self.externalOutputs[url];
     });
   }
@@ -108,7 +108,7 @@ class Source {
 
   setQualityLayer(id, spatialLayer, temporalLayer) {
     var subscriber = this.getSubscriber(id);
-    log.info('message: setQualityLayer, spatialLayer: ', spatialLayer,
+    log.info('setQualityLayer, spatialLayer: ', spatialLayer,
                                      ', temporalLayer: ', temporalLayer);
     subscriber.setQualityLayer(spatialLayer, temporalLayer);
   }
@@ -117,7 +117,7 @@ class Source {
     var subscriber = this.getSubscriber(id);
     subscriber.muteVideo = muteVideo;
     subscriber.muteAudio = muteAudio;
-    log.info('message: Mute Stream, video: ', this.muteVideo || muteVideo,
+    log.info('Mute Stream, video: ', this.muteVideo || muteVideo,
                                  ', audio: ', this.muteAudio || muteAudio);
     subscriber.muteStream(this.muteVideo || muteVideo,
                           this.muteAudio || muteAudio);
@@ -178,7 +178,7 @@ class ExternalInput extends Source {
     super(id, threadPool, ioThreadPool);
     var eiId = id + '_' + url;
 
-    log.info('message: Adding ExternalInput, id: ' + eiId);
+    log.info('Adding ExternalInput, id: ' + eiId);
 
     var ei = new addon.ExternalInput(url);
 

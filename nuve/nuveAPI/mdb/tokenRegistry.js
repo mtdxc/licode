@@ -13,7 +13,7 @@ var log = logger.getLogger('TokenRegistry');
 exports.getList = function (callback) {
     db.tokens.find({}).toArray(function (err, tokens) {
         if (err || !tokens) {
-            log.info('message: token getList empty');
+            log.info('token getList empty');
         } else {
             callback(tokens);
         }
@@ -24,7 +24,7 @@ var getToken = exports.getToken = function (id, callback) {
     db.tokens.findOne({_id: db.ObjectId(id)}, function (err, token) {
         if (token == null) {
             token = undefined;
-            log.info('message: getToken token not found, tokenId: ' + id);
+            log.info('getToken token not found, tokenId: ' + id);
         }
         if (callback !== undefined) {
             callback(token);
@@ -48,7 +48,7 @@ var hasToken = exports.hasToken = function (id, callback) {
  */
 exports.addToken = function (token, callback) {
     db.tokens.save(token, function (error, saved) {
-        if (error) log.warn('message: addToken error, ' + logger.objectToLog(error));
+        if (error) log.warn('addToken error, ' + logger.objectToLog(error));
         callback(saved._id);
     });
 };
@@ -61,8 +61,7 @@ var removeToken = exports.removeToken = function (id, callback) {
         if (hasT) {
             db.tokens.remove({_id: db.ObjectId(id)}, function (error) {
                 if (error) {
-                    log.warn('message: removeToken error, ' +
-                        logger.objectToLog(error));
+                    log.warn('removeToken error, ' + logger.objectToLog(error));
                 }
                 callback();
             });
@@ -76,7 +75,7 @@ var removeToken = exports.removeToken = function (id, callback) {
  */
 exports.updateToken = function (token) {
     db.tokens.save(token, function (error) {
-        if (error) log.warn('message: updateToken error, ' + logger.objectToLog(error));
+        if (error) log.warn('updateToken error, ' + logger.objectToLog(error));
     });
 };
 
@@ -94,7 +93,7 @@ exports.removeOldTokens = function () {
                 dif = time - tokenTime;
                 if (dif > 3*60*1000) {
 
-                    log.info('message: removing old token, tokenId: ' + token._id + ', roomId: ' +
+                    log.info('removing old token, tokenId: ' + token._id + ', roomId: ' +
                         token.room + ', serviceId: ' + token.service);
                     removeToken(token._id + '', function() {});
                 }

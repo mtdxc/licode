@@ -30,12 +30,12 @@ exports.getList = function (req, res) {
             res.status(404).send('Service not found');
             return;
         } else if (currentRoom === undefined) {
-            log.info('message: getUserList - room not found, roomId: ' + req.params.room);
+            log.info('getUserList - room not found, roomId: ' + req.params.room);
             res.status(404).send('Room does not exist');
             return;
         }
 
-        log.info('message: getUsersList success, roomId: ' + currentRoom._id +
+        log.info('getUsersList success, roomId: ' + currentRoom._id +
                  ', serviceId: ' + currentService._id);
         cloudHandler.getUsersInRoom(currentRoom._id, function (users) {
             if (users === 'timeout') {

@@ -32,7 +32,7 @@ exports.MonitorSubscriber = function (log) {
         var lastAverage, average, lastBWValue;
         var nextRetry = 0;
         wrtc.bwStatus = BW_STABLE;
-        log.info('message: Start wrtc adapt scheme, ' +
+        log.info('Start wrtc adapt scheme, ' +
                  'id: ' + wrtc.wrtcId + ', ' +
                  'scheme: notify-break, ' +
                  'minVideoBW: ' + wrtc.minVideoBW);
@@ -67,7 +67,7 @@ exports.MonitorSubscriber = function (log) {
                 case BW_STABLE:
                     if(average <= lastAverage && (average < wrtc.lowerThres)) {
                         if (++tics > TICS_PER_TRANSITION) {
-                            log.info('message: scheme state change, ' +
+                            log.info('scheme state change, ' +
                                       'id: ' + wrtc.wrtcId + ', ' +
                                       'previousState: BW_STABLE, ' +
                                       'newState: BW_WONT_RECOVER, ' +
@@ -83,7 +83,7 @@ exports.MonitorSubscriber = function (log) {
                     }
                     break;
                 case BW_WONTRECOVER:
-                    log.info('message: Switched to audio-only, ' +
+                    log.info('Switched to audio-only, ' +
                               'id: ' + wrtc.wrtcId + ', ' +
                               'state: BW_WONT_RECOVER, ' +
                               'averageBandwidth: ' + average + ', ' +

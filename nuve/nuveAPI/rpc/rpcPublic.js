@@ -39,14 +39,14 @@ exports.deleteToken = function (id, callback) {
                 } else {
                     token.use += 1;
                     tokenRegistry.updateToken(token);
-                    log.info ('message: using testToken, tokenUse: ' + token.use + ', testRoom: ' + 
+                    log.info ('using testToken, tokenUse: ' + token.use + ', testRoom: ' + 
                         token.room, ', serviceId: ' + token.service);
                     callback('callback', token);
                 }
 
             } else {
                 tokenRegistry.removeToken(id, function () {
-                    log.info('message: consumed token, tokenId: ', token._id,
+                    log.info('consumed token, tokenId: ', token._id,
                              ', roomId: ' + token.room + ', serviceId: ' + token.service);
                     callback('callback', token);
                 });

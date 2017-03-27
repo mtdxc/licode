@@ -10,7 +10,7 @@ var log = logger.getLogger('ErizoControllerRegistry');
 exports.getErizoControllers = function (callback) {
     db.erizoControllers.find({}).toArray(function (err, erizoControllers) {
         if (err || !erizoControllers) {
-            log.info('message: service getList empty');
+            log.info('service getList empty');
         } else {
             callback(erizoControllers);
         }
@@ -20,7 +20,7 @@ exports.getErizoControllers = function (callback) {
 var getErizoController = exports.getErizoController = function (id, callback) {
     db.erizoControllers.findOne({_id: db.ObjectId(id)}, function (err, erizoController) {
         if (erizoController === undefined) {
-            log.warn('message: getErizoController - ErizoController not found, Id: ' + id);
+            log.warn('getErizoController - ErizoController not found, Id: ' + id);
         }
         if (callback !== undefined) {
             callback(erizoController);
@@ -43,7 +43,7 @@ var hasErizoController = exports.hasErizoController = function (id, callback) {
  */
 exports.addErizoController = function (erizoController, callback) {
     db.erizoControllers.save(erizoController, function (error, saved) {
-        if (error) log.warn('message: addErizoController error, ' + logger.objectToLog(error));
+        if (error) log.warn('addErizoController error, ' + logger.objectToLog(error));
         callback(saved);
     });
 };
@@ -54,13 +54,13 @@ exports.addErizoController = function (erizoController, callback) {
  */
 exports.updateErizoController = function (id, erizoController) {
     db.erizoControllers.update({_id: db.ObjectId(id)}, {$set: erizoController}, function (error) {
-        if (error) log.warn('message: updateErizoController error, ' + logger.objectToLog(error));
+        if (error) log.warn('updateErizoController error, ' + logger.objectToLog(error));
     });
 };
 
 exports.incrementKeepAlive = function(id) {
     db.erizoControllers.update({_id: db.ObjectId(id)}, {$inc: {keepAlive: 1}}, function (error) {
-        if (error) log.warn('message: updateErizoController error, ' + logger.objectToLog(error));
+        if (error) log.warn('updateErizoController error, ' + logger.objectToLog(error));
     });
 };
 
@@ -71,7 +71,7 @@ exports.removeErizoController = function (id) {
     hasErizoController(id, function (hasEC) {
         if (hasEC) {
             db.erizoControllers.remove({_id: db.ObjectId(id)}, function (error) {
-                if (error) log.warn('message: removeErizoController error, ' +
+                if (error) log.warn('removeErizoController error, ' +
                    logger.objectToLog(error));
             });
         }
