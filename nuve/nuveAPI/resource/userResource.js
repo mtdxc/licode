@@ -31,7 +31,7 @@ exports.getUser = function (req, res) {
             res.status(404).send('Service not found');
             return;
         } else if (currentRoom === undefined) {
-            log.info('message: getUser - room not found, roomId: ' + req.params.room);
+            log.info('getUser - room not found, roomId: ' + req.params.room);
             res.status(404).send('Room does not exist');
             return;
         }
@@ -46,12 +46,12 @@ exports.getUser = function (req, res) {
             for (var index in users){
 
                 if (users[index].name === user){
-                    log.info('message: getUser success, ' + logger.objectToLog(user));
+                    log.info('getUser success, ' + logger.objectToLog(user));
                     res.send(users[index]);
                     return;
                 }
             }
-            log.error('message: getUser user not found, userId: ' + req.params.user);
+            log.error('getUser user not found, userId: ' + req.params.user);
             res.status(404).send('User does not exist');
             return;
         });
@@ -69,7 +69,7 @@ exports.deleteUser = function (req, res) {
             res.status(404).send('Service not found');
             return;
         } else if (currentRoom === undefined) {
-            log.info('message: deleteUser - room not found, roomId: ' + req.params.room);
+            log.info('deleteUser - room not found, roomId: ' + req.params.room);
             res.status(404).send('Room does not exist');
             return;
         }

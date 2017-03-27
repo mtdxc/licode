@@ -22,7 +22,7 @@ exports.MonitorSubscriber = function (log) {
         wrtc.bwValues = [];
         var tics = 0;
         var lastAverage, average, lastBWValue;
-        log.info('message: Start wrtc adapt scheme, ' +
+        log.info('Start wrtc adapt scheme, ' +
                  'id: ' + wrtc.wrtcId + ', ' +
                 'scheme: notify, minVideoBW: ' + wrtc.minVideoBW);
 
@@ -52,10 +52,10 @@ exports.MonitorSubscriber = function (log) {
                 }
             }
 
-            log.debug('message: Measuring interval, average: ' + average); 
+            log.debug('Measuring interval, average: ' + average); 
             if (average <= lastAverage && (average < wrtc.lowerThres)) {
                 if (++tics > TICS_PER_TRANSITION){
-                    log.info('message: Insufficient Bandwidth, ' +
+                    log.info('Insufficient Bandwidth, ' +
                              'id: ' + wrtc.wrtcId + ', ' +
                              'averageBandwidth: ' + average + ', ' +
                              'lowerThreshold: ' + wrtc.lowerThres);

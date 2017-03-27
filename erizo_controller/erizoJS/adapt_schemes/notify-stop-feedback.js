@@ -30,7 +30,7 @@ exports.MonitorSubscriber = function (log) {
         var noFeedbackTics = 0;
         var lastAverage, average, lastBWValue;
         wrtc.bwStatus = BW_STABLE;
-        log.info('message: Start wrtc adapt scheme, ' +
+        log.info('Start wrtc adapt scheme, ' +
             'id: ' + wrtc.wrtcId + ', ' +
                 'scheme: notify-stop-feedback, ' +
                 'minVideoBW: ' + wrtc.minVideoBW);
@@ -65,7 +65,7 @@ exports.MonitorSubscriber = function (log) {
                 case BW_STABLE:
                     if(average <= lastAverage && (average < wrtc.lowerThres)) {
                         if (++tics > TICS_PER_TRANSITION){
-                            log.info('message: scheme state change, ' +
+                            log.info('scheme state change, ' +
                                 'id: ' + wrtc.wrtcId + ', ' +
                                     'previousState: BW_STABLE, ' +
                                     'newState: BW_NO_FEEDBACK, ' +
@@ -84,7 +84,7 @@ exports.MonitorSubscriber = function (log) {
                 case BW_NO_FEEDBACK:
                     if (average >= wrtc.upperThres) {
                         if (++tics > TICS_PER_TRANSITION) {
-                            log.info('message: scheme state change, ' +
+                            log.info('scheme state change, ' +
                                 'id: ' + wrtc.wrtcId + ', ' +
                                     'previousState: BW_NO_FEEDBACK, ' +
                                     'newState: BW_STABLE, ' +

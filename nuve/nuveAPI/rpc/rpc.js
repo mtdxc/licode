@@ -40,16 +40,16 @@ exports.connect = function (callback) {
     connection = amqp.createConnection(addr);
 
     connection.on('ready', function () {
-        log.info('message: AMQP connected');
+        log.info('AMQP connected');
 
         //Create a direct exchange
         exc = connection.exchange('rpcExchange', {type: 'direct'}, function (exchange) {
-            log.info('message: rpcExchange open, exchangeName: ' + exchange.name);
+            log.info('rpcExchange open, exchangeName: ' + exchange.name);
 
             var next = function() {
               //Create the queue for receive messages
               var q = connection.queue('nuveQueue', function (queue) {
-                  log.info('message: queue open, queueName: ' + queue.name);
+                  log.info('queue open, queueName: ' + queue.name);
 
                   q.bind('rpcExchange', 'nuve');
                   q.subscribe(function (message) {
@@ -68,7 +68,7 @@ exports.connect = function (callback) {
 
             //Create the queue for send messages
             clientQueue = connection.queue('', function (q) {
-                log.info('message: clientQueue open, queueName: ' + q.name);
+                log.info('clientQueue open, queueName: ' + q.name);
 
                 clientQueue.bind('rpcExchange', clientQueue.name);
 
@@ -88,8 +88,7 @@ exports.connect = function (callback) {
     });
 
     connection.on('error', function(e) {
-       log.error('message: AMQP connection error killing process, errorMsg: ' +
-           logger.objectToLog(e));
+       log.error('AMQP connection error killing process, errorMsg: ' + logger.objectToLog(e));
        process.exit(1);
     });
 };

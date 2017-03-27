@@ -128,7 +128,7 @@ var fillErizos = function () {
 
 launchErizoJS = function() {
     var id = guid();
-    log.debug('message: launching ErizoJS, erizoId: ' + id);
+    log.debug('launching ErizoJS, erizoId: ' + id);
     var fs = require('fs');
     var erizoProcess, out, err;
     if (GLOBAL.config.erizoAgent.useIndividualLogFiles){
@@ -151,7 +151,7 @@ launchErizoJS = function() {
     }
     erizoProcess.unref();
     erizoProcess.on('close', function () {
-        log.info('message: closed, erizoId: ' + id);
+        log.info('erizoId: ' + id + ' closed');
         var index = idleErizos.indexOf(id);
         var index2 = erizos.indexOf(id);
         if (index > -1) {
@@ -163,8 +163,7 @@ launchErizoJS = function() {
         if (out !== undefined){
             fs.close(out, function (message){
                 if (message){
-                    log.error('message: error closing log file, ' +
-                              'erizoId: ' + id + ', error:', message);
+                    log.error('erizoId: ' + id + ' closing log file error ' + message);
                 }
             });
         }
@@ -172,8 +171,7 @@ launchErizoJS = function() {
         if(err !== undefined){
             fs.close(err, function (message){
                 if (message){
-                    log.error('message: error closing log file, ' +
-                              'erizoId: ' + id + ', error:', message);
+                    log.error('erizoId: ' + id + ' closing log file error ' + message);
                 }
             });
         }
@@ -181,14 +179,14 @@ launchErizoJS = function() {
         fillErizos();
     });
 
-    log.info('message: launched new ErizoJS, erizoId: ' + id);
+    log.info('launched new ErizoJS, erizoId: ' + id);
     processes[id] = erizoProcess;
     idleErizos.push(id);
 };
 
 var dropErizoJS = function(erizoId, callback) {
    if (processes.hasOwnProperty(erizoId)) {
-      log.warn('message: Dropping Erizo that was not closed before - ' +
+      log.warn('Dropping Erizo that was not closed before - ' +
                'possible publisher/subscriber mismatch, erizoId:' + erizoId);
       var process = processes[erizoId];
       process.kill();
@@ -198,9 +196,9 @@ var dropErizoJS = function(erizoId, callback) {
 };
 
 var cleanErizos = function () {
-    log.debug('message: killing erizoJSs on close, numProcesses: ' + processes.length);
+    log.debug('killing erizoJSs on close, numProcesses: ' + processes.length);
     for (var p in processes){
-        log.debug('message: killing process, processId: ' + processes[p].pid);
+        log.debug('killing process, processId: ' + processes[p].pid);
         processes[p].kill('SIGKILL');
     }
     process.exit(0);
@@ -230,21 +228,21 @@ var api = {
         try {
 
             var erizoId = getErizo();
-            log.debug('message: createErizoJS returning, erizoId: ' + erizoId);
+            log.debug('createErizoJS returning, erizoId: ' + erizoId);
             callback('callback', {erizoId: erizoId, agentId: myErizoAgentId});
 
             erizos.push(erizoId);
             fillErizos();
 
         } catch (error) {
-            log.error('message: error creating ErizoJS, error:', error);
+            log.error('error creating ErizoJS, error:', error);
         }
     },
     deleteErizoJS: function(id, callback) {
         try {
             dropErizoJS(id, callback);
         } catch(err) {
-            log.error('message: error stopping ErizoJS');
+            log.error('error stopping ErizoJS', id);
         }
     },
     getErizoAgents: reporter.getErizoAgent
@@ -305,6 +303,6 @@ amqper.connect(function () {
     amqper.bind('ErizoAgent');
     amqper.bind('ErizoAgent_' + myErizoAgentId);
     amqper.bindBroadcast('ErizoAgent', function () {
-        log.warn('message: amqp no method defined');
+        log.warn('amqp no method defined');
     });
 });

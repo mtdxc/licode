@@ -21,7 +21,7 @@ exports.createRoom = function (req, res) {
         return;
     }
     if (req.body.name === undefined) {
-        log.info('message: createRoom - invalid room name');
+        log.info('createRoom - invalid room name');
         res.status(400).send('Invalid room');
         return;
     }
@@ -30,7 +30,7 @@ exports.createRoom = function (req, res) {
 
     if (req.body.options.test) {
         if (currentService.testRoom !== undefined) {
-            log.info('message: testRoom already exists, serviceId: ' + currentService.name);
+            log.info('testRoom already exists, serviceId: ' + currentService.name);
             res.send(currentService.testRoom);
         } else {
             room = {name: 'testRoom'};
@@ -38,7 +38,7 @@ exports.createRoom = function (req, res) {
                 currentService.testRoom = result;
                 currentService.rooms.push(result);
                 serviceRegistry.updateService(currentService);
-                log.info('message: testRoom created, serviceId: ' + currentService.name);
+                log.info('testRoom created, serviceId: ' + currentService.name);
                 res.send(result);
             });
         }
@@ -54,7 +54,7 @@ exports.createRoom = function (req, res) {
         roomRegistry.addRoom(room, function (result) {
             currentService.rooms.push(result);
             serviceRegistry.updateService(currentService);
-            log.info('message: createRoom success, roomName:' + req.body.name + ', serviceId: ' +
+            log.info('createRoom success, roomName:' + req.body.name + ', serviceId: ' +
                      currentService.name + ', p2p: ' + room.p2p);
             res.send(result);
         });
@@ -70,7 +70,7 @@ exports.represent = function (req, res) {
         res.status(404).send('Service not found');
         return;
     }
-    log.info('message: representRooms, serviceId: ' + currentService._id);
+    log.info('representRooms, serviceId: ' + currentService._id);
 
     res.send(currentService.rooms);
 };

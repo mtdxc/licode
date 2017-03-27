@@ -10,7 +10,7 @@ var log = logger.getLogger('RoomRegistry');
 exports.getRooms = function (callback) {
     db.rooms.find({}).toArray(function (err, rooms) {
         if (err || !rooms) {
-            log.info('message: rooms list empty');
+            log.info('rooms list empty ' + err );
         } else {
             callback(rooms);
         }
@@ -20,7 +20,7 @@ exports.getRooms = function (callback) {
 var getRoom = exports.getRoom = function (id, callback) {
     db.rooms.findOne({_id: db.ObjectId(id)}, function (err, room) {
         if (room === undefined) {
-            log.warn('message: getRoom - Room not found, roomId: ' + id);
+            log.warn('getRoom - Room not found, roomId: ' + id);
         }
         if (callback !== undefined) {
             callback(room);
@@ -43,7 +43,7 @@ var hasRoom = exports.hasRoom = function (id, callback) {
  */
 exports.addRoom = function (room, callback) {
     db.rooms.save(room, function (error, saved) {
-        if (error) log.warn('message: addRoom error, ' + logger.objectToLog(error));
+        if (error) log.warn('addRoom error, ' + logger.objectToLog(error));
         callback(saved);
     });
 };
@@ -72,7 +72,7 @@ exports.assignErizoControllerToRoom = function(room, erizoControllerId, callback
     }
     return erizoController;
   }, room._id + '', erizoControllerId + '', function(error, erizoController) {
-    if (error) log.warn('message: assignErizoControllerToRoom error, ' + logger.objectToLog(error));
+    if (error) log.warn('assignErizoControllerToRoom error, ' + logger.objectToLog(error));
     if (callback) {
       callback(erizoController);
     }
@@ -84,7 +84,7 @@ exports.assignErizoControllerToRoom = function(room, erizoControllerId, callback
  */
 exports.updateRoom = function (id, room, callback) {
     db.rooms.update({_id: db.ObjectId(id)}, room, function (error) {
-        if (error) log.warn('message: updateRoom error, ' + logger.objectToLog(error));
+        if (error) log.warn('updateRoom error, ' + logger.objectToLog(error));
         if (callback) callback(error);
     });
 };
@@ -96,8 +96,7 @@ exports.removeRoom = function (id) {
     hasRoom(id, function (hasR) {
         if (hasR) {
             db.rooms.remove({_id: db.ObjectId(id)}, function (error) {
-                if (error) log.warn('message: removeRoom error, ' +
-                   logger.objectToLog(error));
+                if (error) log.warn('removeRoom error, ' + logger.objectToLog(error));
             });
         }
     });

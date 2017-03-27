@@ -36,7 +36,7 @@ exports.MonitorSubscriber = function (log) {
         var lastAverage, average, lastBWValue, toRecover;
         var nextRetry = 0;
         wrtc.bwStatus = BW_STABLE;
-        log.info('message: Start wrtc adapt scheme, ' +
+        log.info('Start wrtc adapt scheme, ' +
                  'id: ' + wrtc.wrtcId + ', ' +
                  'scheme: notify-break-recover, minVideoBW: ' + wrtc.minVideoBW);
 
@@ -71,7 +71,7 @@ exports.MonitorSubscriber = function (log) {
                 case BW_STABLE:
                     if (average <= lastAverage && (average < wrtc.lowerThres)) {
                         if (++tics > TICS_PER_TRANSITON) {
-                            log.info('message: scheme state change, ' +
+                            log.info('scheme state change, ' +
                                       'id: ' + wrtc.wrtcId + ', ' +
                                       'previousState: BW_STABLE, ' +
                                       'newState: BW_INSUFFICIENT, ' +
@@ -88,7 +88,7 @@ exports.MonitorSubscriber = function (log) {
                     break;
                 case BW_INSUFFICIENT:
                     if (average > wrtc.upperThres) { 
-                        log.info('message: scheme state change, ' +
+                        log.info('scheme state change, ' +
                                   'id: ' + wrtc.wrtcId + ', ' +
                                   'previousState: BW_INSUFFICIENT, ' +
                                   'newState: BW_STABLE, ' +
@@ -104,7 +104,7 @@ exports.MonitorSubscriber = function (log) {
                                               bandwidth: average});
                     }
                     else if (retries >= 3) {
-                        log.info('message: scheme state change, ' +
+                        log.info('scheme state change, ' +
                                   'id: ' + wrtc.wrtcId + ', ' +
                                   'previousState: BW_INSUFFICIENT, ' +
                                   'newState: WONT_RECOVER, ' +
@@ -122,14 +122,14 @@ exports.MonitorSubscriber = function (log) {
                     }
                     break;
                 case BW_RECOVERING:
-                    log.info('message: trying to recover, ' +
+                    log.info('trying to recover, ' +
                               'id: ' + wrtc.wrtcId + ', ' +
                               'state: BW_RECOVERING, ' +
                               'lastBandwidthValue: ' + lastBWValue + ', ' +
                               'lastAverageBandwidth: ' + lastAverage + ', ' +
                               'lowerThreshold: ' + wrtc.lowerThres);
                     if(average > wrtc.upperThres){
-                        log.info('message: recovered, ' +
+                        log.info('recovered, ' +
                                   'id: ' + wrtc.wrtcId + ', ' +
                                   'state: BW_RECOVERING, ' +
                                   'newState: BW_STABLE, ' +
@@ -145,7 +145,7 @@ exports.MonitorSubscriber = function (log) {
                                               bandwidth: average});
                     }
                     else if (average> lastAverage) { //we are recovering
-                        log.info('message: bw improvement, ' +
+                        log.info('bw improvement, ' +
                                   'id: ' + wrtc.wrtcId + ', ' +
                                   'state: BW_RECOVERING, ' +
                                   'averageBandwidth: ' + average + ', ' +
@@ -155,7 +155,7 @@ exports.MonitorSubscriber = function (log) {
 
                     }
                     else if (++tics >= ticsToTry) { //finish this retry
-                        log.info('message: recovery tic passed, ' +
+                        log.info('recovery tic passed, ' +
                                   'id: ' + wrtc.wrtcId + ', ' +
                                   'state: BW_RECOVERING, ' +
                                   'numberOfRetries: ' + retries + ', ' +
@@ -169,7 +169,7 @@ exports.MonitorSubscriber = function (log) {
                     }
                     break;
                 case BW_WONTRECOVER:
-                    log.info('message: Stop trying to recover, ' +
+                    log.info('Stop trying to recover, ' +
                               'id: ' + wrtc.wrtcId + ', ' +
                               'state: BW_WONT_RECOVER, ' +
                               'averageBandwidth: ' + average + ', ' +
@@ -187,7 +187,7 @@ exports.MonitorSubscriber = function (log) {
                                           bandwidth: average});
                     break;
                 default:
-                    log.error('message: Unknown BW status, id: ' + wrtc.wrtcId);
+                    log.error('Unknown BW status, id: ' + wrtc.wrtcId);
             }
             lastAverage = average;
         }, INTERVAL_STATS);

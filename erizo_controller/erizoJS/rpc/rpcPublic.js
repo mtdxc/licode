@@ -15,6 +15,6 @@ var controller = erizoJSController.ErizoJSController();
 exports = controller;
 
 exports.keepAlive = function(callback) {
-    log.info('message: KeepAlive from ErizoController');
+    log.info('KeepAlive from ErizoController');
     callback('callback', true);
 };

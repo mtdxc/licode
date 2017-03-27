@@ -17,9 +17,11 @@ var REMOVAL_TIMEOUT = 300000;
 
 var corrID = 0;
 var map = {};   //{corrID: {fn: callback, to: timeout}}
-var connection, rpcExc, broadcastExc, clientQueue;
+var connection, clientQueue;
+var rpcExc, broadcastExc;
 
 var addr = {};
+// callback function for public api
 var rpcPublic = {};
 
 if (GLOBAL.config.rabbit.url !== undefined) {
@@ -46,25 +48,21 @@ exports.connect = function(callback) {
         //Create a direct exchange
         rpcExc = connection.exchange('rpcExchange', {type: 'direct'}, function (exchange) {
             try {
-                log.info('message: rpcExchange open, exchangeName: ' + exchange.name);
+                log.info('rpcExchange ' + exchange.name + ' open');
 
                 //Create the queue for receiving messages
                 clientQueue = connection.queue('', function (q) {
-                    log.info('message: clientqueue open, queuename: ' + q.name);
+                    log.info('clientqueue ' + q.name +' open');
 
                     clientQueue.bind('rpcExchange', clientQueue.name, callback);
 
                     clientQueue.subscribe(function (message) {
                         try {
-                            log.debug('message: message received, ' +
-                                      'queueName: ' + clientQueue.name + ', ' +
-                                      logger.objectToLog(message));
+                            log.debug('queue ' + clientQueue.name  + ' message received: ' + logger.objectToLog(message));
 
                             if(map[message.corrID] !== undefined) {
-                                log.debug('message: Callback, ' +
-                                          'queueName: ' + clientQueue.name + ', ' +
-                                          'messageType: ' + message.type + ',  ' +
-                                          logger.objectToLog(message.data));
+                                log.debug('queue ' + clientQueue.name + ' callback ' +
+                                          'type: ' + message.type + ',  ' + logger.objectToLog(message.data));
                                 clearTimeout(map[message.corrID].to);
                                 if (message.type === 'onReady') {
                                   map[message.corrID].fn[message.type].call({});
@@ -78,17 +76,14 @@ exports.connect = function(callback) {
                                 }, REMOVAL_TIMEOUT);
                             }
                         } catch(err) {
-                            log.error('message: error processing message, ' +
-                                      'queueName: ' + clientQueue.name + ', ' +
+                            log.error('queue ' + clientQueue.name + ' error processing message ' +
                                       logger.objectToLog(err));
                         }
                     });
 
                 });
             } catch (err) {
-                log.error('message: exchange error, ' +
-                          'exchangeName: ' + exchange.name + ', ' +
-                          logger.objectToLog(err));
+                log.error('exchange ' + exchange.name + ' error ' + logger.objectToLog(err));
             }
         });
 
@@ -96,12 +91,12 @@ exports.connect = function(callback) {
         broadcastExc = connection.exchange('broadcastExchange',
                                           {type: 'topic', autoDelete: false},
                                           function (exchange) {
-            log.info('message: exchange open, exchangeName: ' + exchange.name);
+            log.info('broadcastExchange open, exchangeName: ' + exchange.name);
         });
     });
 
     connection.on('error', function(e) {
-       log.error('message: AMQP connection error killing process, ' + logger.objectToLog(e));
+       log.error('AMQP connection error killing process, ' + logger.objectToLog(e));
        process.exit(1);
     });
 };
@@ -111,14 +106,12 @@ exports.bind = function(id, callback) {
     //Create the queue for receive messages
     var q = connection.queue(id, function () {
         try {
-            log.info('message: queue open, queueName: ' + q.name);
+            log.info('queue ' + q.name +'/' + id + ' open');
 
             q.bind('rpcExchange', id, callback);
             q.subscribe(function (message) {
                 try {
-                    log.debug('message: message received, ' +
-                              'queueName: ' + q.name + ', ' +
-                              logger.objectToLog(message));
+                    log.debug('queue '+ q.name +' message received: ' + logger.objectToLog(message));
                     message.args = message.args || [];
                     message.args.push(function(type, result) {
                         rpcExc.publish(message.replyTo,
@@ -126,16 +119,12 @@ exports.bind = function(id, callback) {
                     });
                     rpcPublic[message.method].apply(rpcPublic, message.args);
                 } catch (error) {
-                    log.error('message: error processing call, ' +
-                              'queueName: ' + q.name + ', ' +
-                              logger.objectToLog(error));
+                    log.error('queue '+ q.name + ' error processing call:' + logger.objectToLog(error));
                 }
 
             });
         } catch (err) {
-            log.error('message: queue error, ' +
-                      'queueName: ' + q.name + ', ' +
-                      logger.objectToLog(err));
+            log.error('queue '+ q.name + ' error: ' + logger.objectToLog(err));
         }
 
     });
@@ -147,7 +136,7 @@ exports.bindBroadcast = function(id, callback) {
     //Create the queue for receive messages
     var q = connection.queue('', function () {
         try {
-            log.info('message: broadcast queue open, queueName: ' + q.name);
+            log.info('broadcast queue '+ q.name + '/' + id + ' open');
 
             q.bind('broadcastExchange', id);
             q.subscribe(function (body){
@@ -168,9 +157,7 @@ exports.bindBroadcast = function(id, callback) {
             });
 
         } catch (err) {
-            log.error('message: exchange error, ' +
-                      'queueName: ' + q.name + ', ' +
-                      logger.objectToLog(err));
+            log.error('exchange error on queue ' + q.name + ': ' + logger.objectToLog(err));
         }
 
     });
