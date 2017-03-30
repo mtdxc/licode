@@ -15,14 +15,12 @@ namespace erizo {
 
 class WebRtcConnection;
 
-
 class NackInfo {
  public:
-  NackInfo(): seq_num{0}, retransmits{0}, sent_time{0} {}
-  explicit NackInfo(uint16_t seq_num): seq_num{seq_num}, retransmits{0}, sent_time{0} {}
-  uint16_t seq_num;
-  uint16_t retransmits;
-  uint64_t sent_time;
+  explicit NackInfo(uint16_t seq_num): seq_num{seq_num} {}
+  uint16_t seq_num = 0;
+  uint16_t retransmits = 0;
+  uint64_t sent_time = 0;
 };
 
 class RtcpNackGenerator{
@@ -42,7 +40,6 @@ class RtcpNackGenerator{
   bool initialized_;
   uint16_t highest_seq_num_;
   uint32_t ssrc_;
-  NackInfo nack_info_;
   std::vector<NackInfo> nack_info_list_;
   std::shared_ptr<Clock> clock_;
 };

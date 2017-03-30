@@ -1,4 +1,4 @@
-#ifndef ERIZO_SRC_ERIZO_RTP_FECRECEIVERHANDLER_H_
+﻿#ifndef ERIZO_SRC_ERIZO_RTP_FECRECEIVERHANDLER_H_
 #define ERIZO_SRC_ERIZO_RTP_FECRECEIVERHANDLER_H_
 
 #include <string>
@@ -10,7 +10,10 @@
 namespace erizo {
 
 class WebRtcConnection;
-
+/*
+对RED的视频Fec包进行解包.
+why OutBandHandler not InBountHandler?
+*/
 class FecReceiverHandler: public OutboundHandler, public webrtc::RtpData {
   DECLARE_LOGGER();
 

@@ -18,7 +18,7 @@ void LayerDetectorHandler::disable() {
 
 void LayerDetectorHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
-  if (!chead->isRtcp() && enabled_ && packet->type == VIDEO_PACKET) {
+  if (enabled_ && !chead->isRtcp() && packet->type == VIDEO_PACKET) {
     RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
     RtpMap *codec = connection_->getRemoteSdpInfo().getCodecByExternalPayloadType(rtp_header->getPayloadType());
     if (codec && codec->encoding_name == "VP8") {
@@ -31,18 +31,16 @@ void LayerDetectorHandler::read(Context *ctx, packetPtr packet) {
 }
 
 int LayerDetectorHandler::getSsrcPosition(uint32_t ssrc) {
-  std::vector<uint32_t>::iterator item = std::find(video_ssrc_list_.begin(), video_ssrc_list_.end(), ssrc);
-  size_t index = std::distance(video_ssrc_list_.begin(), item);
-  if (index != video_ssrc_list_.size()) {
-    return index;
+  for (size_t i = 0;i<video_ssrc_list_.size();i++){
+    if (video_ssrc_list_[i] == ssrc)
+      return i;
   }
   return -1;
 }
 
 void LayerDetectorHandler::parseLayerInfoFromVP8(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
-  unsigned char* start_buffer = reinterpret_cast<unsigned char*> (packet->data);
-  start_buffer = start_buffer + rtp_header->getHeaderLength();
+  unsigned char* start_buffer = reinterpret_cast<unsigned char*>(packet->data) + rtp_header->getHeaderLength();
   RTPPayloadVP8* payload = vp8_parser_.parseVP8(
       start_buffer, packet->length - rtp_header->getHeaderLength());
 
@@ -74,10 +72,9 @@ void LayerDetectorHandler::parseLayerInfoFromVP8(packetPtr packet) {
 
 void LayerDetectorHandler::parseLayerInfoFromVP9(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
-  unsigned char* start_buffer = reinterpret_cast<unsigned char*> (packet->data);
-  start_buffer = start_buffer + rtp_header->getHeaderLength();
   RTPPayloadVP9* payload = vp9_parser_.parseVP9(
-      start_buffer, packet->length - rtp_header->getHeaderLength());
+    (unsigned char*)packet->data + rtp_header->getHeaderLength(),
+    packet->length - rtp_header->getHeaderLength());
 
   int spatial_layer = payload->spatialID;
 

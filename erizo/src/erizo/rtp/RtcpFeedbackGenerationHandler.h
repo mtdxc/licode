@@ -1,4 +1,4 @@
-#ifndef ERIZO_SRC_ERIZO_RTP_RTCPFEEDBACKGENERATIONHANDLER_H_
+﻿#ifndef ERIZO_SRC_ERIZO_RTP_RTCPFEEDBACKGENERATIONHANDLER_H_
 #define ERIZO_SRC_ERIZO_RTP_RTCPFEEDBACKGENERATIONHANDLER_H_
 
 #include <memory>
@@ -27,7 +27,6 @@ class RtcpGeneratorPair {
 class RtcpFeedbackGenerationHandler: public Handler {
   DECLARE_LOGGER();
 
-
  public:
   explicit RtcpFeedbackGenerationHandler(bool nacks_enabled = true,
       std::shared_ptr<Clock> the_clock = std::make_shared<SteadyClock>());
@@ -45,8 +44,14 @@ class RtcpFeedbackGenerationHandler: public Handler {
   void notifyUpdate() override;
 
  private:
+  RtcpGeneratorPair* getGenerator(int ssrc) {
+    if (generators_map_.count(ssrc))
+      return &generators_map_[ssrc];
+    return NULL;
+  }
   WebRtcConnection *connection_;
-  std::map<uint32_t, std::shared_ptr<RtcpGeneratorPair>> generators_map_;
+  // ssrc -> RtcpGeneratorPair 放在一起要求音视频ssrc不能相同
+  std::map<uint32_t, RtcpGeneratorPair> generators_map_;
 
   bool enabled_, initialized_;
   bool nacks_enabled_;

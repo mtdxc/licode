@@ -1,4 +1,4 @@
-#include <algorithm>
+﻿#include <algorithm>
 #include "rtp/RtcpNackGenerator.h"
 #include "rtp/RtpUtils.h"
 #include "WebRtcConnection.h"
@@ -39,9 +39,9 @@ bool RtcpNackGenerator::handleRtpPacket(packetPtr packet) {
         seq_num, highest_seq_num_, ssrc_);
     //  Look for it in nack list, remove it if its there
     auto nack_info = std::find_if(nack_info_list_.begin(), nack_info_list_.end(),
-        [seq_num](NackInfo& current_nack) {
+      [seq_num](NackInfo& current_nack) {
         return (current_nack.seq_num == seq_num);
-        });
+      });
     if (nack_info != nack_info_list_.end()) {
       ELOG_DEBUG("message: Recovered Packet %u", seq_num);
       nack_info_list_.erase(nack_info);
@@ -58,6 +58,7 @@ bool RtcpNackGenerator::addNacks(uint16_t seq_num) {
     ELOG_DEBUG("message: Inserting a new Nack in list, ssrc: %u, seq_num: %u", ssrc_, current_seq_num);
     nack_info_list_.push_back(NackInfo{current_seq_num});
   }
+  // nack是尽量保证之前的?? 如果丢的包不重发，那队列不就满了?
   while (nack_info_list_.size() > kMaxNacks) {
      nack_info_list_.erase(nack_info_list_.end() - 1);
   }
@@ -69,7 +70,7 @@ bool RtcpNackGenerator::addNackPacketToRr(packetPtr rr_packet) {
   // Only does it if it's time (> 100 ms since last NACK)
   std::vector <NackBlock> nack_vector;
   ELOG_DEBUG("message: Adding nacks to RR, nack_info_list_.size(): %lu", nack_info_list_.size());
-  uint64_t now_ms = ClockUtils::timePointToMs(clock_->now());
+  uint64_t now_ms = ClockUtils::msNow();
   for (uint16_t index = 0; index < nack_info_list_.size(); index++) {
     NackInfo& base_nack_info = nack_info_list_[index];
     if (!isTimeToRetransmit(base_nack_info, now_ms)) {
@@ -84,11 +85,12 @@ bool RtcpNackGenerator::addNackPacketToRr(packetPtr rr_packet) {
         index--;  // Items are moved in the list so the next element has the current index
         continue;
     }
+    base_nack_info.sent_time = now_ms;
+    base_nack_info.retransmits++;
+
     ELOG_DEBUG("message: PID, seq_num %u", base_nack_info.seq_num);
     uint16_t pid = base_nack_info.seq_num;
     uint16_t blp = 0;
-    base_nack_info.sent_time = now_ms;
-    base_nack_info.retransmits++;
     for (; index < nack_info_list_.size(); index++) {
       NackInfo& blp_nack_info = nack_info_list_[index];
       uint16_t distance = blp_nack_info.seq_num - pid -1;
@@ -103,7 +105,7 @@ bool RtcpNackGenerator::addNackPacketToRr(packetPtr rr_packet) {
           continue;
         }
         ELOG_DEBUG("message: Adding Nack to BLP, seq_num: %u", blp_nack_info.seq_num);
-        blp |= (1 << distance);
+        blp |= (1 << distance); // setbit in distance
         blp_nack_info.sent_time = now_ms;
         blp_nack_info.retransmits++;
       } else {
@@ -119,8 +121,7 @@ bool RtcpNackGenerator::addNackPacketToRr(packetPtr rr_packet) {
     return false;
   }
 
-  char* buffer = rr_packet->data;
-  buffer += rr_packet->length;
+  char* buffer = rr_packet->data + rr_packet->length;
 
   RtcpHeader nack_packet;
   nack_packet.setPacketType(RTCP_RTP_Feedback_PT);
@@ -130,11 +131,10 @@ bool RtcpNackGenerator::addNackPacketToRr(packetPtr rr_packet) {
   nack_packet.setLength(kNackCommonHeaderLengthRtcp + nack_vector.size());
   memcpy(buffer, reinterpret_cast<char *>(&nack_packet), kNackCommonHeaderLengthBytes);
   buffer += kNackCommonHeaderLengthBytes;
-
+  // copy nack block
   memcpy(buffer, &nack_vector[0], nack_vector.size()*4);
-  int nack_length = (nack_packet.getLength()+1)*4;
 
-  rr_packet->length += nack_length;
+  rr_packet->length += nack_packet.getPacketSize();
   return true;
 }
 

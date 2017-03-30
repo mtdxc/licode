@@ -1,4 +1,4 @@
-#ifndef ERIZO_SRC_ERIZO_RTP_SEQUENCENUMBERTRANSLATOR_H_
+﻿#ifndef ERIZO_SRC_ERIZO_RTP_SEQUENCENUMBERTRANSLATOR_H_
 #define ERIZO_SRC_ERIZO_RTP_SEQUENCENUMBERTRANSLATOR_H_
 
 #include <utility>
@@ -9,7 +9,7 @@
 
 namespace erizo {
 
-enum class SequenceNumberType : uint8_t {
+enum SequenceNumberType {
   Valid = 0,
   Skip = 1,
   Discard = 2,
@@ -17,13 +17,13 @@ enum class SequenceNumberType : uint8_t {
 };
 
 struct SequenceNumber {
-  SequenceNumber() : input{0}, output{0}, type{SequenceNumberType::Valid} {}
+  SequenceNumber(){}
   SequenceNumber(uint16_t input_, uint16_t output_, SequenceNumberType type_) :
       input{input_}, output{output_}, type{type_} {}
-
-  uint16_t input;
-  uint16_t output;
-  SequenceNumberType type;
+  // index in in_XXX_buffer_
+  uint16_t input = 0;
+  uint16_t output = 0;
+  SequenceNumberType type = Valid;
 };
 
 class SequenceNumberTranslator: public Service, public std::enable_shared_from_this<SequenceNumberTranslator> {
@@ -40,7 +40,7 @@ class SequenceNumberTranslator: public Service, public std::enable_shared_from_t
 
  private:
   void add(SequenceNumber sequence_number);
-  uint16_t fill(const uint16_t &first, const uint16_t &last);
+  uint16_t fill(uint16_t first, uint16_t last);
   SequenceNumber& internalGet(uint16_t input_sequence_number);
   SequenceNumber& internalReverse(uint16_t output_sequence_number);
   void updateLastOutputSequenceNumber(bool skip, uint16_t output_sequence_number);
@@ -48,12 +48,12 @@ class SequenceNumberTranslator: public Service, public std::enable_shared_from_t
  private:
   std::vector<SequenceNumber> in_out_buffer_;
   std::vector<SequenceNumber> out_in_buffer_;
-  uint16_t first_input_sequence_number_;
-  uint16_t last_input_sequence_number_;
-  uint16_t last_output_sequence_number_;
-  uint16_t offset_;
-  bool initialized_;
-  bool reset_;
+  uint16_t first_input_sequence_number_ = 0;
+  uint16_t last_input_sequence_number_ = 0;
+  uint16_t last_output_sequence_number_ = 0;
+  uint16_t offset_ = 0;
+  bool initialized_ = false;
+  bool reset_ = false;
 };
 }  // namespace erizo
 

@@ -1,4 +1,4 @@
-#include "stats/StatNode.h"
+ï»¿#include "stats/StatNode.h"
 
 #include <cmath>
 #include <sstream>
@@ -75,8 +75,7 @@ void RateStat::checkPeriod() {
 
 MovingIntervalRateStat::MovingIntervalRateStat(duration interval_size, uint32_t intervals, double scale,
   std::shared_ptr<Clock> the_clock): interval_size_ms_{ClockUtils::durationToMs(interval_size)},
-  intervals_in_window_{intervals}, scale_{scale}, calculation_start_ms_{0}, current_interval_{0},
-  accumulated_intervals_{0}, current_window_start_ms_{0}, current_window_end_ms_{0},
+  intervals_in_window_{intervals}, scale_{scale},
   sample_vector_(intervals, 0),
   initialized_{false}, clock_{the_clock} {
 }
@@ -96,16 +95,18 @@ void MovingIntervalRateStat::add(uint64_t value) {
 
   int32_t intervals_to_pass = (now_ms - current_window_end_ms_) / interval_size_ms_;
   if (intervals_to_pass > 0) {
-    // Ì«¾ÃÃ»¸üĞÂ£¨³¬¹ı´°¿Ú£©¾ÍÇå¿ÕÊı×Ö²¢Ö»Áôµ±Ç°Öµ
+    // è¶…è¿‡çª—å£ä¸€å€...
     if (static_cast<uint32_t>(intervals_to_pass) >= intervals_in_window_) {
       sample_vector_.assign(intervals_in_window_, 0);
-      current_interval_ = getIntervalForTimeMs(now_ms);;
-      accumulated_intervals_ += intervals_to_pass;
+      // get now index and set value
+      current_interval_ = getIntervalForTimeMs(now_ms);
       sample_vector_[current_interval_]+= value;
+      // reset accumulated_intervals_ to now and update new range
+      accumulated_intervals_ += intervals_to_pass;
       updateWindowTimes();
       return;
     }
-    // ·ñÔò°ÑÖĞ¼ä¼äÏ¶Ìî³É0£¬²¢¸üĞÂÏÂ´Î¼ÆËãÖµ
+    // å¦åˆ™æŠŠä¸­é—´é—´éš™å¡«æˆ0ï¼Œå¹¶æ›´æ–°ä¸‹æ¬¡è®¡ç®—å€¼
     for (int i = 0; i < intervals_to_pass; i++) {
       current_interval_ = getNextInterval(current_interval_);
       sample_vector_[current_interval_] = 0;
@@ -120,7 +121,7 @@ void MovingIntervalRateStat::add(uint64_t value) {
     updateWindowTimes();
     current_interval_ = corresponding_interval;
   }
-  // ÔÚµ±Ç°¼ä¸ôÄÚÀÛ¼ÓÖµ¾ÍĞĞ
+  // åœ¨å½“å‰é—´éš”å†…ç´¯åŠ å€¼å°±è¡Œ
   sample_vector_[current_interval_]+= value;
 }
 
@@ -141,12 +142,11 @@ uint64_t MovingIntervalRateStat::calculateRateForInterval(uint64_t interval_to_c
     return 0;
   }
 
-  uint64_t now_ms = ClockUtils::timePointToMs(clock_->now());
+  uint64_t now_ms = ClockUtils::msNow();
   uint64_t start_of_requested_interval = now_ms - interval_to_calculate_ms;
   uint64_t interval_start_time = std::max(start_of_requested_interval, current_window_start_ms_);
   uint32_t intervals_to_pass = (interval_start_time - current_window_start_ms_) / interval_size_ms_;
   //  We check if it's within the data we have
-
   if (intervals_to_pass >=  intervals_in_window_) {
     return 0;
   }
@@ -160,7 +160,7 @@ uint64_t MovingIntervalRateStat::calculateRateForInterval(uint64_t interval_to_c
     moving_interval = getNextInterval(moving_interval);
   } while (moving_interval != current_interval_);
 
-  double last_value_part_in_interval = static_cast<double>(now_ms - (current_window_end_ms_ - interval_size_ms_))
+  double last_value_part_in_interval = (double)(now_ms - (current_window_end_ms_ - interval_size_ms_))
     /interval_size_ms_;
   double proportional_value = last_value_part_in_interval * sample_vector_[current_interval_];
   if (last_value_part_in_interval < 1) {
@@ -178,15 +178,46 @@ uint32_t MovingIntervalRateStat::getIntervalForTimeMs(uint64_t time_ms) {
   return ((time_ms - calculation_start_ms_)/interval_size_ms_) % intervals_in_window_;
 }
 
-uint32_t MovingIntervalRateStat::getNextInterval(uint32_t interval) {
-  return (interval + 1) % intervals_in_window_;
-}
-
 void MovingIntervalRateStat::updateWindowTimes() {
   current_window_end_ms_ = calculation_start_ms_ + accumulated_intervals_ * interval_size_ms_;
   current_window_start_ms_ = calculation_start_ms_ +
     (accumulated_intervals_ - std::min(accumulated_intervals_, static_cast<uint64_t>(intervals_in_window_)))
     * interval_size_ms_;
+}
+
+IntervalRateStat::IntervalRateStat(duration interval, uint32_t windows, double scale, std::shared_ptr<Clock> the_clock)
+  :scale_(scale), interval_ms_(ClockUtils::durationToMs(interval)), sample_vector_(windows), clock_(the_clock) {
+}
+
+void IntervalRateStat::add(uint64_t value)
+{
+  int64_t now_interval = getNowInterval();
+  int now_pos = now_interval % sample_vector_.size();
+  Item& it = sample_vector_[now_pos];
+  it.value += value;
+  if (it.inv_time != now_interval)
+    it.inv_time = now_interval;
+}
+
+std::string IntervalRateStat::toString()
+{
+  return std::to_string(value());
+}
+
+uint64_t IntervalRateStat::getRange(int range)
+{
+  int64_t intEnd = getNowInterval();
+  int64_t intFirst = 0;
+  uint64_t sum = 0;
+  for (int64_t intStart = intEnd - range; intStart <= intEnd; intStart++)
+  {
+    int pos = intStart % sample_vector_.size();
+    if (sample_vector_[pos].inv_time == intStart) {
+      if (intFirst == 0) intFirst = intStart;
+      sum += sample_vector_[pos].value;
+    }
+  }
+  return sum * scale_ * 1000 / interval_ms_ / (intEnd - intFirst + 1);
 }
 
 MovingAverageStat::MovingAverageStat(uint32_t window_size)

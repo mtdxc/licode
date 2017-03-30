@@ -23,7 +23,7 @@ void RtpUtils::updateREMB(RtcpHeader *chead, uint64_t bitrate) {
 
 void RtpUtils::forEachNack(RtcpHeader *chead, std::function<void(uint16_t, uint16_t, RtcpHeader*)> f) {
   if (chead->packettype == RTCP_RTP_Feedback_PT) {
-    int length = (chead->getLength() + 1)*4;
+    int length = chead->getPacketSize();
     int current_position = kNackCommonHeaderLengthBytes;
     uint8_t* aux_pointer = reinterpret_cast<uint8_t*>(chead);
     RtcpHeader* aux_chead;
@@ -67,9 +67,7 @@ packetPtr RtpUtils::createPLI(uint32_t source_ssrc, uint32_t sink_ssrc) {
   pli.setSSRC(sink_ssrc);
   pli.setSourceSSRC(source_ssrc);
   pli.setLength(2);
-  char *buf = reinterpret_cast<char*>(&pli);
-  int len = (pli.getLength() + 1) * 4;
-  return std::make_shared<dataPacket>(0, buf, len, VIDEO_PACKET);
+  return std::make_shared<dataPacket>(0, reinterpret_cast<char*>(&pli), pli.getPacketSize(), VIDEO_PACKET);;
 }
 
 packetPtr RtpUtils::createFIR(uint32_t source_ssrc, uint32_t sink_ssrc, uint8_t seq_number) {
@@ -81,9 +79,7 @@ packetPtr RtpUtils::createFIR(uint32_t source_ssrc, uint32_t sink_ssrc, uint8_t 
   fir.setLength(4);
   fir.setFIRSourceSSRC(source_ssrc);
   fir.setFIRSequenceNumber(seq_number);
-  char *buf = reinterpret_cast<char*>(&fir);
-  int len = (fir.getLength() + 1) * 4;
-  return std::make_shared<dataPacket>(0, buf, len, VIDEO_PACKET);
+  return std::make_shared<dataPacket>(0, reinterpret_cast<char*>(&fir), fir.getPacketSize(), VIDEO_PACKET);
 }
 
 
@@ -97,31 +93,20 @@ int RtpUtils::getPaddingLength(packetPtr packet) {
 
 void RtpUtils::forEachRRBlock(packetPtr packet, std::function<void(RtcpHeader*)> f) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
-  int len = packet->length;
   if (chead->isFeedback()) {
-    char* moving_buffer = packet->data;
-    int rtcp_length = 0;
-    int total_length = 0;
-    int currentBlock = 0;
-
-    do {
-      moving_buffer += rtcp_length;
-      chead = reinterpret_cast<RtcpHeader*>(moving_buffer);
-      rtcp_length = (ntohs(chead->length) + 1) * 4;
-      total_length += rtcp_length;
+    RtcpAccessor acs(packet);
+    while (chead = acs.nextRtcp()) {
       f(chead);
-      currentBlock++;
-    } while (total_length < len);
+    }
   }
 }
 
 packetPtr RtpUtils::makePaddingPacket(packetPtr packet, uint8_t padding_size) {
-  erizo::RtpHeader *header = reinterpret_cast<RtpHeader*>(packet->data);
-
+  RtpHeader *header = reinterpret_cast<RtpHeader*>(packet->data);
   uint16_t packet_length = header->getHeaderLength() + padding_size;
 
   char packet_buffer[kMaxPacketSize];
-  erizo::RtpHeader *new_header = reinterpret_cast<RtpHeader*>(packet_buffer);
+  RtpHeader *new_header = reinterpret_cast<RtpHeader*>(packet_buffer);
   memset(packet_buffer, 0, packet_length);
   memcpy(packet_buffer, reinterpret_cast<char*>(header), header->getHeaderLength());
 

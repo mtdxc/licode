@@ -16,7 +16,9 @@
 namespace erizo {
 
 class WebRtcConnection;
-class LayerDetectorHandler: public InboundHandler, public std::enable_shared_from_this<LayerDetectorHandler> {
+// Video Layer and keyFrame Detect
+class LayerDetectorHandler: public InboundHandler, 
+  public std::enable_shared_from_this<LayerDetectorHandler> {
   DECLARE_LOGGER();
 
  public:

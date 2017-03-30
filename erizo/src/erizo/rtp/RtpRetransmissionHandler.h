@@ -39,10 +39,14 @@ class RtpRetransmissionHandler : public Handler {
   void notifyUpdate() override;
 
  private:
+  // 为性能考虑,不测试系列号是否相同
+  inline uint16_t getIndexInBuffer(uint16_t seq_num) {
+     return seq_num % kRetransmissionsBufferSize;
+  }
   MovingIntervalRateStat& getRtxBitrateStat();
   uint64_t getBitrateCalculated();
   void calculateRtxBitrate();
-  // 为性能考虑,不测试系列号是否相同
+
  private:
   std::shared_ptr<erizo::Clock> clock_;
   WebRtcConnection *connection_;

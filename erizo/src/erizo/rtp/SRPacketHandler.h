@@ -1,4 +1,4 @@
-#ifndef ERIZO_SRC_ERIZO_RTP_SRPACKETHANDLER_H_
+﻿#ifndef ERIZO_SRC_ERIZO_RTP_SRPACKETHANDLER_H_
 #define ERIZO_SRC_ERIZO_RTP_SRPACKETHANDLER_H_
 
 #include <memory>
@@ -38,10 +38,10 @@ class SRPacketHandler: public Handler {
     uint32_t sent_octets;
     uint32_t sent_packets;
   };
-
+  typedef std::shared_ptr<SRInfo> SRInfoPtr;
   bool enabled_, initialized_;
   WebRtcConnection* connection_;
-  std::map<uint32_t, std::shared_ptr<SRInfo>> sr_info_map_;
+  std::map<uint32_t, SRInfoPtr> sr_info_map_;
 
   void handleRtpPacket(packetPtr packet);
   void handleSR(packetPtr packet);

@@ -1,11 +1,6 @@
 /*
  * RtcpAggregator.cpp
  */
-
-#include "rtp/RtcpAggregator.h"
-
-#include <webrtc/base/platform_thread.h>
-
 #include <list>
 #include <map>
 #include <set>
@@ -13,7 +8,9 @@
 #include <utility>
 #include <cstring>
 #include <algorithm>
+#include "rtp/RtcpAggregator.h"
 #include "lib/Clock.h"
+#include <webrtc/base/platform_thread.h>
 
 namespace erizo {
 
@@ -27,7 +24,7 @@ RtcpAggregator::RtcpAggregator(MediaSink* msink, MediaSource* msource, uint32_t 
 void RtcpAggregator::addSourceSsrc(uint32_t ssrc) {
   std::lock_guard<std::mutex> mlock(mapLock_);
   if (rtcpData_.find(ssrc) == rtcpData_.end()) {
-    rtcpData_[ssrc] = RtcpDataPtr(new RtcpData());
+    rtcpData_[ssrc] = std::make_shared<RtcpData>();
     if (ssrc == rtcpSource_->getAudioSourceSSRC()) {
       ELOG_DEBUG("It is an audio SSRC %u", ssrc);
       rtcpData_[ssrc]->mediaType = AUDIO_TYPE;
@@ -42,7 +39,7 @@ void RtcpAggregator::setPublisherBW(uint32_t bandwidth) {
   defaultVideoBw_ = std::max((uint32_t)(bandwidth*1.2), max_video_bw_);
 }
 
-RtcpDataPtr RtcpAggregator::getRtcpData(int ssrc) {
+RtcpDataPtr RtcpAggregator::getRtcpData(uint32_t ssrc) {
   std::lock_guard<std::mutex> mlock(mapLock_);
   return rtcpData_[ssrc];
 }
@@ -57,7 +54,7 @@ void RtcpAggregator::analyzeSr(RtcpHeader* chead) {
   uint64_t now = ClockUtils::msNow();
   uint64_t theNTP = chead->getNtpTimestamp();
   uint32_t ntp = (theNTP & (0xFFFFFFFF0000)) >> 16;
-  theData->senderReports.push_back(SrDataPtr(new SrDelayData(ntp, now)));
+  theData->senderReports.push_back(std::make_shared<SrDelayData>(ntp, now));
   // We only store the last 20 sr
   if (theData->senderReports.size() > 20) {
     theData->senderReports.pop_front();
@@ -83,6 +80,7 @@ int RtcpAggregator::analyzeFeedback(char *buf, int len) {
     uint16_t blp = 0;
     uint32_t lostPacketSeq = 0;
     uint32_t calculatedlsr, delay, calculateLastSr, extendedSeqNo;
+
     RtcpAccessor access(buf, len);
     while (chead = access.nextRtcp())
     {
@@ -104,7 +102,7 @@ int RtcpAggregator::analyzeFeedback(char *buf, int len) {
                         chead->getLostPackets(), chead->getFractionLost(), partNum, chead->getBlockCount(),
                         chead->getSourceSSRC(), chead->getSSRC());
           }
-          theData->ratioLost = std::max(theData->ratioLost, (uint32_t)chead->getFractionLost());
+          theData->ratioLost = std::max(theData->ratioLost, chead->getFractionLost());
           theData->totalPacketsLost = std::max(theData->totalPacketsLost, chead->getLostPackets());
           extendedSeqNo = chead->getSeqnumCycles();
           extendedSeqNo = (extendedSeqNo << 16) + chead->getHighestSeqnum();
@@ -116,8 +114,7 @@ int RtcpAggregator::analyzeFeedback(char *buf, int len) {
           theData->jitter = std::max(theData->jitter, chead->getJitter());
           calculateLastSr = chead->getLastSr();
           calculatedlsr = (chead->getDelaySinceLastSr() * 1000) / 65536;
-          for (std::list<SrDataPtr>::iterator it = theData->senderReports.begin();
-                        it != theData->senderReports.end(); ++it) {
+          for (auto it = theData->senderReports.begin(); it != theData->senderReports.end(); ++it) {
             if ((*it)->sr_ntp == calculateLastSr) {
               uint64_t sentts = (*it)->sr_send_time;
               delay = nowms - sentts - calculatedlsr;
@@ -285,6 +282,7 @@ void RtcpAggregator::checkRtcpFb() {
       uint32_t packetsLostInInterval = rtcpData->totalPacketsLost - rtcpData->prevTotalPacketsLost;
       double ratio = static_cast<double>(packetsLostInInterval/packetsReceivedinInterval);
       rtcpHead.setFractionLost(ratio*256);
+
       rtcpData->prevTotalPacketsLost = rtcpData->totalPacketsLost;
       rtcpData->prevExtendedSeqNo = rtcpData->extendedSeqNo;
 
@@ -299,6 +297,7 @@ void RtcpAggregator::checkRtcpFb() {
 
       int length = rtcpHead.getPacketSize();
       memcpy(packet_, (uint8_t*)&rtcpHead, length);
+
       if (rtcpData->shouldSendNACK) {
         ELOG_DEBUG("SEND NACK, SENDING with Seqno: %u", rtcpData->nackSeqnum);
         length += addNACK(packet_+length, rtcpData->nackSeqnum,

@@ -1,4 +1,4 @@
-#ifndef ERIZO_SRC_ERIZO_STATS_STATNODE_H_
+﻿#ifndef ERIZO_SRC_ERIZO_STATS_STATNODE_H_
 #define ERIZO_SRC_ERIZO_STATS_STATNODE_H_
 
 #include <string>
@@ -27,7 +27,20 @@ class StatNode {
     }
     node_map_.insert(std::make_pair(key, std::make_shared<Node>(std::forward<Node>(stat))));
   }
-
+  template <typename Node>
+  void setStat(std::string key, uint64_t value) {  // NOLINT
+    if (node_map_.find(key) != node_map_.end())
+      (*(Node*)node_map_[key].get()) = value;
+    else
+      node_map_.insert(std::make_pair(key, std::make_shared<Node>(value)));
+  }
+  template <typename Node>
+  void addStat(std::string key, uint64_t value) {  // NOLINT
+    if (node_map_.find(key) != node_map_.end())
+      node_map_[key]->add(value);
+    else
+      node_map_.insert(std::make_pair(key, std::make_shared<Node>(value)));
+  }
   virtual bool hasChild(std::string name) { return node_map_.find(name) != node_map_.end(); }
   virtual bool hasChild(uint64_t value) { return hasChild(std::to_string(value)); }
 
@@ -113,27 +126,63 @@ class MovingIntervalRateStat : public StatNode {
   void add(uint64_t value) override;
   uint64_t value() override;
   uint64_t value(duration stat_interval);
-
+  
   std::string toString() override;
 
  private:
-
   uint64_t calculateRateForInterval(uint64_t interval_to_calculate_ms);
+  // 根据时刻获取存储索引
   uint32_t getIntervalForTimeMs(uint64_t time_ms);
-  uint32_t getNextInterval(uint32_t interval);
+  // 获取下个存储索引
+  uint32_t getNextInterval(uint32_t interval) {
+    return (interval + 1) % intervals_in_window_;
+  }
   void updateWindowTimes();
 
  private:
-  int64_t interval_size_ms_; // ������ʱ��
-  uint32_t intervals_in_window_; // ���ڴ�С sample_vector_�����ߴ�
+  int64_t interval_size_ms_; // 每个间隔多长ms
+  uint32_t intervals_in_window_; // 窗口大小 sample_vector_ 存储的最大尺寸
   double scale_;
-  uint64_t calculation_start_ms_; // initialized_ ��ʱ�� 
-  uint64_t current_interval_; // ��ǰ����
-  uint64_t accumulated_intervals_;
-  uint64_t current_window_start_ms_;
-  uint64_t current_window_end_ms_;
+  uint64_t calculation_start_ms_ = 0; // initialized_ 的时刻 
+  uint64_t current_interval_ = 0; // 当前索引
+  // calculation_start_ms_ + accumulated_intervals_ * interval_size_ms_ = current_window_end_ms_
+  uint64_t accumulated_intervals_ = 0;
+  // 窗口起始和结束
+  uint64_t current_window_start_ms_ = 0;
+  uint64_t current_window_end_ms_ = 0;
   std::vector<uint64_t> sample_vector_;
-  bool initialized_;
+
+  bool initialized_ = false;
+  std::shared_ptr<Clock> clock_;
+};
+// same as MovingIntervalRateStat but less code
+class IntervalRateStat : public StatNode {
+public:
+  IntervalRateStat(duration interval, uint32_t windows, double scale,
+    std::shared_ptr<Clock> the_clock = std::make_shared<SteadyClock>());
+
+  void add(uint64_t value) override;
+  uint64_t value() override {
+    return getRange(sample_vector_.size());
+  }
+  uint64_t value(duration stat_interval) {
+    int range = ClockUtils::durationToMs(stat_interval) / interval_ms_;
+    return getRange(range);
+  }
+
+  std::string toString() override;
+protected:
+  int64_t getNowInterval() {
+    return ClockUtils::timePointToMs(clock_->now()) / interval_ms_;
+  }
+  uint64_t getRange(int elems);
+  struct Item {
+    int64_t inv_time = 0; // real interval of time
+    int64_t value = 0; // count value
+  };
+  double scale_;
+  int64_t interval_ms_; // 间隔ms
+  std::vector<Item> sample_vector_;
   std::shared_ptr<Clock> clock_;
 };
 

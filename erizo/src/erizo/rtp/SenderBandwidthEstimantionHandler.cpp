@@ -58,16 +58,9 @@ void SenderBandwidthEstimationHandler::notifyUpdate() {
 void SenderBandwidthEstimationHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (chead->isFeedback() && chead->getSourceSSRC() == connection_->getVideoSinkSSRC()) {
-    char* packet_pointer = packet->data;
-    int rtcp_length = 0;
-    int total_length = 0;
     int current_block = 0;
-
-    do {
-      packet_pointer+=rtcp_length;
-      chead = reinterpret_cast<RtcpHeader*>(packet_pointer);
-      rtcp_length = (ntohs(chead->length) + 1) * 4;
-      total_length += rtcp_length;
+    RtcpAccessor acs(packet);
+    while(chead = acs.nextRtcp()) {
       connection_->Info("ssrc %u, sourceSSRC %u, PacketType %u",
           chead->getSSRC(),
           chead->getSourceSSRC(),
@@ -126,8 +119,8 @@ void SenderBandwidthEstimationHandler::read(Context *ctx, packetPtr packet) {
           break;
       }
       current_block++;
-    } while (total_length < packet->length);
     }
+  }
   ctx->fireRead(packet);
 }
 
@@ -150,18 +143,16 @@ void SenderBandwidthEstimationHandler::write(Context *ctx, packetPtr packet) {
 
 void SenderBandwidthEstimationHandler::analyzeSr(RtcpHeader* chead) {
   uint64_t now = ClockUtils::msNow();
-  uint32_t ntp;
-  ntp = chead->get32MiddleNtp();
+  uint32_t ntp = chead->get32MiddleNtp();
   connection_->Info("adding incoming SR to list, ntp: %u", ntp);
-  sr_delay_data_.push_back(std::shared_ptr<SrDelayData>( new SrDelayData(ntp, now)));
+  sr_delay_data_.push_back(std::make_shared<SrDelayData>(ntp, now));
   if (sr_delay_data_.size() >= kMaxSrListSize) {
     sr_delay_data_.pop_front();
   }
 }
 
 void SenderBandwidthEstimationHandler::updateEstimate() {
-  sender_bwe_->CurrentEstimate(&estimated_bitrate_, &estimated_loss_,
-      &estimated_rtt_);
+  sender_bwe_->CurrentEstimate(&estimated_bitrate_, &estimated_loss_, &estimated_rtt_);
   stats_->getNode()["total"].insertStat("senderBitrateEstimation",
       CumulativeStat{static_cast<uint64_t>(estimated_bitrate_)});
   connection_->Info("estimated bitrate %d, loss %u, rtt %ld",

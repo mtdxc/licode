@@ -24,7 +24,7 @@ class RtcpAggregator: public RtcpProcessor{
   void analyzeSr(RtcpHeader* chead);
   int analyzeFeedback(char* buf, int len);
   void checkRtcpFb();
-  RtcpDataPtr getRtcpData(int ssrc);
+  RtcpDataPtr getRtcpData(uint32_t ssrc);
  private:
   static const int REMB_TIMEOUT = 1000;
   static const uint64_t NTPTOMSCONV = 4294967296;

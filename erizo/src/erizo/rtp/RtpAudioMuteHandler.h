@@ -1,4 +1,4 @@
-#ifndef ERIZO_SRC_ERIZO_RTP_RTPAUDIOMUTEHANDLER_H_
+﻿#ifndef ERIZO_SRC_ERIZO_RTP_RTPAUDIOMUTEHANDLER_H_
 #define ERIZO_SRC_ERIZO_RTP_RTPAUDIOMUTEHANDLER_H_
 
 #include "logger.h"
@@ -29,10 +29,12 @@ class RtpAudioMuteHandler: public Handler {
   void notifyUpdate() override;
 
  private:
-  int32_t  last_original_seq_num_;
-  uint16_t seq_num_offset_, last_sent_seq_num_;
+  // 因静音导致出现的系列号偏移，需要进行修正
+  uint16_t seq_num_offset_ = 0;
+  uint16_t last_sent_seq_num_;
+  int32_t  last_original_seq_num_ = -1;
 
-  bool mute_is_active_;
+  bool mute_is_active_ = false;
 
   WebRtcConnection* connection_;
 

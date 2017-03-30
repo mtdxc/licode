@@ -7,7 +7,7 @@ namespace erizo {
 DEFINE_LOGGER(RtpAudioMuteHandler, "rtp.RtpAudioMuteHandler");
 
 RtpAudioMuteHandler::RtpAudioMuteHandler() :
-  last_original_seq_num_{-1}, seq_num_offset_{0}, mute_is_active_{false}, connection_{nullptr} {}
+  connection_{nullptr} {}
 
 
 void RtpAudioMuteHandler::enable() {
@@ -26,7 +26,7 @@ void RtpAudioMuteHandler::notifyUpdate() {
 
 void RtpAudioMuteHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
-  if (connection_->getAudioSinkSSRC() != chead->getSourceSSRC()) {
+  if (connection_->getAudioSinkSSRC() != chead->getSourceSSRC() || !chead->isRtcp()) {
     ctx->fireRead(packet);
     return;
   }
@@ -61,10 +61,8 @@ void RtpAudioMuteHandler::write(Context *ctx, packetPtr packet) {
     ctx->fireWrite(packet);
     return;
   }
-  bool is_muted;
-  uint16_t offset;
-  is_muted = mute_is_active_;
-  offset = seq_num_offset_;
+  bool is_muted = mute_is_active_;
+  uint16_t offset  = seq_num_offset_;
   last_original_seq_num_ = rtp_header->getSeqNumber();
   if (!is_muted) {
     last_sent_seq_num_ = last_original_seq_num_ - offset;
@@ -89,11 +87,11 @@ void RtpAudioMuteHandler::muteAudio(bool active) {
 }
 
 inline void RtpAudioMuteHandler::setPacketSeqNumber(packetPtr packet, uint16_t seq_number) {
-  RtpHeader *head = reinterpret_cast<RtpHeader*> (packet->data);
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (packet->data);
   if (chead->isRtcp()) {
     return;
   }
+  RtpHeader *head = reinterpret_cast<RtpHeader*> (packet->data);
   head->setSeqNumber(seq_number);
 }
 

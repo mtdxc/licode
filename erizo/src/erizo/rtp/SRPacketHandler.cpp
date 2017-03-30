@@ -1,4 +1,4 @@
-#include "rtp/SRPacketHandler.h"
+﻿#include "rtp/SRPacketHandler.h"
 #include "WebRtcConnection.h"
 
 namespace erizo {
@@ -17,17 +17,14 @@ void SRPacketHandler::disable() {
   enabled_ = false;
 }
 
-
 void SRPacketHandler::handleRtpPacket(packetPtr packet) {
   RtpHeader *head = reinterpret_cast<RtpHeader*>(packet->data);
   uint32_t ssrc = head->getSSRC();
-  auto sr_selected_info_iter = sr_info_map_.find(ssrc);
-  std::shared_ptr<SRInfo> selected_info;
-  if (sr_selected_info_iter == sr_info_map_.end()) {
+  if (!sr_info_map_.count(ssrc)) {
     ELOG_DEBUG("message: Inserting new SSRC in sr_info_map, ssrc: %u", ssrc);
     sr_info_map_[ssrc] = std::make_shared<SRInfo>();
   }
-  selected_info = sr_info_map_[ssrc];
+  SRInfoPtr selected_info = sr_info_map_[ssrc];
   selected_info->sent_packets++;
   selected_info->sent_octets += (packet->length - head->getHeaderLength());
 }
@@ -42,7 +39,7 @@ void SRPacketHandler::handleSR(packetPtr packet) {
     ELOG_DEBUG("message: handleSR no info for this SSRC, ssrc: %u", ssrc);
     return;
   }
-  std::shared_ptr<SRInfo> selected_info = sr_selected_info_iter->second;
+  SRInfoPtr selected_info = sr_selected_info_iter->second;
   ELOG_DEBUG("message: Rewriting SR, ssrc: %u, octets_sent_before: %u, packets_sent_before: %u"
     " octets_sent_after %u packets_sent_after: %u", ssrc, chead->getOctetsSent(), chead->getPacketsSent(),
     selected_info->sent_octets, selected_info->sent_packets);
@@ -53,9 +50,9 @@ void SRPacketHandler::handleSR(packetPtr packet) {
 void SRPacketHandler::write(Context *ctx, packetPtr packet) {
   if (initialized_ && enabled_) {
     RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
-    if (!chead->isRtcp() && enabled_) {
+    if (!chead->isRtcp()) {
       handleRtpPacket(packet);
-    } else if (chead->packettype == RTCP_Sender_PT && enabled_) {
+    } else if (chead->packettype == RTCP_Sender_PT) {
       handleSR(packet);
     }
   }

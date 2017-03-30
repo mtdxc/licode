@@ -1,11 +1,10 @@
 #ifndef ERIZO_SRC_ERIZO_RTP_RTCPPROCESSOR_H_
 #define ERIZO_SRC_ERIZO_RTP_RTCPPROCESSOR_H_
 
-#include <memory>
-#include <map>
 #include <list>
 #include <set>
 #include <mutex>
+#include <memory>
 
 #include "MediaDefinitions.h"
 #include "SdpInfo.h"
@@ -29,44 +28,46 @@ class RtcpData {
 // lost packets - list and length
  public:
   // current values - tracks packet lost for fraction calculation
-  uint16_t rrsReceivedInPeriod;
+  uint16_t rrsReceivedInPeriod = 0;
 
-  uint32_t ssrc;
-  uint32_t totalPacketsLost;
-  uint32_t prevTotalPacketsLost;
-  uint32_t ratioLost:8;
-  uint16_t highestSeqNumReceived;
-  uint16_t seqNumCycles;
-  uint32_t extendedSeqNo;
-  uint32_t prevExtendedSeqNo;
-  uint32_t lastSr;
-  uint64_t reportedBandwidth;
-  uint32_t maxBandwidth;
-  uint32_t delaySinceLastSr;
+  uint32_t ssrc = 0;
+  uint32_t totalPacketsLost = 0;
+  uint32_t prevTotalPacketsLost = 0;
+  uint8_t ratioLost = 0;
+  uint16_t highestSeqNumReceived = 0;
+  uint16_t seqNumCycles = 0;
+  uint32_t extendedSeqNo = 0;
+  uint32_t prevExtendedSeqNo = 0;
+  uint32_t lastSr = 0;
+  uint64_t reportedBandwidth = 0;
+  uint32_t maxBandwidth = 0;
+  uint32_t delaySinceLastSr = 0;
 
-  uint32_t nextPacketInMs;
+  uint32_t nextPacketInMs = 0;
 
-  uint32_t lastDelay;
+  uint32_t lastDelay = 0;
 
-  uint32_t jitter;
+  uint32_t jitter = 0;
   // last SR field
-  uint32_t lastSrTimestamp;
+  uint32_t lastSrTimestamp = 0;
   // required to properly calculate DLSR
-  uint16_t nackSeqnum;
-  uint16_t nackBlp;
+  uint16_t nackSeqnum = 0;
+  uint16_t nackBlp = 0;
 
   // time based data flow limits
-  uint64_t last_sr_updated, last_remb_sent;
-  uint64_t last_sr_reception, last_rr_was_scheduled;
+  uint64_t last_sr_updated = 0;
+  uint64_t last_remb_sent = 0;
+  uint64_t last_sr_reception = 0;
+  uint64_t last_rr_was_scheduled = 0;
   // to prevent sending too many reports, track time of last
-  uint64_t last_rr_sent;
+  uint64_t last_rr_sent = 0;
 
-  bool shouldSendPli;
-  bool shouldSendREMB;
-  bool shouldSendNACK;
+  bool shouldSendPli = false;
+  bool shouldSendREMB = false;
+  bool shouldSendNACK = false;
   // flag to send receiver report
-  bool requestRr;
-  bool shouldReset;
+  bool requestRr = false;
+  bool shouldReset = false;
 
   MediaType mediaType;
 
@@ -74,33 +75,6 @@ class RtcpData {
   std::set<uint32_t> nackedPackets_;
 
   RtcpData() {
-    nextPacketInMs = 0;
-    rrsReceivedInPeriod = 0;
-    totalPacketsLost = 0;
-    prevTotalPacketsLost = 0;
-    ratioLost = 0;
-    highestSeqNumReceived = 0;
-    seqNumCycles = 0;
-    extendedSeqNo = 0;
-    prevExtendedSeqNo = 0;
-    lastSr = 0;
-    reportedBandwidth = 0;
-    delaySinceLastSr = 0;
-    jitter = 0;
-    lastSrTimestamp = 0;
-    requestRr = false;
-    lastDelay = 0;
-
-    shouldSendPli = false;
-    shouldSendREMB = false;
-    shouldSendNACK = false;
-    shouldReset = false;
-    nackSeqnum = 0;
-    nackBlp = 0;
-    last_rr_sent = 0;
-    last_remb_sent = 0;
-    last_sr_reception = 0;
-    last_rr_was_scheduled = 0;
   }
 
   // lock for any blocking data change
