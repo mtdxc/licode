@@ -28,9 +28,8 @@ void RtcpFeedbackGenerationHandler::read(Context *ctx, packetPtr packet) {
 
   if (chead->getPacketType() == RTCP_Sender_PT) {
     uint32_t ssrc = chead->getSSRC();
-    auto generator_it = generators_map_.find(ssrc);
-    if (generator_it != generators_map_.end()) {
-      generator_it->second->rr_generator->handleSr(packet);
+    if (auto gen = getGenerator(ssrc)) {
+      gen->rr_generator->handleSr(packet);
     } else {
       ELOG_DEBUG("message: no RrGenerator found, ssrc: %u", ssrc);
     }
@@ -43,11 +42,11 @@ void RtcpFeedbackGenerationHandler::read(Context *ctx, packetPtr packet) {
   if (!chead->isRtcp()) {
     RtpHeader *head = reinterpret_cast<RtpHeader*>(packet->data);
     uint32_t ssrc = head->getSSRC();
-    auto generator_it = generators_map_.find(ssrc);
-    if (generator_it != generators_map_.end()) {
-        should_send_rr = generator_it->second->rr_generator->handleRtpPacket(packet);
+    auto gen = getGenerator(ssrc);
+    if (gen) {
+        should_send_rr = gen->rr_generator->handleRtpPacket(packet);
         if (nacks_enabled_) {
-          should_send_nack = generator_it->second->nack_generator->handleRtpPacket(packet);
+          should_send_nack = gen->nack_generator->handleRtpPacket(packet);
         }
     } else {
       ELOG_DEBUG("message: no Generator found, ssrc: %u", ssrc);
@@ -55,9 +54,9 @@ void RtcpFeedbackGenerationHandler::read(Context *ctx, packetPtr packet) {
 
     if (should_send_rr || should_send_nack) {
       ELOG_DEBUG("message: Should send Rtcp, ssrc %u", ssrc);
-      packetPtr rtcp_packet = generator_it->second->rr_generator->generateReceiverReport();
-      if (nacks_enabled_ && generator_it->second->nack_generator != nullptr) {
-        generator_it->second->nack_generator->addNackPacketToRr(rtcp_packet);
+      packetPtr rtcp_packet = gen->rr_generator->generateReceiverReport();
+      if (nacks_enabled_ && gen->nack_generator != nullptr) {
+        gen->nack_generator->addNackPacketToRr(rtcp_packet);
       }
       ctx->fireWrite(rtcp_packet);
     }
@@ -84,27 +83,18 @@ void RtcpFeedbackGenerationHandler::notifyUpdate() {
     return;
   }
   // TODO(pedro) detect if nacks are enabled here with the negotiated SDP scanning the rtp_mappings
-  std::vector<uint32_t> video_ssrc_list = connection_->getVideoSourceSSRCList();
-  std::for_each(video_ssrc_list.begin(), video_ssrc_list.end(), [this] (uint32_t video_ssrc) {
-    if (video_ssrc != 0) {
-      auto video_generator = std::make_shared<RtcpGeneratorPair>();
-      generators_map_[video_ssrc] = video_generator;
-      auto video_rr = std::make_shared<RtcpRrGenerator>(video_ssrc, VIDEO_PACKET, clock_);
-      video_generator->rr_generator = video_rr;
+  for (uint32_t video_ssrc : connection_->getVideoSourceSSRCList()) {
+    if (!video_ssrc) continue;
+    generators_map_[video_ssrc].rr_generator = std::make_shared<RtcpRrGenerator>(video_ssrc, VIDEO_PACKET, clock_);
     connection_->Info("Initialized video rrGenerator, ssrc: %u", video_ssrc);
     if (nacks_enabled_) {
       connection_->Info("Initialized video nack generator, ssrc %u", video_ssrc);
-        auto video_nack = std::make_shared<RtcpNackGenerator>(video_ssrc, clock_);
-        video_generator->nack_generator = video_nack;
+      generators_map_[video_ssrc].nack_generator = std::make_shared<RtcpNackGenerator>(video_ssrc, clock_);
     }
   }
-  });
   uint32_t audio_ssrc = connection_->getAudioSourceSSRC();
   if (audio_ssrc != 0) {
-    auto audio_generator = std::make_shared<RtcpGeneratorPair>();
-    generators_map_[audio_ssrc] = audio_generator;
-    auto audio_rr = std::make_shared<RtcpRrGenerator>(audio_ssrc, AUDIO_PACKET, clock_);
-    audio_generator->rr_generator = audio_rr;
+    generators_map_[audio_ssrc].rr_generator = std::make_shared<RtcpRrGenerator>(audio_ssrc, AUDIO_PACKET, clock_);
     connection_->Info("Initialized audio, ssrc: %u", audio_ssrc);
   }
   initialized_ = true;

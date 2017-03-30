@@ -1,4 +1,4 @@
-#include "rtp/RtcpProcessorHandler.h"
+﻿#include "rtp/RtcpProcessorHandler.h"
 #include "MediaDefinitions.h"
 #include "WebRtcConnection.h"
 #include "Stats.h"
@@ -28,6 +28,7 @@ void RtcpProcessorHandler::read(Context *ctx, packetPtr packet) {
        processor_->setPublisherBW(stats_->getNode()["total"]["bitrateCalculated"].value());
     }
   }
+  // 使用MediaSource接口发送数据，应该不会重新进入PipeLine
   processor_->checkRtcpFb();
   ctx->fireRead(packet);
 }
@@ -35,6 +36,7 @@ void RtcpProcessorHandler::read(Context *ctx, packetPtr packet) {
 void RtcpProcessorHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (chead->isFeedback()) {
+    // 由processor_模块来决定是否发送feedback包
     int length = processor_->analyzeFeedback(packet->data, packet->length);
     if (length) {
       ctx->fireWrite(packet);

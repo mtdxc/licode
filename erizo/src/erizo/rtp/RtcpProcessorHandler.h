@@ -11,12 +11,13 @@ class RtcpProcessor;
 class Stats;
 class WebRtcConnection;
 
+// use with RtcpProcessor fill data to it and trigle send
 class RtcpProcessorHandler: public Handler {
   DECLARE_LOGGER();
 
  public:
   RtcpProcessorHandler();
-
+  // always enable
   void enable() override;
   void disable() override;
 

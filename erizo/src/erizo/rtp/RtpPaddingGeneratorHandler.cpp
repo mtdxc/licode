@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <string>
 #include "rtp/RtcpProcessor.h"
+#include "rtp/QualityManager.h"
 #include "MediaDefinitions.h"
 #include "WebRtcConnection.h"
 #include "RtpUtils.h"
-#include "rtp/QualityManager.h"
 namespace erizo {
 
 DEFINE_LOGGER(RtpPaddingGeneratorHandler, "rtp.RtpPaddingGeneratorHandler");
@@ -49,10 +49,8 @@ void RtpPaddingGeneratorHandler::notifyUpdate() {
 
   auto quality_manager = pipeline->getService<QualityManager>();
 
-  if (quality_manager->isPaddingEnabled() && !enabled_) {
-    enablePadding();
-  } else if (!quality_manager->isPaddingEnabled() && enabled_) {
-    disablePadding();
+  if (quality_manager->isPaddingEnabled() != enabled_) {
+    quality_manager->isPaddingEnabled()? enablePadding(): disablePadding();
   }
 
   auto processor = pipeline->getService<RtcpProcessor>();
@@ -68,14 +66,14 @@ void RtpPaddingGeneratorHandler::read(Context *ctx, packetPtr packet) {
 void RtpPaddingGeneratorHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   bool is_higher_sequence_number = false;
-  if (packet->type == VIDEO_PACKET && !chead->isRtcp()) {
+  if (packet->type == VIDEO_PACKET && !chead->isRtcp()) { // rtp video
     connection_->getWorker()->unschedule(scheduled_task_);
     is_higher_sequence_number = isHigherSequenceNumber(packet);
     if (!first_packet_received_) {
       started_at_ = clock_->now();
     }
     first_packet_received_ = true;
-    }
+  }
 
   ctx->fireWrite(packet);
 
@@ -115,7 +113,7 @@ void RtpPaddingGeneratorHandler::onPacketWithMarkerSet(packetPtr packet) {
   scheduled_task_ = connection_->getWorker()->scheduleFromNow([packet, weak_this] {
     if (auto this_ptr = weak_this.lock()) {
       this_ptr->onPacketWithMarkerSet(packet);
-    }
+}
   }, std::chrono::milliseconds(1000 / kMinMarkerRate));
 }
 

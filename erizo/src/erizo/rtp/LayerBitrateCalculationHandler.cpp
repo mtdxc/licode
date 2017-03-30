@@ -1,4 +1,4 @@
-#include <vector>
+﻿#include <vector>
 #include "rtp/LayerBitrateCalculationHandler.h"
 #include "rtp/QualityManager.h"
 #include "WebRtcConnection.h"
@@ -20,26 +20,25 @@ void LayerBitrateCalculationHandler::disable() {
 }
 
 void LayerBitrateCalculationHandler::write(Context *ctx, packetPtr packet) {
-  if (!enabled_ || !initialized_) {
+  if (!enabled_ || !initialized_ || packet->type!=VIDEO_PACKET || isRtcpPacket(packet)) {
     ctx->fireWrite(packet);
     return;
   }
-
-  std::for_each(packet->compatible_spatial_layers.begin(),
-      packet->compatible_spatial_layers.end(), [this, packet](int &layer_num){
-        std::string spatial_layer_name = std::to_string(layer_num);
-        std::for_each(packet->compatible_temporal_layers.begin(),
-          packet->compatible_temporal_layers.end(), [this, packet, spatial_layer_name](int &layer_num){
-            std::string temporal_layer_name = std::to_string(layer_num);
-            if (!stats_->getNode()[kQualityLayersStatsKey][spatial_layer_name].hasChild(temporal_layer_name)) {
-              stats_->getNode()[kQualityLayersStatsKey][spatial_layer_name].insertStat(
-                  temporal_layer_name, MovingIntervalRateStat{kLayerRateStatIntervalSize,
-                  kLayerRateStatIntervals, 8.});
-            } else {
-              stats_->getNode()[kQualityLayersStatsKey][spatial_layer_name][temporal_layer_name]+=packet->length;
-            }
-          });
-      });
+  // 统计发出去的各层包的流量...
+  for (auto s : packet->compatible_spatial_layers){
+    std::string spatial_layer_name = std::to_string(s);
+    for (auto t: packet->compatible_temporal_layers){
+      std::string temporal_layer_name = std::to_string(t);
+      StatNode& sNode = stats_->getNode()[kQualityLayersStatsKey][spatial_layer_name];
+      if (!sNode.hasChild(temporal_layer_name)) {
+        sNode.insertStat(temporal_layer_name, 
+          MovingIntervalRateStat(kLayerRateStatIntervalSize, kLayerRateStatIntervals, 8. ));
+      }
+      else {
+        sNode[temporal_layer_name] += packet->length;
+      }
+    }
+  }
   quality_manager_->notifyQualityUpdate();
   ctx->fireWrite(packet);
 }

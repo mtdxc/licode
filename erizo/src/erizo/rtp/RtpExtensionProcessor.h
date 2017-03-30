@@ -1,4 +1,4 @@
-#ifndef ERIZO_SRC_ERIZO_RTP_RTPEXTENSIONPROCESSOR_H_
+﻿#ifndef ERIZO_SRC_ERIZO_RTP_RTPEXTENSIONPROCESSOR_H_
 #define ERIZO_SRC_ERIZO_RTP_RTPEXTENSIONPROCESSOR_H_
 
 #include <array>
@@ -15,7 +15,7 @@ namespace erizo {
 enum RTPExtensions {
   UNKNOWN = 0,
   SSRC_AUDIO_LEVEL,     // urn:ietf:params:rtp-hdrext:ssrc-audio-level
-  ABS_SEND_TIME,        // http:// www.webrtc.org/experiments/rtp-hdrext/abs-send-time
+  ABS_SEND_TIME,        // http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time
   TOFFSET,              // urn:ietf:params:rtp-hdrext:toffset
   VIDEO_ORIENTATION,    // urn:3gpp:video-orientation
   TRANSPORT_CC,         // http://www.ietf.org/id/draft-holmer-rmcat-transport-wide-cc-extensions-01
@@ -45,8 +45,11 @@ class RtpExtensionProcessor{
   bool isValidExtension(std::string uri);
 
  private:
+  // support extension map
   std::vector<ExtMap> ext_mappings_;
+  // id -> RTPExtensions gen in parseSdp function
   std::array<RTPExtensions, 10> ext_map_video_, ext_map_audio_;
+  // string-> RTPExtensions type
   std::map<std::string, uint8_t> translationMap_;
   uint32_t processAbsSendTime(char* buf);
   uint32_t stripExtension(char* buf, int len);

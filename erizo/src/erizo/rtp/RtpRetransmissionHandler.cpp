@@ -73,8 +73,7 @@ void RtpRetransmissionHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (packet->data);
   if (chead->isRtcp() && chead->isFeedback()) {
     RtcpAccessor acsor(packet);
-    while (chead = acsor.nextRtcp())
-    {
+    while (chead = acsor.nextRtcp()){
       if (chead->packettype == RTCP_RTP_Feedback_PT) {
         contains_nack = true;
 

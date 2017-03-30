@@ -12,9 +12,7 @@ constexpr duration PliPacerHandler::kMinPLIPeriod;
 constexpr duration PliPacerHandler::kKeyframeTimeout;
 
 PliPacerHandler::PliPacerHandler(std::shared_ptr<erizo::Clock> the_clock)
-    : enabled_{true}, connection_{nullptr}, clock_{the_clock}, time_last_keyframe_{clock_->now()},
-      waiting_for_keyframe_{false}, scheduled_pli_{-1},
-      video_sink_ssrc_{0}, video_source_ssrc_{0}, fir_seq_number_{0} {}
+    : enabled_{true}, connection_{nullptr}, clock_{the_clock}, time_last_keyframe_{clock_->now()}{}
 
 void PliPacerHandler::enable() {
   enabled_ = true;
@@ -29,6 +27,7 @@ void PliPacerHandler::notifyUpdate() {
   if (pipeline && !connection_) {
     connection_ = pipeline->getService<WebRtcConnection>().get();
     video_sink_ssrc_ = connection_->getVideoSinkSSRC();
+    // maybe have more than one??
     video_source_ssrc_ = connection_->getVideoSourceSSRC();
   }
 }
@@ -51,8 +50,8 @@ void PliPacerHandler::sendPLI() {
 void PliPacerHandler::sendFIR() {
   connection_->Info("Timed out waiting for a keyframe");
   getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
-  getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
-  getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
+  //getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
+  //getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
   waiting_for_keyframe_ = false;
   scheduled_pli_ = -1;
 }
@@ -76,7 +75,7 @@ void PliPacerHandler::scheduleNextPLI() {
 void PliPacerHandler::write(Context *ctx, packetPtr packet) {
   if (enabled_ && RtpUtils::isPLI(packet)) {
     if (waiting_for_keyframe_) {
-      return;
+      return; // drop this pli
     }
     waiting_for_keyframe_ = true;
     scheduleNextPLI();

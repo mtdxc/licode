@@ -10,7 +10,7 @@
 namespace erizo {
 
 class WebRtcConnection;
-
+// FIR/PLI request and check handler
 class PliPacerHandler: public Handler, public std::enable_shared_from_this<PliPacerHandler> {
   DECLARE_LOGGER();
 
@@ -41,12 +41,16 @@ class PliPacerHandler: public Handler, public std::enable_shared_from_this<PliPa
   bool enabled_;
   WebRtcConnection* connection_;
   std::shared_ptr<erizo::Clock> clock_;
+  // keep tracker of last keyframe received time.
   time_point time_last_keyframe_;
-  bool waiting_for_keyframe_;
-  int scheduled_pli_;
-  uint32_t video_sink_ssrc_;
-  uint32_t video_source_ssrc_;
-  uint8_t fir_seq_number_;
+  bool waiting_for_keyframe_ = false;
+
+  // work schedule id for pli for unschedule
+  int scheduled_pli_ = -1;
+  // for construct fir packet
+  uint32_t video_sink_ssrc_ = 0;
+  uint32_t video_source_ssrc_ = 0;
+  uint8_t fir_seq_number_ = 0;
 };
 
 }  // namespace erizo

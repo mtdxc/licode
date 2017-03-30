@@ -1,4 +1,4 @@
-
+ï»¿
 /*
  * RtpHeaders.h
  */
@@ -555,7 +555,12 @@ class RtcpHeader {
     return 4*(ntohs(length) + 1);
   }
 };
-// ÓÃÓÚÃ¶¾Ù¶à¸öRTCP¸´ºÏ°ü
+
+// å¿«é€Ÿåˆ¤æ–­å¸§ç±»å‹
+inline bool isRtcpPacket(packetPtr ptr) {
+  return ((RtcpHeader*)ptr->data)->isRtcp();
+}
+// ç”¨äºæšä¸¾å¤šä¸ªRTCPå¤åˆåŒ…
 struct RtcpAccessor {
   char* buffer_ = NULL;
   int length_ = 0;

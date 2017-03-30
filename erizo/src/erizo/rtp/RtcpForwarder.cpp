@@ -17,13 +17,13 @@ RtcpForwarder::RtcpForwarder(MediaSink* msink, MediaSource* msource, uint32_t ma
 void RtcpForwarder::addSourceSsrc(uint32_t ssrc) {
   std::lock_guard<std::mutex> mlock(mapLock_);
   if (rtcpData_.find(ssrc) == rtcpData_.end()) {
-    this->rtcpData_[ssrc] = RtcpDataPtr(new RtcpData());
-    if (ssrc == this->rtcpSource_->getAudioSourceSSRC()) {
+    rtcpData_[ssrc] = RtcpDataPtr(new RtcpData());
+    if (ssrc == rtcpSource_->getAudioSourceSSRC()) {
       ELOG_DEBUG("Adding new Audio source SSRC %u", ssrc);
-      this->rtcpData_[ssrc]->mediaType = AUDIO_TYPE;
+      rtcpData_[ssrc]->mediaType = AUDIO_TYPE;
     } else {
       ELOG_DEBUG("Adding new Video source SSRC %u", ssrc);
-      this->rtcpData_[ssrc]->mediaType = VIDEO_TYPE;
+      rtcpData_[ssrc]->mediaType = VIDEO_TYPE;
     }
   }
 }
@@ -43,11 +43,9 @@ void RtcpForwarder::analyzeSr(RtcpHeader* chead) {
   RtcpDataPtr theData = getRtcpData(recvSSRC);
   std::lock_guard<std::mutex> lock(theData->dataLock);
 
-  uint64_t now = ClockUtils::msNow();
-  uint32_t ntp;
   uint64_t theNTP = chead->getNtpTimestamp();
-  ntp = (theNTP & (0xFFFFFFFF0000)) >> 16;
-  theData->senderReports.push_back(SrDataPtr(new SrDelayData(ntp, now)));
+  uint32_t ntp = (theNTP & (0xFFFFFFFF0000)) >> 16;
+  theData->senderReports.push_back(std::make_shared<SrDelayData>(ntp, ClockUtils::msNow()));
   // We only store the last 20 sr
   if (theData->senderReports.size() > 20) {
     theData->senderReports.pop_front();

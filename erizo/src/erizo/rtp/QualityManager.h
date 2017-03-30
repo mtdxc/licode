@@ -2,11 +2,11 @@
 #define ERIZO_SRC_ERIZO_RTP_QUALITYMANAGER_H_
 
 #include "logger.h"
-#include "Stats.h"
 #include "lib/Clock.h"
 #include "pipeline/Service.h"
 
 namespace erizo {
+class Stats;
 
 class QualityManager: public Service, public std::enable_shared_from_this<QualityManager> {
   DECLARE_LOGGER();
@@ -42,18 +42,17 @@ class QualityManager: public Service, public std::enable_shared_from_this<Qualit
   bool isInMaxLayer();
   void setPadding(bool enabled);
 
-
  private:
-  bool initialized_;
-  bool enabled_;
-  bool padding_enabled_;
-  bool forced_layers_;
-  bool slideshow_mode_active_;
-  int spatial_layer_;
-  int temporal_layer_;
-  int max_active_spatial_layer_;
-  int max_active_temporal_layer_;
-  uint64_t current_estimated_bitrate_;
+  bool initialized_ = false;
+  bool enabled_ = false;
+  bool padding_enabled_ = true;
+  bool forced_layers_ = false;
+  bool slideshow_mode_active_ = false;
+  int spatial_layer_ = 0;
+  int temporal_layer_ = 0;
+  int max_active_spatial_layer_ = 0;
+  int max_active_temporal_layer_ = 0;
+  uint64_t current_estimated_bitrate_ = 0;
 
   time_point last_quality_check_;
   time_point last_activity_check_;

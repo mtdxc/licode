@@ -22,9 +22,8 @@ const uint32_t BandwidthEstimationHandler::kRembMinimumBitrate = 20000;
 // % threshold for if we should send a new REMB asap.
 const unsigned int kSendThresholdPercent = 97;
 
-std::unique_ptr<RemoteBitrateEstimator> RemoteBitrateEstimatorPicker::pickEstimator(bool using_absolute_send_time,
-                                                                                    webrtc::Clock* const clock,
-                                                                                    RemoteBitrateObserver *observer) {
+std::unique_ptr<RemoteBitrateEstimator> RemoteBitrateEstimatorPicker::pickEstimator(
+  bool using_absolute_send_time, webrtc::Clock* const clock, RemoteBitrateObserver *observer) {
   std::unique_ptr<RemoteBitrateEstimator> rbe;
   if (using_absolute_send_time) {
     rbe.reset(new webrtc::RemoteBitrateEstimatorAbsSendTime(observer, clock));
@@ -35,8 +34,7 @@ std::unique_ptr<RemoteBitrateEstimator> RemoteBitrateEstimatorPicker::pickEstima
 }
 
 BandwidthEstimationHandler::BandwidthEstimationHandler(std::shared_ptr<RemoteBitrateEstimatorPicker> picker) :
-  connection_{nullptr}, clock_{webrtc::Clock::GetRealTimeClock()},
-  picker_{picker},
+  connection_{nullptr}, clock_{webrtc::Clock::GetRealTimeClock()}, picker_{picker},
   using_absolute_send_time_{false}, packets_since_absolute_send_time_{0},
   min_bitrate_bps_{kMinBitRateAllowed},
   bitrate_{0}, last_send_bitrate_{0}, last_remb_time_{0},
@@ -69,7 +67,9 @@ void BandwidthEstimationHandler::notifyUpdate() {
   if (processor_.getVideoExtensionMap().size() == 0) {
     return;
   }
-  updateExtensionMaps(processor_.getVideoExtensionMap(), processor_.getAudioExtensionMap());
+  // copy extend map from licode to webrtc
+  updateExtensionMap(true, processor_.getVideoExtensionMap());
+  updateExtensionMap(false, processor_.getAudioExtensionMap());
   pickEstimator();
   initialized_ = true;
 }
@@ -82,12 +82,6 @@ void BandwidthEstimationHandler::process() {
       this_ptr->process();
     }
   }, std::chrono::milliseconds(rbe_->TimeUntilNextProcess()));
-}
-
-void BandwidthEstimationHandler::updateExtensionMaps(std::array<RTPExtensions, 10> video_map,
-                                                     std::array<RTPExtensions, 10> audio_map) {
-  updateExtensionMap(true, video_map);
-  updateExtensionMap(false, audio_map);
 }
 
 void BandwidthEstimationHandler::updateExtensionMap(bool is_video, std::array<RTPExtensions, 10> map) {
@@ -135,10 +129,9 @@ void BandwidthEstimationHandler::read(Context *ctx, packetPtr packet) {
   if (!chead->isRtcp() && packet->type == VIDEO_PACKET) {
     if (parsePacket(packet)) {
       int64_t arrival_time_ms = packet->received_time_ms;
-      arrival_time_ms = clock_->TimeInMilliseconds() - (ClockUtils::timePointToMs(clock::now()) - arrival_time_ms);
-      size_t payload_size = packet->length;
+      arrival_time_ms = clock_->TimeInMilliseconds() - (ClockUtils::msNow() - arrival_time_ms);
       pickEstimatorFromHeader();
-      rbe_->IncomingPacket(arrival_time_ms, payload_size, header_);
+      rbe_->IncomingPacket(arrival_time_ms, packet->length, header_);
     } else {
       ELOG_DEBUG("Packet not parsed %d", packet->type);
     }
@@ -147,26 +140,22 @@ void BandwidthEstimationHandler::read(Context *ctx, packetPtr packet) {
 }
 
 bool BandwidthEstimationHandler::parsePacket(packetPtr packet) {
-  const uint8_t* buffer = reinterpret_cast<uint8_t*>(packet->data);
-  size_t length = packet->length;
-  webrtc::RtpUtility::RtpHeaderParser rtp_parser(buffer, length);
+  webrtc::RtpUtility::RtpHeaderParser rtp_parser((uint8_t*)packet->data, packet->length);
   memset(&header_, 0, sizeof(header_));
-  RtpHeaderExtensionMap map = getHeaderExtensionMap(packet);
-  return rtp_parser.Parse(&header_, &map);
+  return rtp_parser.Parse(&header_, getHeaderExtensionMap(packet));
 }
 
-RtpHeaderExtensionMap BandwidthEstimationHandler::getHeaderExtensionMap(packetPtr packet) const {
-  RtpHeaderExtensionMap map;
+RtpHeaderExtensionMap* BandwidthEstimationHandler::getHeaderExtensionMap(packetPtr packet) {
   switch (packet->type) {
     case VIDEO_PACKET:
-      return ext_map_video_;
+      return &ext_map_video_;
       break;
     case AUDIO_PACKET:
-      return ext_map_audio_;
+      return &ext_map_audio_;
       break;
     default:
       ELOG_INFO("Won't process RTP extensions for unknown type packets");
-      return {};
+      return NULL;
       break;
   }
 }
@@ -198,6 +187,34 @@ void BandwidthEstimationHandler::pickEstimator() {
   rbe_->SetMinBitrate(min_bitrate_bps_);
 }
 
+void BandwidthEstimationHandler::OnReceiveBitrateChanged(const std::vector<uint32_t>& ssrcs,
+                                     uint32_t bitrate) {
+  uint64_t now = ClockUtils::msNow();
+  if (last_send_bitrate_ > 0) {
+    unsigned int new_remb_bitrate = last_send_bitrate_ - bitrate_ + bitrate;
+    if (new_remb_bitrate < kSendThresholdPercent * last_send_bitrate_ / 100) {
+      // The new bitrate estimate is less than kSendThresholdPercent % of the
+      // last report. Send a REMB asap.
+      last_remb_time_ = now - kRembSendIntervallMs;
+    }
+  }
+
+  if (bitrate < kRembMinimumBitrate) {
+    bitrate = kRembMinimumBitrate;
+  }
+
+  bitrate_ = bitrate;
+
+  if (now - last_remb_time_ < kRembSendIntervallMs) {
+    return;
+  }
+  last_remb_time_ = now;
+  last_send_bitrate_ = bitrate_;
+  // update erizoBandwidth stats
+  stats_->getNode()[connection_->getVideoSourceSSRC()].setStat<CumulativeStat>("erizoBandwidth", last_send_bitrate_);
+  sendREMBPacket();
+}
+
 void BandwidthEstimationHandler::sendREMBPacket() {
   remb_packet_.setPacketType(RTCP_PS_Feedback_PT);
   remb_packet_.setBlockCount(RTCP_AFB);
@@ -210,40 +227,10 @@ void BandwidthEstimationHandler::sendREMBPacket() {
   remb_packet_.setREMBBitRate(bitrate_);
   remb_packet_.setREMBNumSSRC(1);
   remb_packet_.setREMBFeedSSRC(connection_->getVideoSourceSSRC());
-  int remb_length = (remb_packet_.getLength() + 1) * 4;
   if (active_) {
     ELOG_DEBUG("BWE Estimation is %d", last_send_bitrate_);
     getContext()->fireWrite(std::make_shared<dataPacket>(0,
-      reinterpret_cast<char*>(&remb_packet_), remb_length, OTHER_PACKET));
+      reinterpret_cast<char*>(&remb_packet_), remb_packet_.getPacketSize(), OTHER_PACKET));
   }
 }
-
-void BandwidthEstimationHandler::OnReceiveBitrateChanged(const std::vector<uint32_t>& ssrcs,
-                                     uint32_t bitrate) {
-  if (last_send_bitrate_ > 0) {
-    unsigned int new_remb_bitrate = last_send_bitrate_ - bitrate_ + bitrate;
-    if (new_remb_bitrate < kSendThresholdPercent * last_send_bitrate_ / 100) {
-      // The new bitrate estimate is less than kSendThresholdPercent % of the
-      // last report. Send a REMB asap.
-      last_remb_time_ = ClockUtils::timePointToMs(clock::now()) - kRembSendIntervallMs;
-    }
-  }
-
-  if (bitrate < kRembMinimumBitrate) {
-    bitrate = kRembMinimumBitrate;
-  }
-
-  bitrate_ = bitrate;
-
-  uint64_t now = ClockUtils::timePointToMs(clock::now());
-
-  if (now - last_remb_time_ < kRembSendIntervallMs) {
-    return;
-  }
-  last_remb_time_ = now;
-  last_send_bitrate_ = bitrate_;
-  stats_->getNode()[connection_->getVideoSourceSSRC()].insertStat("erizoBandwidth", CumulativeStat{last_send_bitrate_});
-  sendREMBPacket();
-}
-
 }  // namespace erizo

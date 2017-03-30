@@ -1,4 +1,4 @@
-#ifndef ERIZO_SRC_ERIZO_RTP_RTPPACKETQUEUE_H_
+﻿#ifndef ERIZO_SRC_ERIZO_RTP_RTPPACKETQUEUE_H_
 #define ERIZO_SRC_ERIZO_RTP_RTPPACKETQUEUE_H_
 
 #include <mutex>
@@ -52,6 +52,7 @@ class RtpPacketQueue {
 
   std::mutex queueMutex_;
   std::list<packetPtr> queue_;
+  // last popPacket seq
   int lastSequenceNumberGiven_;
   bool rtpSequenceLessThan(uint16_t x, uint16_t y);
 

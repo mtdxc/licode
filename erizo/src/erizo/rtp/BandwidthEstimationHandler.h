@@ -21,7 +21,7 @@ class Worker;
 using webrtc::RemoteBitrateEstimator;
 using webrtc::RemoteBitrateObserver;
 using webrtc::RtpHeaderExtensionMap;
-
+// BitrateEstimator Factory
 class RemoteBitrateEstimatorPicker {
  public:
   virtual std::unique_ptr<RemoteBitrateEstimator> pickEstimator(bool using_absolute_send_time,
@@ -52,13 +52,11 @@ class BandwidthEstimationHandler: public Handler, public RemoteBitrateObserver,
   void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
-  void updateExtensionMaps(std::array<RTPExtensions, 10> video_map, std::array<RTPExtensions, 10> audio_map);
-
  private:
   void process();
   void sendREMBPacket();
   bool parsePacket(packetPtr packet);
-  RtpHeaderExtensionMap getHeaderExtensionMap(packetPtr packet) const;
+  RtpHeaderExtensionMap* getHeaderExtensionMap(packetPtr packet);
   void pickEstimatorFromHeader();
   void pickEstimator();
 
@@ -72,6 +70,7 @@ class BandwidthEstimationHandler: public Handler, public RemoteBitrateObserver,
   std::unique_ptr<RemoteBitrateEstimator> rbe_;
   bool using_absolute_send_time_;
   uint32_t packets_since_absolute_send_time_;
+
   int min_bitrate_bps_;
   webrtc::RTPHeader header_;
   RtcpHeader remb_packet_;

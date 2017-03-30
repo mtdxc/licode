@@ -1,4 +1,4 @@
-#include "rtp/SequenceNumberTranslator.h"
+﻿#include "rtp/SequenceNumberTranslator.h"
 
 #include <vector>
 #include "rtp/RtpUtils.h"
@@ -12,12 +12,7 @@ DEFINE_LOGGER(SequenceNumberTranslator, "rtp.SequenceNumberTranslator");
 
 SequenceNumberTranslator::SequenceNumberTranslator()
     : in_out_buffer_{kMaxSequenceNumberInBuffer},
-      out_in_buffer_{kMaxSequenceNumberInBuffer},
-      first_input_sequence_number_{0},
-      last_input_sequence_number_{0},
-      last_output_sequence_number_{0},
-      offset_{0},
-      initialized_{false}, reset_{false} {
+      out_in_buffer_{kMaxSequenceNumberInBuffer}{
 }
 
 void SequenceNumberTranslator::add(SequenceNumber sequence_number) {
@@ -25,8 +20,7 @@ void SequenceNumberTranslator::add(SequenceNumber sequence_number) {
   out_in_buffer_[sequence_number.output % kMaxSequenceNumberInBuffer] = sequence_number;
 }
 
-uint16_t SequenceNumberTranslator::fill(const uint16_t &first,
-                                        const uint16_t &last) {
+uint16_t SequenceNumberTranslator::fill(uint16_t first, uint16_t last) {
   if (last < first) {
     fill(first, 65535);
     fill(0, last);
@@ -82,11 +76,11 @@ SequenceNumber SequenceNumberTranslator::get(uint16_t input_sequence_number, boo
     add(SequenceNumber{input_sequence_number, output_sequence_number, type});
     updateLastOutputSequenceNumber(skip, output_sequence_number);
     if (!skip) {
-      last_input_sequence_number_ = input_sequence_number;
-      first_input_sequence_number_ = input_sequence_number;
-      initialized_ = true;
-      reset_ = false;
-      offset_ = 0;
+    last_input_sequence_number_ = input_sequence_number;
+    first_input_sequence_number_ = input_sequence_number;
+    initialized_ = true;
+    reset_ = false;
+    offset_ = 0;
     }
     return get(input_sequence_number);
   }

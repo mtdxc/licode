@@ -1,11 +1,7 @@
+﻿#include <string>
 #include "rtp/StatsHandler.h"
-
-#include <string>
-
 #include "MediaDefinitions.h"
 #include "WebRtcConnection.h"
-
-
 
 namespace erizo {
 
@@ -18,8 +14,8 @@ void StatsCalculator::update(WebRtcConnection *connection, std::shared_ptr<Stats
     connection_ = connection;
     stats_ = stats;
     if (!getStatsInfo().hasChild("total")) {
-      getStatsInfo()["total"].insertStat("bitrateCalculated", MovingIntervalRateStat{kRateStatIntervalSize,
-        kRateStatIntervals, 8.});
+      getStatsInfo()["total"].insertStat("bitrateCalculated", 
+        MovingIntervalRateStat(kRateStatIntervalSize, kRateStatIntervals, 8.));
     }
   }
 }
@@ -42,16 +38,16 @@ void StatsCalculator::processRtpPacket(packetPtr packet) {
     ELOG_DEBUG("message: Unknown SSRC in processRtpPacket, ssrc: %u, PT: %u", ssrc, head->getPayloadType());
     return;
   }
-  if (!getStatsInfo()[ssrc].hasChild("bitrateCalculated")) {
+  StatNode& ssrc_stat = getStatsInfo()[ssrc];
+  if (!ssrc_stat.hasChild("bitrateCalculated")) {
     if (connection_->isVideoSourceSSRC(ssrc) || connection_->isVideoSinkSSRC(ssrc)) {
-      getStatsInfo()[ssrc].insertStat("type", StringStat{"video"});
+      ssrc_stat.insertStat("type", StringStat("video"));
     } else if (connection_->isAudioSourceSSRC(ssrc) || connection_->isAudioSinkSSRC(ssrc)) {
-      getStatsInfo()[ssrc].insertStat("type", StringStat{"audio"});
+      ssrc_stat.insertStat("type", StringStat("audio"));
     }
-    getStatsInfo()[ssrc].insertStat("bitrateCalculated", MovingIntervalRateStat{kRateStatIntervalSize,
-        kRateStatIntervals, 8.});
+    ssrc_stat.insertStat("bitrateCalculated", MovingIntervalRateStat{kRateStatIntervalSize, kRateStatIntervals, 8.});
   }
-  getStatsInfo()[ssrc]["bitrateCalculated"] += len;
+  ssrc_stat["bitrateCalculated"] += len;
   getStatsInfo()["total"]["bitrateCalculated"] += len;
   if (packet->type == VIDEO_PACKET && packet->is_keyframe) {
     incrStat(ssrc, "keyFrames");
@@ -59,11 +55,7 @@ void StatsCalculator::processRtpPacket(packetPtr packet) {
 }
 
 void StatsCalculator::incrStat(uint32_t ssrc, std::string stat) {
-  if (!getStatsInfo()[ssrc].hasChild(stat)) {
-    getStatsInfo()[ssrc].insertStat(stat, CumulativeStat{1});
-    return;
-  }
-  ++getStatsInfo()[ssrc][stat];
+  getStatsInfo()[ssrc].addStat<CumulativeStat>(stat, 1);
 }
 
 void StatsCalculator::processRtcpPacket(packetPtr packet) {
@@ -88,6 +80,7 @@ void StatsCalculator::processRtcpPacket(packetPtr packet) {
 
   ELOG_DEBUG("RTCP packet received, type: %u, size: %u, packetLength: %u", chead->getPacketType(),
        chead->getPacketSize(), len);
+  StatNode& ssrc_stat = getStatsInfo()[ssrc];
   RtcpAccessor access(buf, len);
   while (chead = access.nextRtcp())
   {
@@ -105,15 +98,15 @@ void StatsCalculator::processRtcpPacket(packetPtr packet) {
           break;
         }
         ELOG_DEBUG("RTP RR: Fraction Lost %u, packetsLost %u", chead->getFractionLost(), chead->getLostPackets());
-        getStatsInfo()[ssrc].insertStat("fractionLost", CumulativeStat{chead->getFractionLost()});
-        getStatsInfo()[ssrc].insertStat("packetsLost", CumulativeStat{chead->getLostPackets()});
-        getStatsInfo()[ssrc].insertStat("jitter", CumulativeStat{chead->getJitter()});
-        getStatsInfo()[ssrc].insertStat("sourceSsrc", CumulativeStat{ssrc});
+        ssrc_stat.setStat<CumulativeStat>("fractionLost", chead->getFractionLost());
+        ssrc_stat.setStat<CumulativeStat>("packetsLost", chead->getLostPackets());
+        ssrc_stat.setStat<CumulativeStat>("jitter", chead->getJitter());
+        ssrc_stat.setStat<CumulativeStat>("sourceSsrc", ssrc);
         break;
       case RTCP_Sender_PT:
         ELOG_DEBUG("RTP SR: Packets Sent %u, Octets Sent %u", chead->getPacketsSent(), chead->getOctetsSent());
-        getStatsInfo()[ssrc].insertStat("packetsSent", CumulativeStat{chead->getPacketsSent()});
-        getStatsInfo()[ssrc].insertStat("bytesSent", CumulativeStat{chead->getOctetsSent()});
+        ssrc_stat.setStat<CumulativeStat>("packetsSent", chead->getPacketsSent());
+        ssrc_stat.setStat<CumulativeStat>("bytesSent", chead->getOctetsSent());
         break;
       case RTCP_RTP_Feedback_PT:
         ELOG_DEBUG("RTP FB: Usually NACKs: %u", chead->getBlockCount());
@@ -146,7 +139,7 @@ void StatsCalculator::processRtcpPacket(packetPtr packet) {
                 uint64_t bitrate = chead->getREMBBitRate();
                 // ELOG_DEBUG("REMB Packet numSSRC %u mantissa %u exp %u, tot %lu bps",
                 //             chead->getREMBNumSSRC(), chead->getBrMantis(), chead->getBrExp(), bitrate);
-                getStatsInfo()[ssrc].insertStat("bandwidth", CumulativeStat{bitrate});
+                ssrc_stat.setStat<CumulativeStat>("bandwidth", bitrate);
               } else {
                 ELOG_DEBUG("Unsupported AFB Packet not REMB")
               }
@@ -176,8 +169,7 @@ void IncomingStatsHandler::notifyUpdate() {
     return;
   }
   auto pipeline = getContext()->getPipelineShared();
-  update(pipeline->getService<WebRtcConnection>().get(),
-             pipeline->getService<Stats>());
+  update(pipeline->getService<WebRtcConnection>().get(), pipeline->getService<Stats>());
 }
 
 void IncomingStatsHandler::read(Context *ctx, packetPtr packet) {
@@ -196,8 +188,7 @@ void OutgoingStatsHandler::notifyUpdate() {
     return;
   }
   auto pipeline = getContext()->getPipelineShared();
-  update(pipeline->getService<WebRtcConnection>().get(),
-             pipeline->getService<Stats>());
+  update(pipeline->getService<WebRtcConnection>().get(), pipeline->getService<Stats>());
 }
 
 void OutgoingStatsHandler::write(Context *ctx, packetPtr packet) {

@@ -1,5 +1,6 @@
 #include "rtp/QualityManager.h"
 #include "WebRtcConnection.h"
+#include "Stats.h"
 
 namespace erizo {
 
@@ -10,9 +11,7 @@ constexpr duration QualityManager::kActiveLayerInterval;
 constexpr float QualityManager::kIncreaseLayerBitrateThreshold;
 
 QualityManager::QualityManager(std::shared_ptr<Clock> the_clock)
-  : initialized_{false}, enabled_{false}, padding_enabled_{false}, forced_layers_{false},
-  slideshow_mode_active_{false}, spatial_layer_{0}, temporal_layer_{0}, max_active_spatial_layer_{0},
-  max_active_temporal_layer_{0}, current_estimated_bitrate_{0}, last_quality_check_{the_clock->now()},
+  : initialized_{false}, last_quality_check_{the_clock->now()},
   last_activity_check_{the_clock->now()}, clock_{the_clock} {}
 
 void QualityManager::enable() {
@@ -84,8 +83,8 @@ void QualityManager::selectLayer(bool try_higher_layers) {
       current_estimated_bitrate_, spatial_layer_, temporal_layer_);
   for (auto &spatial_layer_node : stats_->getNode()["qualityLayers"].getMap()) {
     for (auto &temporal_layer_node : stats_->getNode()["qualityLayers"][spatial_layer_node.first.c_str()].getMap()) {
-      ELOG_DEBUG("Bitrate for layer %d/%d %lu",
-          aux_spatial_layer, aux_temporal_layer, temporal_layer_node.second->value());
+     ELOG_DEBUG("Bitrate for layer %d/%d %lu",
+         aux_spatial_layer, aux_temporal_layer, temporal_layer_node.second->value());
       if (temporal_layer_node.second->value() != 0 &&
           (1. + bitrate_margin) * temporal_layer_node.second->value() < current_estimated_bitrate_) {
         next_temporal_layer = aux_temporal_layer;
@@ -146,13 +145,14 @@ void QualityManager::calculateMaxActiveLayer() {
 }
 
 uint64_t QualityManager::getInstantLayerBitrate(int spatial_layer, int temporal_layer) {
-  if (!stats_->getNode()["qualityLayers"].hasChild(spatial_layer) ||
-      !stats_->getNode()["qualityLayers"][spatial_layer].hasChild(temporal_layer)) {
+  auto qualityLayers = stats_->getNode()["qualityLayers"];
+  if (!qualityLayers.hasChild(spatial_layer) ||
+      !qualityLayers[spatial_layer].hasChild(temporal_layer)) {
     return 0;
   }
 
   MovingIntervalRateStat* layer_stat =
-    reinterpret_cast<MovingIntervalRateStat*>(&stats_->getNode()["qualityLayers"][spatial_layer][temporal_layer]);
+    reinterpret_cast<MovingIntervalRateStat*>(&qualityLayers[spatial_layer][temporal_layer]);
   return layer_stat->value(kActiveLayerInterval);
 }
 

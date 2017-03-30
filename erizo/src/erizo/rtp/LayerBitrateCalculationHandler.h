@@ -16,7 +16,6 @@ constexpr uint32_t kLayerRateStatIntervals = 30;
 class LayerBitrateCalculationHandler: public OutboundHandler {
   DECLARE_LOGGER();
 
-
  public:
   LayerBitrateCalculationHandler();
 
