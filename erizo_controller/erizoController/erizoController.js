@@ -186,7 +186,9 @@ var sendMsgToRoom = function (room, type, arg) {
     for (id in sockets) {
         if (sockets.hasOwnProperty(id)) {
             log.debug('sendMsgToRoom ' + room.id + 'clientId: ' + sockets[id] + ', ' + logger.objectToLog(type));
-            io.sockets.socket(sockets[id]).emit(type, arg);
+            var conn = io.sockets.connected[sockets[id]];
+            if(conn)
+                conn.emit(type, arg);
         }
     }
 };
@@ -301,7 +303,6 @@ var updateMyState = function () {
 var listen = function () {
     io.sockets.on('connection', function (socket) {
         log.info('erizoClient connected, clientId: ' + socket.id);
-
         // Gets 'token' messages on the socket. Checks the signature and ask nuve if it is valid.
         // Then registers it in the room and callback to the client.
         socket.on('token', function (token, callback) {
@@ -345,7 +346,7 @@ var listen = function () {
                                         room.controller.removePublisher(streamId);
                                         // clear suscribe
                                         for (var s in room.sockets) {
-                                            var streams = io.sockets.socket(room.sockets[s]).streams;
+                                            var streams = io.sockets.connected[room.sockets[s]].streams;
                                             var index = streams.indexOf(streamId);
                                             if (index !== -1) {
                                                 streams.splice(index, 1);
@@ -427,7 +428,7 @@ var listen = function () {
             for (id in sockets) {
                 if (sockets.hasOwnProperty(id)) {
                     log.debug('sending dataStream, clientId: ' + sockets[id] + ', dataStream: ' + msg.id);
-                    io.sockets.socket(sockets[id]).emit('onDataStream', msg);
+                    io.sockets.connected[sockets[id]].emit('onDataStream', msg);
                 }
             }
         });
@@ -439,7 +440,7 @@ var listen = function () {
         socket.on('signaling_message', function (msg) {
             if (socket.room.p2p) {
                 // msg: {streamId, peersocket, msg:{type,action}}
-                io.sockets.socket(msg.peerSocket).emit('signaling_message_peer',
+                io.sockets.connected[msg.peerSocket].emit('signaling_message_peer',
                         {streamId: msg.streamId, peerSocket: socket.id, msg: msg.msg});
             } else {
                 var isControlMessage = (msg.msg.type === 'control');
@@ -465,7 +466,7 @@ var listen = function () {
             for (id in sockets) {
                 if (sockets.hasOwnProperty(id)) {
                     log.debug('Sending new attributes, clientId: ' + sockets[id] + ', streamId: ' + msg.id);
-                    io.sockets.socket(sockets[id]).emit('onUpdateAttributeStream', msg);
+                    io.sockets.connected[sockets[id]].emit('onUpdateAttributeStream', msg);
                 }
             }
         });
@@ -649,7 +650,7 @@ var listen = function () {
 
                 if (socket.room.p2p) {
                     var s = stream.getSocket();
-                    io.sockets.socket(s).emit('publish_me', {streamId: options.streamId,
+                    io.sockets.connected[s].emit('publish_me', {streamId: options.streamId,
                                                              peerSocket: socket.id});
 
                 } else {
@@ -961,7 +962,7 @@ exports.getUsersInRoom = function (room, callback) {
     sockets = rooms[room].sockets;
     for (id in sockets) {
         if (sockets.hasOwnProperty(id)) {
-            users.push(io.sockets.socket(sockets[id]).user);
+            users.push(io.sockets.connected[sockets[id]].user);
         }
     }
     callback(users);
@@ -982,15 +983,15 @@ exports.deleteUser = function (user, room, callback) {
 
     for (id in sockets) {
         if (sockets.hasOwnProperty(id)) {
-            if (io.sockets.socket(sockets[id]).user.name === user){
+            if (io.sockets.connected[sockets[id]].user.name === user){
                 socketsToDelete.push(sockets[id]);
             }
         }
     }
 
     for (var s in socketsToDelete) {
-        log.info('deleteUser, user: ' + io.sockets.socket(socketsToDelete[s]).user.name);
-        io.sockets.socket(socketsToDelete[s]).disconnect();
+        log.info('deleteUser, user: ' + io.sockets.connected[socketsToDelete[s]].user.name);
+        io.sockets.connected[socketsToDelete[s]].disconnect();
     }
 
     if (socketsToDelete.length !== 0) {
