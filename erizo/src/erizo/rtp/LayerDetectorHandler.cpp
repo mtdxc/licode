@@ -17,21 +17,22 @@ void LayerDetectorHandler::disable() {
 }
 
 void LayerDetectorHandler::read(Context *ctx, packetPtr packet) {
-  RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
-  if (enabled_ && !chead->isRtcp() && packet->type == VIDEO_PACKET) {
+  if (enabled_ && isVideoRtp(packet)) {
     RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
     RtpMap *codec = connection_->getRemoteSdpInfo().getCodecByExternalPayloadType(rtp_header->getPayloadType());
     if (codec && codec->encoding_name == "VP8") {
       parseLayerInfoFromVP8(packet);
     } else if (codec && codec->encoding_name == "VP9") {
       parseLayerInfoFromVP9(packet);
+    } else if (codec && codec->encoding_name == "H264") {
+      parseLayerInfoFromH264(packet);
     }
   }
   ctx->fireRead(packet);
 }
 
 int LayerDetectorHandler::getSsrcPosition(uint32_t ssrc) {
-  for (size_t i = 0;i<video_ssrc_list_.size();i++){
+  for (size_t i = 0; i<video_ssrc_list_.size() ;i++){
     if (video_ssrc_list_[i] == ssrc)
       return i;
   }
@@ -40,9 +41,9 @@ int LayerDetectorHandler::getSsrcPosition(uint32_t ssrc) {
 
 void LayerDetectorHandler::parseLayerInfoFromVP8(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
-  unsigned char* start_buffer = reinterpret_cast<unsigned char*>(packet->data) + rtp_header->getHeaderLength();
   RTPPayloadVP8* payload = vp8_parser_.parseVP8(
-      start_buffer, packet->length - rtp_header->getHeaderLength());
+	  rtp_header->getPayloadPtr(), 
+	  packet->length - rtp_header->getHeaderLength());
 
   packet->compatible_temporal_layers = {};
   switch (payload->tID) {
@@ -73,12 +74,12 @@ void LayerDetectorHandler::parseLayerInfoFromVP8(packetPtr packet) {
 void LayerDetectorHandler::parseLayerInfoFromVP9(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   RTPPayloadVP9* payload = vp9_parser_.parseVP9(
-    (unsigned char*)packet->data + rtp_header->getHeaderLength(),
+    rtp_header->getPayloadPtr(),
     packet->length - rtp_header->getHeaderLength());
 
+  // why?
   int spatial_layer = payload->spatialID;
-
-  packet->compatible_spatial_layers = {};
+  packet->compatible_spatial_layers.clear();
   for (int i = 5; i >= spatial_layer; i--) {
     packet->compatible_spatial_layers.push_back(i);
   }
@@ -109,6 +110,28 @@ void LayerDetectorHandler::parseLayerInfoFromVP9(packetPtr packet) {
   delete payload;
 }
 
+void LayerDetectorHandler::parseLayerInfoFromH264(packetPtr packet)
+{
+  RtpHeader * rtp_header = (RtpHeader *)packet->data;
+  uint8_t* p = rtp_header->getPayloadPtr();
+  uint8_t nal_type = p[0] & 0x1f;
+  // only support 2 temporal layer
+  packet->compatible_temporal_layers = { p[0] & 0x60 ? 0 : 1 };
+  if (nal_type == 28 || nal_type == 29) {//stap a and b
+    nal_type = p[1] & 0x1f;
+    packet->ending_of_layer_frame = p[1] & 0x40;
+  }
+  else if (nal_type == 25 || nal_type == 26) {
+    nal_type = p[3] & 0x1f;
+    packet->ending_of_layer_frame = true;
+  }
+  else {
+    packet->ending_of_layer_frame = true;
+  }
+  packet->is_keyframe = (nal_type == 5 || nal_type == 7);
+  packet->compatible_spatial_layers = { getSsrcPosition(rtp_header->getSSRC()) };
+}
+
 void LayerDetectorHandler::notifyUpdate() {
   if (initialized_) {
     return;
@@ -126,4 +149,5 @@ void LayerDetectorHandler::notifyUpdate() {
 
   video_ssrc_list_ = connection_->getVideoSourceSSRCList();
 }
+
 }  // namespace erizo

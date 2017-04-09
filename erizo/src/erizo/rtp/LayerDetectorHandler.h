@@ -32,11 +32,13 @@ class LayerDetectorHandler: public InboundHandler,
   }
 
   void read(Context *ctx, packetPtr packet) override;
+
   void notifyUpdate() override;
 
  private:
   void parseLayerInfoFromVP8(packetPtr packet);
   void parseLayerInfoFromVP9(packetPtr packet);
+  void parseLayerInfoFromH264(packetPtr packet);
   int getSsrcPosition(uint32_t ssrc);
 
  private:

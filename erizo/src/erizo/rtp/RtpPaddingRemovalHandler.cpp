@@ -17,10 +17,7 @@ void RtpPaddingRemovalHandler::disable() {
 }
 
 void RtpPaddingRemovalHandler::read(Context *ctx, packetPtr packet) {
-  RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
-  RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
-
-  if (!chead->isRtcp() && enabled_ && packet->type == VIDEO_PACKET) {
+  if (enabled_ && isVideoRtp(packet)) {
     RtpHeader* rtp_header = (RtpHeader*)packet->data;
     uint32_t ssrc = rtp_header->getSSRC();
     std::shared_ptr<SequenceNumberTranslator> translator = getTranslatorForSsrc(ssrc, true);
@@ -90,15 +87,15 @@ void RtpPaddingRemovalHandler::write(Context *ctx, packetPtr packet) {
 bool RtpPaddingRemovalHandler::removePaddingBytes(std::shared_ptr<dataPacket> packet,
     std::shared_ptr<SequenceNumberTranslator> translator) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
-  int header_length = rtp_header->getHeaderLength();
-
   int padding_length = RtpUtils::getPaddingLength(packet);
-  if (padding_length + header_length == packet->length) {
+  if (padding_length + rtp_header->getHeaderLength() == packet->length) 
+  {// empty packet...
     uint16_t sequence_number = rtp_header->getSeqNumber();
     translator->get(sequence_number, true);
 	connection_->Info("Dropping packet %u", sequence_number);
     return false;
   }
+  // remove end and set padding bits
   packet->length -= padding_length;
   rtp_header->padding = 0;
   return true;

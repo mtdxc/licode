@@ -11,17 +11,18 @@ constexpr duration QualityManager::kActiveLayerInterval;
 constexpr float QualityManager::kIncreaseLayerBitrateThreshold;
 
 QualityManager::QualityManager(std::shared_ptr<Clock> the_clock)
-  : initialized_{false}, last_quality_check_{the_clock->now()},
-  last_activity_check_{the_clock->now()}, clock_{the_clock} {}
+  : initialized_{false}, clock_{the_clock} {
+  last_quality_check_ = last_activity_check_ = the_clock->now();
+}
 
 void QualityManager::enable() {
-  ELOG_DEBUG("message: Enabling QualityManager");
+  ELOG_DEBUG("Enabling QualityManager");
   enabled_ = true;
   setPadding(true);
 }
 
 void QualityManager::disable() {
-  ELOG_DEBUG("message: Disabling QualityManager");
+  ELOG_DEBUG("Disabling QualityManager");
   enabled_ = false;
   setPadding(false);
 }
@@ -49,24 +50,27 @@ void QualityManager::notifyQualityUpdate() {
   if (forced_layers_) {
     return;
   }
-  time_point now = clock_->now();
-  current_estimated_bitrate_ = stats_->getNode()["total"]["senderBitrateEstimation"].value();
-  uint64_t current_layer_instant_bitrate = getInstantLayerBitrate(spatial_layer_, temporal_layer_);
-  bool estimated_is_under_layer_bitrate = current_estimated_bitrate_ < current_layer_instant_bitrate;
 
+  // 根据带宽自动检测layer
+  time_point now = clock_->now();
   if (now - last_activity_check_ > kActiveLayerInterval) {
     calculateMaxActiveLayer();
     last_activity_check_ = now;
   }
-
+  // 当前层还在发送
   bool layer_is_active = spatial_layer_ <= max_active_spatial_layer_;
 
+  current_estimated_bitrate_ = stats_->getNode()["total"]["senderBitrateEstimation"].value();
+  uint64_t current_layer_instant_bitrate = getInstantLayerBitrate(spatial_layer_, temporal_layer_);
+  bool estimated_is_under_layer_bitrate = current_estimated_bitrate_ < current_layer_instant_bitrate;
+
   if (!layer_is_active || (estimated_is_under_layer_bitrate && !slideshow_mode_active_)) {
-    ELOG_DEBUG("message: Forcing calculate new layer, "
-        "estimated_is_under_layer_bitrate: %d, layer_is_active: %d", estimated_is_under_layer_bitrate,
-        layer_is_active);
+    ELOG_DEBUG("Forcing calculate new layer, estimated_is_under_layer_bitrate: %d, layer_is_active: %d", 
+      estimated_is_under_layer_bitrate, layer_is_active);
+    // switch down layer
     selectLayer(false);
   } else if (now - last_quality_check_ > kMinLayerSwitchInterval) {
+    // try to switch good layer
     selectLayer(true);
   }
 }
@@ -81,8 +85,9 @@ void QualityManager::selectLayer(bool try_higher_layers) {
   bool below_min_layer = true;
   ELOG_DEBUG("Calculate best layer with %lu, current layer %d/%d",
       current_estimated_bitrate_, spatial_layer_, temporal_layer_);
-  for (auto &spatial_layer_node : stats_->getNode()["qualityLayers"].getMap()) {
-    for (auto &temporal_layer_node : stats_->getNode()["qualityLayers"][spatial_layer_node.first.c_str()].getMap()) {
+  StatNode& qls = stats_->getNode()["qualityLayers"];
+  for (auto &spatial_layer_node : qls.getMap()) {
+    for (auto &temporal_layer_node : qls[spatial_layer_node.first].getMap()) {
      ELOG_DEBUG("Bitrate for layer %d/%d %lu",
          aux_spatial_layer, aux_temporal_layer, temporal_layer_node.second->value());
       if (temporal_layer_node.second->value() != 0 &&
@@ -109,7 +114,7 @@ void QualityManager::selectLayer(bool try_higher_layers) {
   }
 
   if (next_temporal_layer != temporal_layer_ || next_spatial_layer != spatial_layer_) {
-    ELOG_DEBUG("message: Layer Switch, current_layer: %d/%d, new_layer: %d/%d",
+    ELOG_DEBUG("Layer Switch, current_layer: %d/%d, new_layer: %d/%d",
         spatial_layer_, temporal_layer_, next_spatial_layer, next_temporal_layer);
     setTemporalLayer(next_temporal_layer);
     setSpatialLayer(next_spatial_layer);
@@ -117,7 +122,7 @@ void QualityManager::selectLayer(bool try_higher_layers) {
     // TODO(javier): should we wait for the actual spatial switch?
     // should we disable padding temporarily to avoid congestion (old padding + new bitrate)?
     setPadding(!isInMaxLayer());
-    ELOG_DEBUG("message: Is padding enabled, padding_enabled_: %d", padding_enabled_);
+    ELOG_DEBUG("Is padding enabled, padding_enabled_: %d", padding_enabled_);
   }
 }
 

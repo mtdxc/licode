@@ -27,7 +27,7 @@ class QualityManager: public Service, public std::enable_shared_from_this<Qualit
 
   void setSpatialLayer(int spatial_layer);
   void setTemporalLayer(int temporal_layer);
-
+  // 强制指定接收Layer
   void forceLayers(int spatial_layer, int temporal_layer);
 
   void notifyQualityUpdate();
@@ -46,6 +46,7 @@ class QualityManager: public Service, public std::enable_shared_from_this<Qualit
   bool initialized_ = false;
   bool enabled_ = false;
   bool padding_enabled_ = true;
+  // layer set by user in forceLayers func
   bool forced_layers_ = false;
   bool slideshow_mode_active_ = false;
   int spatial_layer_ = 0;

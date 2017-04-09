@@ -10,12 +10,7 @@ DEFINE_LOGGER(QualityFilterHandler, "rtp.QualityFilterHandler");
 constexpr duration kSwitchTimeout = std::chrono::seconds(3);
 
 QualityFilterHandler::QualityFilterHandler()
-  : connection_{nullptr}, enabled_{true}, initialized_{false},
-  receiving_multiple_ssrc_{false}, changing_spatial_layer_{false}, is_scalable_{false},
-  target_spatial_layer_{0},
-  future_spatial_layer_{-1}, target_temporal_layer_{0},
-  video_sink_ssrc_{0}, video_source_ssrc_{0}, last_ssrc_received_{0},
-  max_video_bw_{0}, last_timestamp_sent_{0}, timestamp_offset_{0}, time_change_started_{clock::now()} {}
+  : connection_{nullptr}, time_change_started_{clock::now()} {}
 
 void QualityFilterHandler::enable() {
   enabled_ = true;
@@ -51,7 +46,6 @@ void QualityFilterHandler::checkLayers() {
   if (new_spatial_layer != target_spatial_layer_) {
     sendPLI();
     future_spatial_layer_ = new_spatial_layer;
-    changing_spatial_layer_ = true;
     time_change_started_ = clock::now();
   }
   int new_temporal_layer = quality_manager_->getTemporalLayer();
@@ -61,9 +55,9 @@ void QualityFilterHandler::checkLayers() {
 bool QualityFilterHandler::checkSSRCChange(uint32_t ssrc) {
   bool changed = false;
   if (last_ssrc_received_ != ssrc) {
+    last_ssrc_received_ = ssrc;
     changed = true;
   }
-  last_ssrc_received_ = ssrc;
   return changed;
 }
 
@@ -78,12 +72,14 @@ void QualityFilterHandler::changeSpatialLayerOnKeyframeReceived(packetPtr packet
 
   time_point now = clock::now();
 
-  if (packet->belongsToSpatialLayer(future_spatial_layer_) &&
-      packet->belongsToTemporalLayer(target_temporal_layer_) &&
-      packet->is_keyframe) {
+  if (packet->is_keyframe && 
+      packet->belongsToSpatialLayer(future_spatial_layer_) &&
+      packet->belongsToTemporalLayer(target_temporal_layer_)) {
+    // 遇到关键帧才切换spatial层
     target_spatial_layer_ = future_spatial_layer_;
     future_spatial_layer_ = -1;
   } else if (now - time_change_started_ > kSwitchTimeout) {
+    // 否则请求关键帧，并强制切换 why?
     sendPLI();
     target_spatial_layer_ = future_spatial_layer_;
     future_spatial_layer_ = -1;
@@ -94,6 +90,7 @@ void QualityFilterHandler::detectVideoScalability(packetPtr packet) {
   if (is_scalable_ || packet->type != VIDEO_PACKET) {
     return;
   }
+  // 0 0 基础层，2 layer or 2 temporal
   if (packet->belongsToTemporalLayer(1) || packet->belongsToSpatialLayer(1)) {
     is_scalable_ = true;
     quality_manager_->enable();
@@ -101,13 +98,12 @@ void QualityFilterHandler::detectVideoScalability(packetPtr packet) {
 }
 
 void QualityFilterHandler::write(Context *ctx, packetPtr packet) {
-  RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
 
   detectVideoScalability(packet);
 
-  if (is_scalable_ && !chead->isRtcp() && enabled_ && packet->type == VIDEO_PACKET) {
+  if (is_scalable_&& enabled_ && isVideoRtp(packet) ) {
     RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
-
+    // apply layer setting for QualityManager
     checkLayers();
 
     uint32_t ssrc = rtp_header->getSSRC();

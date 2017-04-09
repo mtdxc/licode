@@ -196,6 +196,10 @@ class RtpHeader {
   inline int getHeaderLength() const {
     return MIN_SIZE + cc * 4 + hasextension * (4 + ntohs(extensionlength) * 4);
   }
+  // add by caiqm
+  inline uint8_t* getPayloadPtr() {
+	  return ((uint8_t*)this) + getHeaderLength();
+  }
 };
 
 class AbsSendTimeExtension {
@@ -559,6 +563,9 @@ class RtcpHeader {
 // 快速判断帧类型
 inline bool isRtcpPacket(packetPtr ptr) {
   return ((RtcpHeader*)ptr->data)->isRtcp();
+}
+inline bool isVideoRtp(packetPtr ptr) {
+  return ptr->type == VIDEO_PACKET && !isRtcpPacket(ptr);
 }
 // 用于枚举多个RTCP复合包
 struct RtcpAccessor {

@@ -8,6 +8,7 @@
 static constexpr uint16_t kServicePacketBufferSize = 256;
 
 namespace erizo {
+
 class PacketBufferService: public Service {
  public:
   DECLARE_LOGGER();
