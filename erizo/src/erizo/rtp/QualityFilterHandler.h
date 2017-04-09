@@ -19,7 +19,6 @@ class WebRtcConnection;
 class QualityFilterHandler: public Handler, public std::enable_shared_from_this<QualityFilterHandler> {
   DECLARE_LOGGER();
 
-
  public:
   QualityFilterHandler();
 
@@ -46,20 +45,22 @@ class QualityFilterHandler: public Handler, public std::enable_shared_from_this<
   std::shared_ptr<QualityManager> quality_manager_;
   SequenceNumberTranslator translator_;
   WebRtcConnection *connection_;
-  bool enabled_;
-  bool initialized_;
-  bool receiving_multiple_ssrc_;
-  bool changing_spatial_layer_;
-  bool is_scalable_;
-  int target_spatial_layer_;
-  int future_spatial_layer_;
-  int target_temporal_layer_;
-  uint32_t video_sink_ssrc_;
-  uint32_t video_source_ssrc_;
-  uint32_t last_ssrc_received_;
-  uint32_t max_video_bw_;
-  uint32_t last_timestamp_sent_;
-  uint32_t timestamp_offset_;
+  bool enabled_ = true;
+  bool initialized_ = false;
+  bool receiving_multiple_ssrc_ = false;
+  bool is_scalable_ = false;
+
+  int target_spatial_layer_ = 0;
+  // 将切换的空间层id, 空间层必须等到关键帧后才可以切换,切换后此id就置为-1
+  int future_spatial_layer_ = -1;
+  int target_temporal_layer_ = 0;
+
+  uint32_t video_sink_ssrc_ = 0;
+  uint32_t video_source_ssrc_ = 0;
+  uint32_t last_ssrc_received_ = 0;
+  uint32_t max_video_bw_ = 0;
+  uint32_t last_timestamp_sent_ = 0;
+  uint32_t timestamp_offset_ = 0;
   time_point time_change_started_;
 };
 }  // namespace erizo

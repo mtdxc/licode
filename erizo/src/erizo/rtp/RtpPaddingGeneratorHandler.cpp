@@ -18,17 +18,12 @@ constexpr uint64_t kInitialBitrate = 300000;
 constexpr uint64_t kPaddingBurstSize = 255 * 10;
 
 RtpPaddingGeneratorHandler::RtpPaddingGeneratorHandler(std::shared_ptr<erizo::Clock> the_clock) :
-  clock_{the_clock}, connection_{nullptr}, max_video_bw_{0}, higher_sequence_number_{0},
-  video_sink_ssrc_{0}, audio_source_ssrc_{0},
-  number_of_full_padding_packets_{0}, last_padding_packet_size_{0},
-  last_rate_calculation_time_{clock_->now()}, started_at_{clock_->now()},
-  enabled_{false}, first_packet_received_{false},
+  clock_{the_clock}, connection_{nullptr}, 
   marker_rate_{std::chrono::milliseconds(100), 20, 1., clock_},
   rtp_header_length_{12},
-  bucket_{kInitialBitrate, kPaddingBurstSize, clock_},
-  scheduled_task_{-1} {}
-
-
+  bucket_{kInitialBitrate, kPaddingBurstSize, clock_}{
+  last_rate_calculation_time_ = started_at_ = clock_->now();
+}
 
 void RtpPaddingGeneratorHandler::enable() {
 }
@@ -48,7 +43,6 @@ void RtpPaddingGeneratorHandler::notifyUpdate() {
   }
 
   auto quality_manager = pipeline->getService<QualityManager>();
-
   if (quality_manager->isPaddingEnabled() != enabled_) {
     quality_manager->isPaddingEnabled()? enablePadding(): disablePadding();
   }
@@ -64,9 +58,8 @@ void RtpPaddingGeneratorHandler::read(Context *ctx, packetPtr packet) {
 }
 
 void RtpPaddingGeneratorHandler::write(Context *ctx, packetPtr packet) {
-  RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   bool is_higher_sequence_number = false;
-  if (packet->type == VIDEO_PACKET && !chead->isRtcp()) { // rtp video
+  if (isVideoRtp(packet)) { // rtp video
     connection_->getWorker()->unschedule(scheduled_task_);
     is_higher_sequence_number = isHigherSequenceNumber(packet);
     if (!first_packet_received_) {
@@ -96,7 +89,6 @@ void RtpPaddingGeneratorHandler::sendPaddingPacket(packetPtr packet, uint8_t pad
   auto padding_packet = RtpUtils::makePaddingPacket(packet, padding_size);
 
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(padding_packet->data);
-
   rtp_header->setSeqNumber(sequence_number.output);
   stats_->getNode()["total"]["paddingBitrate"] += padding_packet->length;
   getContext()->fireWrite(padding_packet);
@@ -104,16 +96,16 @@ void RtpPaddingGeneratorHandler::sendPaddingPacket(packetPtr packet, uint8_t pad
 
 void RtpPaddingGeneratorHandler::onPacketWithMarkerSet(packetPtr packet) {
   ++marker_rate_;
-
   for (uint i = 0; i < number_of_full_padding_packets_; i++) {
     sendPaddingPacket(packet, kMaxPaddingSize);
   }
   sendPaddingPacket(packet, last_padding_packet_size_);
+
   std::weak_ptr<RtpPaddingGeneratorHandler> weak_this = shared_from_this();
   scheduled_task_ = connection_->getWorker()->scheduleFromNow([packet, weak_this] {
     if (auto this_ptr = weak_this.lock()) {
       this_ptr->onPacketWithMarkerSet(packet);
-}
+    }
   }, std::chrono::milliseconds(1000 / kMinMarkerRate));
 }
 

@@ -51,20 +51,20 @@ class RtpPaddingGeneratorHandler: public Handler, public std::enable_shared_from
   SequenceNumberTranslator translator_;
   WebRtcConnection* connection_;
   std::shared_ptr<Stats> stats_;
-  uint64_t max_video_bw_;
-  uint16_t higher_sequence_number_;
-  uint32_t video_sink_ssrc_;
-  uint32_t audio_source_ssrc_;
-  uint64_t number_of_full_padding_packets_;
-  uint8_t last_padding_packet_size_;
+  uint64_t max_video_bw_ = 0;
+  uint16_t higher_sequence_number_ = 0;
+  uint32_t video_sink_ssrc_ = 0;
+  uint32_t audio_source_ssrc_ = 0;
+  uint64_t number_of_full_padding_packets_ = 0;
+  uint8_t last_padding_packet_size_ = 0;
   time_point last_rate_calculation_time_;
   time_point started_at_;
-  bool enabled_;
-  bool first_packet_received_;
+  bool enabled_ = false;
+  bool first_packet_received_ = false;
   MovingIntervalRateStat marker_rate_;
-  uint32_t rtp_header_length_;
+  uint32_t rtp_header_length_ = 12;
   TokenBucket bucket_;
-  int scheduled_task_;
+  int scheduled_task_ = -1;
 };
 
 }  // namespace erizo

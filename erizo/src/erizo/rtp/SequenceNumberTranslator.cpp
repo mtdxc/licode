@@ -76,11 +76,11 @@ SequenceNumber SequenceNumberTranslator::get(uint16_t input_sequence_number, boo
     add(SequenceNumber{input_sequence_number, output_sequence_number, type});
     updateLastOutputSequenceNumber(skip, output_sequence_number);
     if (!skip) {
-    last_input_sequence_number_ = input_sequence_number;
-    first_input_sequence_number_ = input_sequence_number;
-    initialized_ = true;
-    reset_ = false;
-    offset_ = 0;
+      last_input_sequence_number_ = input_sequence_number;
+      first_input_sequence_number_ = input_sequence_number;
+      initialized_ = true;
+      reset_ = false;
+      offset_ = 0;
     }
     return get(input_sequence_number);
   }

@@ -16,7 +16,6 @@ class WebRtcConnection;
 class RtpPaddingRemovalHandler: public Handler, public std::enable_shared_from_this<RtpPaddingRemovalHandler> {
   DECLARE_LOGGER();
 
-
  public:
   RtpPaddingRemovalHandler();
 
