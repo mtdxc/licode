@@ -6,6 +6,7 @@ var ST = require('./Stream');
 var config = require('./../../licode_config');
 var Permission = require('./permission');
 var Getopt = require('node-getopt');
+var iputils = require('./../common/iputils');
 
 // Configuration default values
 GLOBAL.config = config || {};
@@ -143,8 +144,6 @@ var LIMIT_N_ROOMS = GLOBAL.config.erizoController.limit_n_rooms; // jshint ignor
 
 var INTERVAL_TIME_KEEPALIVE = GLOBAL.config.erizoController.interval_time_keepAlive; // jshint ignore:line
 
-var BINDED_INTERFACE_NAME = GLOBAL.config.erizoController.networkInterface;
-
 var myId;
 /*
 socket{
@@ -195,31 +194,9 @@ var sendMsgToRoom = function (room, type, arg) {
 var publicIP;
 
 var addToCloudHandler = function (callback) {
-    var interfaces = require('os').networkInterfaces(),
-        addresses = [], address;
-    var k, k2;
-
-    for (k in interfaces) {
-        if (!GLOBAL.config.erizoController.networkinterface ||
-            GLOBAL.config.erizoController.networkinterface === k) {
-          if (interfaces.hasOwnProperty(k)) {
-              for (k2 in interfaces[k]) {
-                  if (interfaces[k].hasOwnProperty(k2)) {
-                      address = interfaces[k][k2];
-                      if (address.family === 'IPv4' && !address.internal) {
-                          if (k === BINDED_INTERFACE_NAME || !BINDED_INTERFACE_NAME) {
-                              addresses.push(address.address);
-                          }
-                      }
-                  }
-              }
-          }
-        }
-    }
-
     if (GLOBAL.config.erizoController.publicIP === '' ||
         GLOBAL.config.erizoController.publicIP === undefined){
-        publicIP = addresses[0];
+        publicIP = iputils.v4Addrs(GLOBAL.config.erizoController.networkInterface)[0];
     } else {
         publicIP = GLOBAL.config.erizoController.publicIP;
     }

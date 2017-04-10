@@ -3,6 +3,7 @@
 var Getopt = require('node-getopt');
 var spawn = require('child_process').spawn;
 var config = require('./../../licode_config');
+var iputils = require('./../common/iputils');
 
 // Configuration default values
 GLOBAL.config = config || {};
@@ -13,8 +14,6 @@ GLOBAL.config.erizoAgent.prerunProcesses =
 GLOBAL.config.erizoAgent.publicIP = GLOBAL.config.erizoAgent.publicIP || '';
 GLOBAL.config.erizoAgent.instanceLogDir = GLOBAL.config.erizoAgent.instanceLogDir || '.';
 GLOBAL.config.erizoAgent.useIndividualLogFiles = GLOBAL.config.erizoAgent.useIndividualLogFiles || false;
-
-var BINDED_INTERFACE_NAME = GLOBAL.config.erizoAgent.networkInterface;
 
 // Parse command line arguments
 var getopt = new Getopt([
@@ -30,11 +29,7 @@ var getopt = new Getopt([
 ]);
 
 
-var addresses = [],
-    k,
-    k2,
-    address,
-    privateIP,
+var privateIP,
     publicIP;
 
 var opt = getopt.parse(process.argv.slice(2));
@@ -242,48 +237,14 @@ var api = {
 };
 
 // check this
-try{
-  var interfaces = require('os').networkInterfaces();
-  for (k in interfaces) {
-    if (interfaces.hasOwnProperty(k)) {
-      if (!GLOBAL.config.erizoAgent.networkinterface ||
-          GLOBAL.config.erizoAgent.networkinterface === k) {
-        for (k2 in interfaces[k]) {
-            if (interfaces[k].hasOwnProperty(k2)) {
-                address = interfaces[k][k2];
-                if (address.family === 'IPv4' && !address.internal) {
-                    if (k === BINDED_INTERFACE_NAME || !BINDED_INTERFACE_NAME) {
-                        addresses.push(address.address);
-                    }
-                }
-            }
-        }
-      }
-    }
-  }
-} catch(err) {
-    log.error('message: networkInterfaces error');
-}
-
-privateIP = addresses[0];
+privateIP = iputils.v4Addrs(GLOBAL.config.erizoAgent.networkinterface)[0];
 
 if (GLOBAL.config.erizoAgent.publicIP === '' || GLOBAL.config.erizoAgent.publicIP === undefined) {
-    publicIP = addresses[0];
-
+    publicIP = privateIP;
     if (global.config.cloudProvider.name === 'amazon') {
-        var AWS = require('aws-sdk');
-        new AWS.MetadataService({
-            httpOptions: {
-                timeout: 5000
-            }
-        }).request('/latest/meta-data/public-ipv4', function(err, data) {
-            if (err) {
-                log.info('Error: ', err);
-            } else {
-                log.info('Got public ip: ', data);
-                publicIP = data;
-                fillErizos();
-            }
+        iputils.getAwsAddr(function(addr){
+            publicIP = data;
+            fillErizos();
         });
     } else {
         fillErizos();
