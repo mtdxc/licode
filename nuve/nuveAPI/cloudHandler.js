@@ -125,7 +125,7 @@ var addNewPrivateErizoController = function (ip, hostname, port, ssl, callback) 
     erizoControllerRegistry.addErizoController(erizoController, function (erizoController) {
         var id = erizoController._id;
         log.info('New erizocontroller (', id, ') in: ', erizoController.ip);
-        // publicIpºÍip²»Í¬,¹ÊÒâµÄÃ´£¿
+        // publicIpå’Œipä¸åŒ,æ•…æ„çš„ä¹ˆï¼Ÿ
         callback({id: id, publicIP: ip, hostname: hostname, port: port, ssl: ssl});
     });
 };
@@ -136,7 +136,7 @@ var addNewAmazonErizoController = function(privateIP, hostname, port, ssl, callb
     if (AWS === undefined) {
         AWS = require('aws-sdk');
     }
-    // µ÷ÓÃÑÇÂíÑ·µÄAPI½«ÄÚÍøµØÖ·»»³É¹«ÍøµØÖ·
+    // è°ƒç”¨äºšé©¬é€Šçš„APIå°†å†…ç½‘åœ°å€æ¢æˆå…¬ç½‘åœ°å€
     log.info('private ip ', privateIP);
     new AWS.MetadataService({
         httpOptions: {
@@ -168,7 +168,7 @@ exports.keepAlive = function (id, callback) {
     erizoControllerRegistry.getErizoController(id, function (erizoController) {
 
         if (erizoController) {
-          // ½«keepAliveÖµ¸Ä³É0
+          // å°†keepAliveå€¼æ”¹æˆ0
           erizoControllerRegistry.updateErizoController(id, {keepAlive: 0});
           result = 'ok';
           //log.info('KA: ', id);
@@ -242,7 +242,7 @@ var getErizoControllerForRoom = exports.getErizoControllerForRoom = function (ro
 exports.getUsersInRoom = function (roomId, callback) {
     roomRegistry.getRoom(roomId, function (room) {
         if (room && room.erizoControllerId) {
-        // ¹ÜroomËùÔÚµÄerizoController·¢ËÍgetUsersInRoom
+        // ç®¡roomæ‰€åœ¨çš„erizoControllerå‘é€getUsersInRoom
         var rpcID = 'erizoController_' + room.erizoControllerId;
         rpc.callRpc(rpcID, 'getUsersInRoom', [roomId], {'callback': function (users) {
             callback(users);
