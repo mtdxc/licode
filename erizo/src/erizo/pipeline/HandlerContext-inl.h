@@ -10,10 +10,9 @@
 #ifndef ERIZO_SRC_ERIZO_PIPELINE_HANDLERCONTEXT_INL_H_
 #define ERIZO_SRC_ERIZO_PIPELINE_HANDLERCONTEXT_INL_H_
 
-#include "./MediaDefinitions.h"
-
+#include "MediaDefinitions.h"
 namespace erizo {
-
+// export to Pipeline
 class PipelineContext {
  public:
   virtual ~PipelineContext() = default;
@@ -22,9 +21,9 @@ class PipelineContext {
   virtual void detachPipeline() = 0;
 
   virtual void notifyUpdate() = 0;
-  virtual std::string getName() = 0;
   virtual void enable() = 0;
   virtual void disable() = 0;
+  virtual std::string getName() = 0;
 
   template <class H, class HandlerContext>
   void attachContext(H* handler, HandlerContext* ctx) {
@@ -44,7 +43,7 @@ class PipelineContext {
 class InboundLink {
  public:
   virtual ~InboundLink() = default;
-  virtual void read(std::shared_ptr<dataPacket> packet) = 0;
+  virtual void read(packetPtr packet) = 0;
   virtual void readEOF() = 0;
   virtual void transportActive() = 0;
   virtual void transportInactive() = 0;
@@ -53,7 +52,7 @@ class InboundLink {
 class OutboundLink {
  public:
   virtual ~OutboundLink() = default;
-  virtual void write(std::shared_ptr<dataPacket> packet) = 0;
+  virtual void write(packetPtr packet) = 0;
   virtual void close() = 0;
 };
 
@@ -141,7 +140,13 @@ class ContextImplBase : public PipelineContext {
  private:
   bool attached_{false};
 };
-
+/*
+In Out类型的Context
+- fireXXX api 根据读写分别调用 InboundLink 和 OutboundLink，传递到下一个 Context
+- XXX(read) 方法传给handler_进行处理
+- Handle存有Context引用ctx，默认 XXX 方法实现就是调用 context 的 fireXXX 将数据传到下一Context
+子类重载 XXX 方法，可根据需要调用父类实现，将数据传到下一Context.
+*/
 template <class H>
 class ContextImpl
   : public HandlerContext,
@@ -165,8 +170,8 @@ class ContextImpl
 
   ~ContextImpl() = default;
 
-  // HandlerContext overrides
-  void fireRead(std::shared_ptr<dataPacket> packet) override {
+  // HandlerContext overrides (call next In/Out)
+  void fireRead(packetPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     if (this->nextIn_) {
       this->nextIn_->read(std::move(packet));
@@ -194,7 +199,7 @@ class ContextImpl
     }
   }
 
-  void fireWrite(std::shared_ptr<dataPacket> packet) override {
+  void fireWrite(packetPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     if (this->nextOut_) {
       this->nextOut_->write(std::move(packet));
@@ -216,8 +221,8 @@ class ContextImpl
     return this->pipelineWeak_.lock();
   }
 
-  // InboundLink overrides
-  void read(std::shared_ptr<dataPacket> packet) override {
+  // InboundLink overrides (call handler_)
+  void read(packetPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     this->handler_->read(this, std::move(packet));
   }
@@ -238,7 +243,7 @@ class ContextImpl
   }
 
   // OutboundLink overrides
-  void write(std::shared_ptr<dataPacket> packet) override {
+  void write(packetPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     this->handler_->write(this, std::move(packet));
   }
@@ -255,7 +260,7 @@ class InboundContextImpl
     public InboundLink,
     public ContextImplBase<H, InboundHandlerContext> {
  public:
-  static const HandlerDir dir = HandlerDir::IN;
+  static const HandlerDir dir = HandlerDir::In;
 
   explicit InboundContextImpl(
       std::weak_ptr<PipelineBase> pipeline,
@@ -272,7 +277,7 @@ class InboundContextImpl
   ~InboundContextImpl() = default;
 
   // InboundHandlerContext overrides
-  void fireRead(std::shared_ptr<dataPacket> packet) override {
+  void fireRead(packetPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     if (this->nextIn_) {
       this->nextIn_->read(std::move(packet));
@@ -309,7 +314,7 @@ class InboundContextImpl
   }
 
   // InboundLink overrides
-  void read(std::shared_ptr<dataPacket> packet) override {
+  void read(packetPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     this->handler_->read(this, std::move(packet));
   }
@@ -336,7 +341,7 @@ class OutboundContextImpl
     public OutboundLink,
     public ContextImplBase<H, OutboundHandlerContext> {
  public:
-  static const HandlerDir dir = HandlerDir::OUT;
+  static const HandlerDir dir = HandlerDir::Out;
 
   explicit OutboundContextImpl(
       std::weak_ptr<PipelineBase> pipeline,
@@ -353,7 +358,7 @@ class OutboundContextImpl
   ~OutboundContextImpl() = default;
 
   // OutboundHandlerContext overrides
-  void fireWrite(std::shared_ptr<dataPacket> packet) override {
+  void fireWrite(packetPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     if (this->nextOut_) {
       return this->nextOut_->write(std::move(packet));
@@ -376,7 +381,7 @@ class OutboundContextImpl
   }
 
   // OutboundLink overrides
-  void write(std::shared_ptr<dataPacket> packet) override {
+  void write(packetPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     return this->handler_->write(this, std::move(packet));
   }
@@ -393,7 +398,7 @@ struct ContextType {
     Handler::dir == HandlerDir::BOTH,
     ContextImpl<Handler>,
     typename std::conditional<
-      Handler::dir == HandlerDir::IN,
+      Handler::dir == HandlerDir::In,
       InboundContextImpl<Handler>,
       OutboundContextImpl<Handler>
     >::type>::type

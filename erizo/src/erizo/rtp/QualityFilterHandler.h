@@ -6,7 +6,7 @@
 #include <random>
 #include <map>
 
-#include "./logger.h"
+#include "logger.h"
 #include "lib/Clock.h"
 #include "pipeline/Handler.h"
 #include "rtp/SequenceNumberTranslator.h"
@@ -30,18 +30,18 @@ class QualityFilterHandler: public Handler, public std::enable_shared_from_this<
      return "quality_filter";
   }
 
-  void read(Context *ctx, std::shared_ptr<dataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:
   void sendPLI();
   void checkLayers();
-  void handleFeedbackPackets(const std::shared_ptr<dataPacket> &packet);
+  void handleFeedbackPackets(packetPtr packet);
   bool checkSSRCChange(uint32_t ssrc);
-  void changeSpatialLayerOnKeyframeReceived(const std::shared_ptr<dataPacket> &packet);
-  void detectVideoScalability(const std::shared_ptr<dataPacket> &packet);
-  void updatePictureID(const std::shared_ptr<dataPacket> &packet);
+  void changeSpatialLayerOnKeyframeReceived(packetPtr packet);
+  void detectVideoScalability(packetPtr packet);
+  void updatePictureID(packetPtr packet);
 
  private:
   std::shared_ptr<QualityManager> quality_manager_;

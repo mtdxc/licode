@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "./logger.h"
+#include "logger.h"
 #include "pipeline/Handler.h"
 #include "thread/Worker.h"
 #include "lib/Clock.h"
@@ -29,8 +29,8 @@ class PliPacerHandler: public Handler, public std::enable_shared_from_this<PliPa
     return "pli-pacer";
   }
 
-  void read(Context *ctx, std::shared_ptr<dataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:

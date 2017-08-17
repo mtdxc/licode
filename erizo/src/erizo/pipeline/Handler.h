@@ -14,8 +14,7 @@
 #include <string>
 
 #include "pipeline/Pipeline.h"
-#include "./MediaDefinitions.h"
-
+#include "MediaDefinitions.h"
 namespace erizo {
 
 template <class Context>
@@ -35,7 +34,7 @@ class HandlerBase {
   }
 
  private:
-  friend PipelineContext;
+   friend class PipelineContext;
   uint64_t attachCount_{0};
   Context* ctx_{nullptr};
 };
@@ -47,11 +46,15 @@ class Handler : public HandlerBase<HandlerContext> {
   typedef HandlerContext Context;
   virtual ~Handler() = default;
 
+  // common
   virtual void enable() = 0;
   virtual void disable() = 0;
+  virtual void notifyUpdate() = 0;
+
   virtual std::string getName() = 0;
 
-  virtual void read(Context* ctx, std::shared_ptr<dataPacket> packet) = 0;
+  // InBound
+  virtual void read(Context* ctx, packetPtr packet) = 0;
   virtual void readEOF(Context* ctx) {
     ctx->fireReadEOF();
   }
@@ -62,27 +65,27 @@ class Handler : public HandlerBase<HandlerContext> {
     ctx->fireTransportInactive();
   }
 
-  virtual void write(Context* ctx, std::shared_ptr<dataPacket> packet) = 0;
+  // OutBound
+  virtual void write(Context* ctx, packetPtr packet) = 0;
   virtual void close(Context* ctx) {
     return ctx->fireClose();
   }
-
-  virtual void notifyUpdate() = 0;
 };
 
 class InboundHandler : public HandlerBase<InboundHandlerContext> {
  public:
-  static const HandlerDir dir = HandlerDir::IN;
+  static const HandlerDir dir = HandlerDir::In;
 
   typedef InboundHandlerContext Context;
   virtual ~InboundHandler() = default;
 
   virtual void enable() = 0;
   virtual void disable() = 0;
+  virtual void notifyUpdate() = 0;
 
   virtual std::string getName() = 0;
 
-  virtual void read(Context* ctx, std::shared_ptr<dataPacket> packet) = 0;
+  virtual void read(Context* ctx, packetPtr packet) = 0;
   virtual void readEOF(Context* ctx) {
     ctx->fireReadEOF();
   }
@@ -93,29 +96,29 @@ class InboundHandler : public HandlerBase<InboundHandlerContext> {
     ctx->fireTransportInactive();
   }
 
-  virtual void notifyUpdate() = 0;
 };
 
 class OutboundHandler : public HandlerBase<OutboundHandlerContext> {
  public:
-  static const HandlerDir dir = HandlerDir::OUT;
+  static const HandlerDir dir = HandlerDir::Out;
 
   typedef OutboundHandlerContext Context;
   virtual ~OutboundHandler() = default;
 
   virtual void enable() = 0;
   virtual void disable() = 0;
+  virtual void notifyUpdate() = 0;
 
   virtual std::string getName() = 0;
 
-  virtual void write(Context* ctx, std::shared_ptr<dataPacket> packet) = 0;
+  virtual void write(Context* ctx, packetPtr packet) = 0;
   virtual void close(Context* ctx) {
     return ctx->fireClose();
   }
 
-  virtual void notifyUpdate() = 0;
 };
 
+// bypass handler
 class HandlerAdapter : public Handler {
  public:
   typedef typename Handler::Context Context;
@@ -130,11 +133,11 @@ class HandlerAdapter : public Handler {
     return "adapter";
   }
 
-  void read(Context* ctx, std::shared_ptr<dataPacket> packet) override {
+  void read(Context* ctx, packetPtr packet) override {
     ctx->fireRead(std::move(packet));
   }
 
-  void write(Context* ctx, std::shared_ptr<dataPacket> packet) override {
+  void write(Context* ctx, packetPtr packet) override {
     return ctx->fireWrite(std::move(packet));
   }
 

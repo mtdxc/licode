@@ -30,7 +30,11 @@ void Observer::start() {
 	while (true) {
 		pc_->OnHangingGetConnect();
 		pc_->OnHangingGetRead();
-		sleep(1);
+#ifdef WIN32
+    Sleep(1);
+#else
+    sleep(1);
+#endif
 	}
 }
 

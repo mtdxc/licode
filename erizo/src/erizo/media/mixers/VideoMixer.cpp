@@ -4,7 +4,7 @@
 #include "media/mixers/VideoMixer.h"
 
 #include "media/mixers/VideoUtils.h"
-#include "./WebRtcConnection.h"
+#include "WebRtcConnection.h"
 
 namespace erizo {
 DEFINE_LOGGER(VideoMixer, "media.mixers.VideoMixer");
@@ -38,11 +38,11 @@ VideoMixer::~VideoMixer() {
   delete op; op = NULL;
 }
 
-int VideoMixer::deliverAudioData_(std::shared_ptr<dataPacket> audio_packet) {
+int VideoMixer::deliverAudioData_(packetPtr audio_packet) {
   return 0;
 }
 
-int VideoMixer::deliverVideoData_(std::shared_ptr<dataPacket> video_packet) {
+int VideoMixer::deliverVideoData_(packetPtr video_packet) {
   return 0;
 }
 

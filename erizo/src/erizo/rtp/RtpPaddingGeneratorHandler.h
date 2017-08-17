@@ -3,13 +3,13 @@
 
 #include <string>
 
-#include "./logger.h"
+#include "logger.h"
 #include "pipeline/Handler.h"
 #include "lib/Clock.h"
 #include "lib/TokenBucket.h"
 #include "thread/Worker.h"
 #include "rtp/SequenceNumberTranslator.h"
-#include "./Stats.h"
+#include "Stats.h"
 
 namespace erizo {
 
@@ -28,15 +28,15 @@ class RtpPaddingGeneratorHandler: public Handler, public std::enable_shared_from
     return "padding-generator";
   }
 
-  void read(Context *ctx, std::shared_ptr<dataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:
-  void sendPaddingPacket(std::shared_ptr<dataPacket> packet, uint8_t padding_size);
-  void onPacketWithMarkerSet(std::shared_ptr<dataPacket> packet);
-  bool isHigherSequenceNumber(std::shared_ptr<dataPacket> packet);
-  void onVideoPacket(std::shared_ptr<dataPacket> packet);
+  void sendPaddingPacket(packetPtr packet, uint8_t padding_size);
+  void onPacketWithMarkerSet(packetPtr packet);
+  bool isHigherSequenceNumber(packetPtr packet);
+  void onVideoPacket(packetPtr packet);
 
   uint64_t getStat(std::string stat_name);
   uint64_t getTargetBitrate();

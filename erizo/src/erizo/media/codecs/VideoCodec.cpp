@@ -1,8 +1,16 @@
 /**
  * VideoCodec.pp
  */
-#include "media/codecs/VideoCodec.h"
-
+#include "logger.h"
+#include "VideoCodec.h"
+extern "C" {
+#ifndef INT64_C
+#define INT64_C(c) (c ## LL)
+#define UINT64_C(c) (c ## ULL)
+#endif
+#include <libavutil/avutil.h>
+#include <libavcodec/avcodec.h>
+}
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -63,10 +71,10 @@ int VideoEncoder::initEncoder(const VideoCodecInfo& info) {
 
   vCoderContext->width = info.width;
   vCoderContext->height = info.height;
-  vCoderContext->pix_fmt = PIX_FMT_YUV420P;
-  vCoderContext->time_base = (AVRational) {1, 90000};
+  vCoderContext->pix_fmt = AV_PIX_FMT_YUV420P;
+  vCoderContext->time_base = {1, 90000};
 
-  vCoderContext->sample_aspect_ratio = (AVRational) { info.width, info.height };
+  vCoderContext->sample_aspect_ratio = { info.width, info.height };
   vCoderContext->thread_count = 4;
 
   if (avcodec_open2(vCoderContext, vCoder, NULL) < 0) {

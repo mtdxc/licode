@@ -8,7 +8,6 @@
 
 #include "Stats.h"
 #include "WebRtcConnection.h"
-#include "lib/ClockUtils.h"
 
 namespace erizo {
 

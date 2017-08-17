@@ -11,7 +11,6 @@ extern "C" {
 #include <ice_ctx.h>
 }
 
-#include <boost/thread.hpp>
 #include <string>
 #include <vector>
 #include <queue>
@@ -19,13 +18,13 @@ extern "C" {
 #include <mutex>  // NOLINT
 #include <future>  // NOLINT
 
-#include "./MediaDefinitions.h"
-#include "./SdpInfo.h"
-#include "./logger.h"
-#include "./IceConnection.h"
+#include "MediaDefinitions.h"
+#include "SdpInfo.h"
+#include "logger.h"
+#include "IceConnection.h"
 #include "lib/NicerInterface.h"
-#include "./thread/Worker.h"
-#include "./thread/IOWorker.h"
+#include "thread/Worker.h"
+#include "thread/IOWorker.h"
 
 namespace erizo {
 
@@ -73,7 +72,7 @@ class NicerConnection : public IceConnection, public std::enable_shared_from_thi
   void startChecking();
   void startSync();
   void closeSync();
-  void async(function<void()> f);
+  void async(std::function<void()> f);
   void setRemoteCredentialsSync(const std::string& username, const std::string& password);
 
   static void gather_callback(NR_SOCKET s, int h, void *arg);  // ICE gather complete

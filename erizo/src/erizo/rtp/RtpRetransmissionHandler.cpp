@@ -1,8 +1,9 @@
-#include "rtp/RtpRetransmissionHandler.h"
-
 #include <algorithm>
-
+#include "rtp/RtpRetransmissionHandler.h"
+#include "rtp/PacketBufferService.h"
+#include "WebRtcConnection.h"
 #include "rtp/RtpUtils.h"
+#include "Stats.h"
 
 namespace erizo {
 
@@ -35,7 +36,7 @@ void RtpRetransmissionHandler::notifyUpdate() {
     if (stats_ && packet_buffer_) {
       initialized_ = true;
     }
-  }
+}
 }
 
 MovingIntervalRateStat& RtpRetransmissionHandler::getRtxBitrateStat() {
@@ -61,7 +62,7 @@ void RtpRetransmissionHandler::calculateRtxBitrate() {
   }
 }
 
-void RtpRetransmissionHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtpRetransmissionHandler::read(Context *ctx, packetPtr packet) {
   if (!enabled_ || !initialized_) {
     return;
   }
@@ -69,13 +70,15 @@ void RtpRetransmissionHandler::read(Context *ctx, std::shared_ptr<dataPacket> pa
 
   bool contains_nack = false;
   bool is_fully_recovered = true;
-
-  RtpUtils::forEachRRBlock(packet, [this, &contains_nack, &is_fully_recovered](RtcpHeader *chead) {
+  RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (packet->data);
+  if (chead->isRtcp() && chead->isFeedback()) {
+    RtcpAccessor acsor(packet);
+    while (chead = acsor.nextRtcp())
+    {
     if (chead->packettype == RTCP_RTP_Feedback_PT) {
       contains_nack = true;
 
-      RtpUtils::forEachNack(chead, [this, chead, &is_fully_recovered](uint16_t new_seq_num,
-         uint16_t new_plb, RtcpHeader* nack_head) {
+      RtpUtils::forEachNack(chead, [this, chead, &is_fully_recovered](uint16_t new_seq_num, uint16_t new_plb, RtcpHeader* hdr) {
         uint16_t initial_seq_num = new_seq_num;
         uint16_t plb = new_plb;
 
@@ -85,10 +88,10 @@ void RtpRetransmissionHandler::read(Context *ctx, std::shared_ptr<dataPacket> pa
 
           if (packet_nacked) {
           std::shared_ptr<dataPacket> recovered;
-
           if (connection_->getVideoSinkSSRC() == chead->getSourceSSRC()) {
             recovered = packet_buffer_->getVideoPacket(seq_num);
-          } else if (connection_->getAudioSinkSSRC() == chead->getSourceSSRC()) {
+				}
+				else if (connection_->getAudioSinkSSRC() == chead->getSourceSSRC()) {
             recovered = packet_buffer_->getAudioPacket(seq_num);
           }
 
@@ -109,13 +112,14 @@ void RtpRetransmissionHandler::read(Context *ctx, std::shared_ptr<dataPacket> pa
         }
       });
     }
-  });
+    }
+  }
   if (!contains_nack || !is_fully_recovered) {
     ctx->fireRead(std::move(packet));
   }
 }
 
-void RtpRetransmissionHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtpRetransmissionHandler::write(Context *ctx, packetPtr packet) {
   if (!initialized_) {
     return;
   }

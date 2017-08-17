@@ -15,7 +15,7 @@
 
 #include "pipeline/HandlerContext.h"
 #include "pipeline/ServiceContext.h"
-#include "./MediaDefinitions.h"
+#include "MediaDefinitions.h"
 
 namespace erizo {
 
@@ -65,9 +65,11 @@ class PipelineBase : public std::enable_shared_from_this<PipelineBase> {
   template <class H>
   PipelineBase& addFront(H* handler);
 
+  // remove a Handler
   template <class H>
   PipelineBase& remove(H* handler);
 
+  // remove all Handler which type is H
   template <class H>
   PipelineBase& remove();
 
@@ -75,15 +77,21 @@ class PipelineBase : public std::enable_shared_from_this<PipelineBase> {
 
   PipelineBase& removeBack();
 
+  // getContext(i)->getHandler();
   template <class H>
   H* getHandler(int i);
 
+  /*
+  return first Handler of type H
+  getContext<H>()->getHandler();
+  */
   template <class H>
   H* getHandler();
 
   template <class H>
   typename ContextType<H>::type* getContext(int i);
 
+  // 利用dynamic_cast, 返回第一个包含Handler类型为H的Context
   template <class H>
   typename ContextType<H>::type* getContext();
 
@@ -119,10 +127,18 @@ class PipelineBase : public std::enable_shared_from_this<PipelineBase> {
   void addContextFront(Context* ctx);
 
   void detachHandlers();
-
-  std::vector<std::shared_ptr<PipelineContext>> ctxs_;
-  std::vector<PipelineContext*> inCtxs_;
-  std::vector<PipelineContext*> outCtxs_;
+  /*
+  - Context是内部上下文衔接类， 有in,out和Both三个方向类型，主要有 nextIn，nextOut 和 Handler 成员, Context的
+    - fireXXX (read) -> nextIn
+    - fireXXX (write) -> nextOut
+    - XXX (read/write) -> Handler
+  - Handler的 xxx 方法默认实现调用本 context 的 fireXXX，将数据传送到 下一个Context
+  - Handler子类必须重载XXX方法加入自己逻辑，处理完毕后根据传递需要来调用父类方法.
+  - Pipeline根据方向管理这两条Context链表，对外提供 Handler 和 Service 类
+  */
+  std::vector<std::shared_ptr<PipelineContext>> ctxs_; ///< 管理生存期
+  std::vector<PipelineContext*> inCtxs_; ///< in或Both链表
+  std::vector<PipelineContext*> outCtxs_;///< out或Both链表
 
   std::vector<std::shared_ptr<PipelineServiceContext>> service_ctxs_;
 
@@ -161,18 +177,15 @@ class Pipeline : public PipelineBase {
 
   ~Pipeline();
 
-  void read(std::shared_ptr<dataPacket> packet);
-
+  void read(packetPtr packet);
   void readEOF();
-
   void transportActive();
-
   void transportInactive();
 
-  void write(std::shared_ptr<dataPacket> packet);
-
+  void write(packetPtr packet);
   void close();
 
+  // 将所有in，out以头尾链表方式链起来，并触发attachPipeline回调
   void finalize() override;
 
   void notifyUpdate();

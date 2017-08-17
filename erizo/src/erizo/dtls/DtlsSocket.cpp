@@ -1,26 +1,72 @@
 #include "dtls/DtlsSocket.h"
+extern "C" {
+#ifdef WIN32
+#include <time.h>
+#include <stdint.h>
+#include <winsock2.h>
+#endif
+}
+#include <srtp.h>
+#include <openssl/opensslv.h>
+#include <openssl/e_os2.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/crypto.h>
+#include <openssl/ssl.h>
 
 #include <iostream>
 #include <cassert>
 #include <cstring>
 #include <string>
-#include "./bf_dwrap.h"
+#include "bf_dwrap.h"
 
-using dtls::DtlsSocket;
-using dtls::SrtpSessionKeys;
-using std::memcpy;
+#ifdef WIN32
+extern "C" {
+int gettimeofday(struct timeval* tv, struct timezone* tz)
+{
+  time_t clock;
+  struct tm tm;
+  SYSTEMTIME win_time;
 
-DEFINE_LOGGER(DtlsSocket, "dtls.DtlsSocket");
+  GetLocalTime(&win_time);
 
+  tm.tm_year = win_time.wYear - 1900;
+  tm.tm_mon = win_time.wMonth - 1;
+  tm.tm_mday = win_time.wDay;
+  tm.tm_hour = win_time.wHour;
+  tm.tm_min = win_time.wMinute;
+  tm.tm_sec = win_time.wSecond;
+  tm.tm_isdst = -1;
+
+  clock = mktime(&tm);
+
+  tv->tv_sec = (long)clock;
+  tv->tv_usec = win_time.wMilliseconds * 1000;
+
+  return 0;
+}
+
+int usleep(int64_t usec)
+{
+  Sleep((DWORD)(usec / 1000));
+  return 0;
+}
+}
+#endif
+
+namespace dtls
+{
 int dummy_cb(int d, X509_STORE_CTX *x) {
   return 1;
 }
 
-DtlsSocket::DtlsSocket(DtlsSocketContext* socketContext, enum SocketType type):
+DEFINE_LOGGER(DtlsSocket, "dtls.DtlsSocket");
+
+DtlsSocket::DtlsSocket(DtlsSocketContext* socketContext, SocketType type):
               mSocketContext(socketContext),
               mSocketType(type),
               mHandshakeCompleted(false) {
-  ELOG_DEBUG("Creating Dtls Socket");
+  ELOG_DEBUG("Creating Dtls Socket %p", this);
   mSocketContext->setDtlsSocket(this);
   SSL_CTX* mContext = mSocketContext->getSSLContext();
   assert(mContext);
@@ -33,8 +79,7 @@ DtlsSocket::DtlsSocket(DtlsSocketContext* socketContext, enum SocketType type):
   switch (type) {
     case Client:
       SSL_set_connect_state(mSsl);
-      // SSL_set_mode(mSsl, SSL_MODE_ENABLE_PARTIAL_WRITE |
-      //         SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+      // SSL_set_mode(mSsl, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
       break;
     case Server:
       SSL_set_accept_state(mSsl);
@@ -53,7 +98,7 @@ DtlsSocket::DtlsSocket(DtlsSocketContext* socketContext, enum SocketType type):
 
   SSL_set_bio(mSsl, mInBio, mOutBio);
   SSL_accept(mSsl);
-  ELOG_DEBUG("Dtls Socket created");
+  ELOG_DEBUG("Dtls Socket created %p", this);
 }
 
 DtlsSocket::~DtlsSocket() {
@@ -81,7 +126,6 @@ bool DtlsSocket::handlePacketMaybe(const unsigned char* bytes, unsigned int len)
     return false;
   }
   DtlsSocketContext::PacketType pType = DtlsSocketContext::demuxPacket(bytes, len);
-
   if (pType != DtlsSocketContext::dtls) {
     return false;
   }
@@ -99,7 +143,7 @@ bool DtlsSocket::handlePacketMaybe(const unsigned char* bytes, unsigned int len)
   // Note: we must catch any below exceptions--if there are any
   try {
     doHandshakeIteration();
-  } catch (int e) {
+  } catch (...) {
     return false;
   }
   return true;
@@ -114,18 +158,13 @@ void DtlsSocket::forceRetransmit() {
 }
 
 void DtlsSocket::doHandshakeIteration() {
-  boost::mutex::scoped_lock lock(handshakeMutex_);
-  char errbuf[1024];
-  int sslerr;
-
+  std::lock_guard<std::mutex> lock(handshakeMutex_);
   if (mHandshakeCompleted)
-  return;
+    return;
 
   int r = SSL_do_handshake(mSsl);
-  errbuf[0] = 0;
-  ERR_error_string_n(ERR_peek_error(), errbuf, sizeof(errbuf));
 
-  // See what was written
+  // See what was need to written
   unsigned char *outBioData;
   int outBioLen = BIO_get_mem_data(mOutBio, &outBioData);
   if (outBioLen > DTLS_MTU) {
@@ -134,7 +173,7 @@ void DtlsSocket::doHandshakeIteration() {
   }
 
   // Now handle handshake errors */
-  switch (sslerr = SSL_get_error(mSsl, r)) {
+  switch (int sslerr = SSL_get_error(mSsl, r)) {
     case SSL_ERROR_NONE:
       mHandshakeCompleted = true;
       mSocketContext->handshakeCompleted();
@@ -142,11 +181,14 @@ void DtlsSocket::doHandshakeIteration() {
     case SSL_ERROR_WANT_READ:
       break;
     default:
-      ELOG_ERROR("SSL error %d", sslerr);
-
+    {
+      char errbuf[1024] = { 0 };
+      ERR_error_string_n(sslerr, errbuf, sizeof(errbuf));
+      ELOG_ERROR("SSL error %d:%s", sslerr, errbuf);
       mSocketContext->handshakeFailed(errbuf);
       // Note: need to fall through to propagate alerts, if any
       break;
+    }
   }
 
   // If mOutBio is now nonzero-length, then we need to write the
@@ -168,8 +210,7 @@ bool DtlsSocket::getRemoteFingerprint(char *fprint) {
 }
 
 bool DtlsSocket::checkFingerprint(const char* fingerprint, unsigned int len) {
-  char fprint[100];
-
+  char fprint[100] = {0};
   if (getRemoteFingerprint(fprint) == false) {
     return false;
   }
@@ -187,15 +228,13 @@ void DtlsSocket::getMyCertFingerprint(char *fingerprint) {
   mSocketContext->getMyCertFingerprint(fingerprint);
 }
 
-SrtpSessionKeys* DtlsSocket::getSrtpSessionKeys() {
+bool DtlsSocket::getSrtpSessionKeys(SrtpSessionKeys* keys) {
   // TODO(pedro): probably an exception candidate
   assert(mHandshakeCompleted);
-
-  SrtpSessionKeys* keys = new SrtpSessionKeys();
-
   unsigned char material[SRTP_MASTER_KEY_LEN << 1];
   if (!SSL_export_keying_material(mSsl, material, sizeof(material), "EXTRACTOR-dtls_srtp", 19, NULL, 0, 0)) {
-    return keys;
+    ELOG_WARN("SSL_export_keying_material error");
+    return false;
   }
 
   size_t offset = 0;
@@ -213,7 +252,7 @@ SrtpSessionKeys* DtlsSocket::getSrtpSessionKeys() {
   keys->clientMasterSaltLen = SRTP_MASTER_KEY_SALT_LEN;
   keys->serverMasterSaltLen = SRTP_MASTER_KEY_SALT_LEN;
 
-  return keys;
+  return true;
 }
 
 SRTP_PROTECTION_PROFILE* DtlsSocket::getSrtpProfile() {
@@ -225,11 +264,10 @@ SRTP_PROTECTION_PROFILE* DtlsSocket::getSrtpProfile() {
 // Fingerprint is assumed to be long enough
 void DtlsSocket::computeFingerprint(X509 *cert, char *fingerprint) {
   unsigned char md[EVP_MAX_MD_SIZE];
-  int r;
   unsigned int i, n;
 
   // r = X509_digest(cert, EVP_sha1(), md, &n);
-  r = X509_digest(cert, EVP_sha256(), md, &n);
+  int r = X509_digest(cert, EVP_sha256(), md, &n);
   // TODO(javier) - is sha1 vs sha256 supposed to come from DTLS handshake?
   // fixing to to SHA-256 for compatibility with current web-rtc implementations
   assert(r == 1);
@@ -239,9 +277,9 @@ void DtlsSocket::computeFingerprint(X509 *cert, char *fingerprint) {
     fingerprint += 2;
 
     if (i < (n-1))
-    *fingerprint++ = ':';
+      *fingerprint++ = ':';
     else
-    *fingerprint++ = 0;
+      *fingerprint++ = 0;
   }
 }
 
@@ -266,20 +304,21 @@ void DtlsSocket::createSrtpSessionPolicies(srtp_policy_t& outboundPolicy, srtp_p
   server_policy.window_size = 128;
   server_policy.allow_repeat_tx = 1;
 
-  SrtpSessionKeys* srtp_key = getSrtpSessionKeys();
+  SrtpSessionKeys srtp_key;
+  getSrtpSessionKeys(&srtp_key);
   /* set client_write key */
   client_policy.key = client_master_key_and_salt;
-  if (srtp_key->clientMasterKeyLen != key_len) {
+  if (srtp_key.clientMasterKeyLen != key_len) {
     ELOG_WARN("error: unexpected client key length");
     assert(0);
   }
-  if (srtp_key->clientMasterSaltLen != salt_len) {
+  if (srtp_key.clientMasterSaltLen != salt_len) {
     ELOG_WARN("error: unexpected client salt length");
     assert(0);
   }
 
-  memcpy(client_master_key_and_salt, srtp_key->clientMasterKey, key_len);
-  memcpy(client_master_key_and_salt + key_len, srtp_key->clientMasterSalt, salt_len);
+  memcpy(client_master_key_and_salt, srtp_key.clientMasterKey, key_len);
+  memcpy(client_master_key_and_salt + key_len, srtp_key.clientMasterSalt, salt_len);
 
   /* initialize client SRTP policy from profile  */
   srtp_err_status_t err = srtp_crypto_policy_set_from_profile_for_rtp(&client_policy.rtp, profile);
@@ -292,19 +331,17 @@ void DtlsSocket::createSrtpSessionPolicies(srtp_policy_t& outboundPolicy, srtp_p
   /* set server_write key */
   server_policy.key = server_master_key_and_salt;
 
-  if (srtp_key->serverMasterKeyLen != key_len) {
+  if (srtp_key.serverMasterKeyLen != key_len) {
     ELOG_WARN("error: unexpected server key length");
     assert(0);
   }
-  if (srtp_key->serverMasterSaltLen != salt_len) {
+  if (srtp_key.serverMasterSaltLen != salt_len) {
     ELOG_WARN("error: unexpected salt length");
     assert(0);
   }
 
-  memcpy(server_master_key_and_salt, srtp_key->serverMasterKey, key_len);
-  memcpy(server_master_key_and_salt + key_len, srtp_key->serverMasterSalt, salt_len);
-
-  delete srtp_key;
+  memcpy(server_master_key_and_salt, srtp_key.serverMasterKey, key_len);
+  memcpy(server_master_key_and_salt + key_len, srtp_key.serverMasterSalt, salt_len);
 
   /* initialize server SRTP policy from profile  */
   err = srtp_crypto_policy_set_from_profile_for_rtp(&server_policy.rtp, profile);
@@ -333,7 +370,7 @@ void DtlsSocket::createSrtpSessionPolicies(srtp_policy_t& outboundPolicy, srtp_p
   //    memset(server_master_key_and_salt, 0x00, SRTP_MAX_KEY_LEN);
   //    memset(&srtp_key, 0x00, sizeof(srtp_key));
 }
-
+}
   /* ====================================================================
 
   Copyright (c) 2007-2008, Eric Rescorla and Derek MacDonald

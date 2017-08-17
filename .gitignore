@@ -23,3 +23,4 @@ Release
 *.obj
 /third_party/ffmpeg
 rtp_media_config.js
+/erizo/src/third_party/ffmpeg

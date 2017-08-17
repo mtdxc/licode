@@ -4,8 +4,7 @@
 
 #include "rtp/RtcpAggregator.h"
 
-#include <boost/thread.hpp>
-#include <boost/lexical_cast.hpp>
+#include <webrtc/base/platform_thread.h>
 
 #include <list>
 #include <map>
@@ -13,11 +12,8 @@
 #include <string>
 #include <utility>
 #include <cstring>
-
+#include <algorithm>
 #include "lib/Clock.h"
-#include "lib/ClockUtils.h"
-
-using std::memcpy;
 
 namespace erizo {
 
@@ -29,71 +25,67 @@ RtcpAggregator::RtcpAggregator(MediaSink* msink, MediaSource* msource, uint32_t 
 }
 
 void RtcpAggregator::addSourceSsrc(uint32_t ssrc) {
-  boost::mutex::scoped_lock mlock(mapLock_);
+  std::lock_guard<std::mutex> mlock(mapLock_);
   if (rtcpData_.find(ssrc) == rtcpData_.end()) {
-    this->rtcpData_[ssrc] = boost::shared_ptr<RtcpData>(new RtcpData());
-    if (ssrc == this->rtcpSource_->getAudioSourceSSRC()) {
+    rtcpData_[ssrc] = RtcpDataPtr(new RtcpData());
+    if (ssrc == rtcpSource_->getAudioSourceSSRC()) {
       ELOG_DEBUG("It is an audio SSRC %u", ssrc);
-      this->rtcpData_[ssrc]->mediaType = AUDIO_TYPE;
+      rtcpData_[ssrc]->mediaType = AUDIO_TYPE;
     } else {
       ELOG_DEBUG("It is a video SSRC %u", ssrc);
-      this->rtcpData_[ssrc]->mediaType = VIDEO_TYPE;
+      rtcpData_[ssrc]->mediaType = VIDEO_TYPE;
     }
   }
 }
 
 void RtcpAggregator::setPublisherBW(uint32_t bandwidth) {
-  defaultVideoBw_ = (bandwidth*1.2) > max_video_bw_? max_video_bw_:(bandwidth*1.2);
+  defaultVideoBw_ = std::max((uint32_t)(bandwidth*1.2), max_video_bw_);
+}
+
+RtcpDataPtr RtcpAggregator::getRtcpData(int ssrc) {
+  std::lock_guard<std::mutex> mlock(mapLock_);
+  return rtcpData_[ssrc];
 }
 
 void RtcpAggregator::analyzeSr(RtcpHeader* chead) {
   uint32_t recvSSRC = chead->getSSRC();
   // We try to add it just in case it is not there yet (otherwise its noop)
-  this->addSourceSsrc(recvSSRC);
+  addSourceSsrc(recvSSRC);
+  RtcpDataPtr theData = getRtcpData(recvSSRC);
 
-  boost::mutex::scoped_lock mlock(mapLock_);
-  boost::shared_ptr<RtcpData> theData = rtcpData_[recvSSRC];
-  boost::mutex::scoped_lock lock(theData->dataLock);
-
-  uint64_t now = ClockUtils::timePointToMs(clock::now());
-  uint32_t ntp;
+  std::lock_guard<std::mutex> lock(theData->dataLock);
+  uint64_t now = ClockUtils::msNow();
   uint64_t theNTP = chead->getNtpTimestamp();
-  ntp = (theNTP & (0xFFFFFFFF0000)) >> 16;
-  theData->senderReports.push_back(boost::shared_ptr<SrDelayData>( new SrDelayData(ntp, now)));
+  uint32_t ntp = (theNTP & (0xFFFFFFFF0000)) >> 16;
+  theData->senderReports.push_back(SrDataPtr(new SrDelayData(ntp, now)));
   // We only store the last 20 sr
   if (theData->senderReports.size() > 20) {
     theData->senderReports.pop_front();
   }
 }
+
 int RtcpAggregator::analyzeFeedback(char *buf, int len) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(buf);
   if (chead->isFeedback()) {
-    if (chead->getBlockCount() == 0 && (chead->getLength()+1) * 4  == len) {
+    if (chead->getBlockCount() == 0 && chead->getPacketSize() == len) {
       ELOG_DEBUG("Ignoring empty RR");
       return 0;
     }
     uint32_t sourceSsrc = chead->getSourceSSRC();
     // We try to add it just in case it is not there yet (otherwise its noop)
-    this->addSourceSsrc(sourceSsrc);
+    addSourceSsrc(sourceSsrc);
+    RtcpDataPtr theData = getRtcpData(sourceSsrc);
 
-    boost::mutex::scoped_lock mlock(mapLock_);
-    boost::shared_ptr<RtcpData> theData = rtcpData_[sourceSsrc];
-    boost::mutex::scoped_lock lock(theData->dataLock);
-    uint64_t nowms = ClockUtils::timePointToMs(clock::now());
-    char* movingBuf = buf;
-    int rtcpLength = 0;
-    int totalLength = 0;
+    std::lock_guard<std::mutex> lock(theData->dataLock);
+    uint64_t nowms = ClockUtils::msNow();
     int partNum = 0;
     uint16_t currentNackPos = 0;
     uint16_t blp = 0;
     uint32_t lostPacketSeq = 0;
     uint32_t calculatedlsr, delay, calculateLastSr, extendedSeqNo;
-
-    do {
-      movingBuf += rtcpLength;
-      chead = reinterpret_cast<RtcpHeader*>(movingBuf);
-      rtcpLength = (ntohs(chead->length) + 1) * 4;
-      totalLength += rtcpLength;
+    RtcpAccessor access(buf, len);
+    while (chead = access.nextRtcp())
+    {
       switch (chead->packettype) {
         case RTCP_SDES_PT:
           ELOG_DEBUG("SDES");
@@ -112,10 +104,8 @@ int RtcpAggregator::analyzeFeedback(char *buf, int len) {
                         chead->getLostPackets(), chead->getFractionLost(), partNum, chead->getBlockCount(),
                         chead->getSourceSSRC(), chead->getSSRC());
           }
-          theData->ratioLost = theData->ratioLost > chead->getFractionLost() ?
-                                            theData->ratioLost : chead->getFractionLost();
-          theData->totalPacketsLost = theData->totalPacketsLost > chead->getLostPackets() ?
-                                            theData->totalPacketsLost : chead->getLostPackets();
+          theData->ratioLost = std::max(theData->ratioLost, (uint32_t)chead->getFractionLost());
+          theData->totalPacketsLost = std::max(theData->totalPacketsLost, chead->getLostPackets());
           extendedSeqNo = chead->getSeqnumCycles();
           extendedSeqNo = (extendedSeqNo << 16) + chead->getHighestSeqnum();
           if (extendedSeqNo > theData->extendedSeqNo) {
@@ -123,10 +113,10 @@ int RtcpAggregator::analyzeFeedback(char *buf, int len) {
             theData->highestSeqNumReceived = chead->getHighestSeqnum();
             theData->seqNumCycles = chead->getSeqnumCycles();
           }
-          theData->jitter = theData->jitter > chead->getJitter()? theData->jitter: chead->getJitter();
+          theData->jitter = std::max(theData->jitter, chead->getJitter());
           calculateLastSr = chead->getLastSr();
           calculatedlsr = (chead->getDelaySinceLastSr() * 1000) / 65536;
-          for (std::list<boost::shared_ptr<SrDelayData>>::iterator it = theData->senderReports.begin();
+          for (std::list<SrDataPtr>::iterator it = theData->senderReports.begin();
                         it != theData->senderReports.end(); ++it) {
             if ((*it)->sr_ntp == calculateLastSr) {
               uint64_t sentts = (*it)->sr_send_time;
@@ -158,10 +148,8 @@ int RtcpAggregator::analyzeFeedback(char *buf, int len) {
               ELOG_DEBUG("We received PID NACK for unacked packet %u", chead->getNackPid());
               theData->shouldSendNACK = true;
             } else {
-              if (theData->nackedPackets_.size() >= MAP_NACK_SIZE) {
-                while (theData->nackedPackets_.size() >= MAP_NACK_SIZE) {
-                  theData->nackedPackets_.erase(theData->nackedPackets_.begin());
-                }
+              while (theData->nackedPackets_.size() >= MAP_NACK_SIZE) {
+                theData->nackedPackets_.erase(theData->nackedPackets_.begin());
               }
               ELOG_DEBUG("We received PID NACK for ALREADY acked packet %u", chead->getNackPid());
             }
@@ -193,7 +181,7 @@ int RtcpAggregator::analyzeFeedback(char *buf, int len) {
           }
           break;
         case RTCP_PS_Feedback_PT:
-          //            ELOG_DEBUG("RTCP PS FB TYPE: %u", chead->getBlockCount() );
+          // ELOG_DEBUG("RTCP PS FB TYPE: %u", chead->getBlockCount() );
           switch (chead->getBlockCount()) {
             case RTCP_PLI_FMT:
               ELOG_DEBUG("PLI Message, partNum %d", partNum);
@@ -208,7 +196,7 @@ int RtcpAggregator::analyzeFeedback(char *buf, int len) {
               break;
             case RTCP_AFB:
               {
-                char *uniqueId = reinterpret_cast<char*>(&chead->report.rembPacket.uniqueid);
+                char *uniqueId = (char*)&chead->report.rembPacket.uniqueid;
                 if (!strncmp(uniqueId, "REMB", 4)) {
                   uint64_t bitrate = chead->getBrMantis() << chead->getBrExp();
                   ELOG_DEBUG("Received REMB %lu", bitrate);
@@ -234,21 +222,21 @@ int RtcpAggregator::analyzeFeedback(char *buf, int len) {
       }
 
       partNum++;
-    } while (totalLength < len);
+    }
   }
   return 0;
 }
 
 
 void RtcpAggregator::checkRtcpFb() {
-  boost::mutex::scoped_lock mlock(mapLock_);
-  std::map<uint32_t, boost::shared_ptr<RtcpData>>::iterator it;
+  std::lock_guard<std::mutex> mlock(mapLock_);
+  std::map<uint32_t, RtcpDataPtr>::iterator it;
   for (it = rtcpData_.begin(); it != rtcpData_.end(); it++) {
-    boost::shared_ptr<RtcpData> rtcpData = it->second;
-    boost::mutex::scoped_lock lock(rtcpData->dataLock);
+    RtcpDataPtr rtcpData = it->second;
+    std::lock_guard<std::mutex> lock(rtcpData->dataLock);
     uint32_t sourceSsrc = it->first;
     uint32_t sinkSsrc;
-    uint64_t now = ClockUtils::timePointToMs(clock::now());
+    uint64_t now = ClockUtils::msNow();
 
     unsigned int dt = now - rtcpData->last_rr_sent;
     unsigned int edlsr = now - rtcpData->last_sr_updated;
@@ -308,16 +296,16 @@ void RtcpAggregator::checkRtcpFb() {
       rtcpHead.setDelaySinceLastSr(rtcpData->delaySinceLastSr + ((edlsr*65536)/1000));
       rtcpHead.setLength(7);
       rtcpHead.setBlockCount(1);
-      int length = (rtcpHead.getLength()+1)*4;
-      memcpy(packet_, reinterpret_cast<uint8_t*>(&rtcpHead), length);
+
+      int length = rtcpHead.getPacketSize();
+      memcpy(packet_, (uint8_t*)&rtcpHead, length);
       if (rtcpData->shouldSendNACK) {
         ELOG_DEBUG("SEND NACK, SENDING with Seqno: %u", rtcpData->nackSeqnum);
-        int theLen = this->addNACK(reinterpret_cast<char*>(packet_), length, rtcpData->nackSeqnum,
+        length += addNACK(packet_+length, rtcpData->nackSeqnum,
                         rtcpData->nackBlp, sourceSsrc, sinkSsrc);
         rtcpData->shouldSendNACK = false;
         rtcpData->nackSeqnum = 0;
         rtcpData->nackBlp = 0;
-        length = theLen;
       }
       if (rtcpData->mediaType == VIDEO_TYPE) {
         unsigned int sincelastREMB = now - rtcpData->last_remb_sent;
@@ -329,10 +317,9 @@ void RtcpAggregator::checkRtcpFb() {
         if (rtcpData->shouldSendREMB) {
           ELOG_DEBUG("Sending REMB, since last %u ms, sending with BW: %lu",
                       sincelastREMB, rtcpData->reportedBandwidth);
-          int theLen = this->addREMB(reinterpret_cast<char*>(packet_), length, rtcpData->reportedBandwidth);
+          length += addREMB(packet_+length, rtcpData->reportedBandwidth);
           rtcpData->shouldSendREMB = false;
           rtcpData->last_remb_sent = now;
-          length = theLen;
         }
       }
       if  (rtcpSource_->isVideoSourceSSRC(sourceSsrc)) {
@@ -348,11 +335,12 @@ void RtcpAggregator::checkRtcpFb() {
       }
       rtcpData->last_rr_was_scheduled = now;
       // schedule next packet
-      std::string thread_id = boost::lexical_cast<std::string>(boost::this_thread::get_id());
-      unsigned int thread_number = 0;
-      sscanf(thread_id.c_str(), "%x", &thread_number);
-
+#ifdef WIN32
+      float random = (rand() % 100 + 50) / 100.0;
+#else
+      unsigned int thread_number = rtc::CurrentThreadId();
       float random = (rand_r(&thread_number) % 100 + 50) / 100.0;
+#endif
       if (rtcpData->mediaType == AUDIO_TYPE) {
         rtcpData->nextPacketInMs = RTCP_AUDIO_INTERVAL*random;
         ELOG_DEBUG("Scheduled next Audio RR in %u ms", rtcpData->nextPacketInMs);
@@ -362,7 +350,7 @@ void RtcpAggregator::checkRtcpFb() {
       }
 
       if (rtcpData->shouldReset) {
-        this->resetData(rtcpData, this->defaultVideoBw_);
+        resetData(rtcpData, defaultVideoBw_);
       }
     }
     if (rtcpData->shouldSendPli) {
@@ -372,43 +360,36 @@ void RtcpAggregator::checkRtcpFb() {
   }
 }
 
-int RtcpAggregator::addREMB(char* buf, int len, uint32_t bitrate) {
-  buf+=len;
-  RtcpHeader theREMB;
-  theREMB.setPacketType(RTCP_PS_Feedback_PT);
-  theREMB.setBlockCount(RTCP_AFB);
-  memcpy(&theREMB.report.rembPacket.uniqueid, "REMB", 4);
+int RtcpAggregator::addREMB(uint8_t* buf, uint32_t bitrate) {
+  RtcpHeader* theREMB = (RtcpHeader*)buf;
+  theREMB->setPacketType(RTCP_PS_Feedback_PT);
+  theREMB->setBlockCount(RTCP_AFB);
+  memcpy(&theREMB->report.rembPacket.uniqueid, "REMB", 4);
 
-  theREMB.setSSRC(rtcpSink_->getVideoSinkSSRC());
-  theREMB.setSourceSSRC(rtcpSource_->getVideoSourceSSRC());
-  theREMB.setLength(5);
-  theREMB.setREMBBitRate(bitrate);
-  theREMB.setREMBNumSSRC(1);
-  theREMB.setREMBFeedSSRC(rtcpSource_->getVideoSourceSSRC());
-  int rembLength = (theREMB.getLength()+1)*4;
-
-  memcpy(buf, reinterpret_cast<uint8_t*>(&theREMB), rembLength);
-  return (len + rembLength);
+  theREMB->setSSRC(rtcpSink_->getVideoSinkSSRC());
+  theREMB->setSourceSSRC(rtcpSource_->getVideoSourceSSRC());
+  theREMB->setLength(5);
+  theREMB->setREMBBitRate(bitrate);
+  theREMB->setREMBNumSSRC(1);
+  theREMB->setREMBFeedSSRC(rtcpSource_->getVideoSourceSSRC());
+  return theREMB->getPacketSize();
 }
 
-int RtcpAggregator::addNACK(char* buf, int len, uint16_t seqNum, uint16_t blp, uint32_t sourceSsrc, uint32_t sinkSsrc) {
-  buf+=len;
+int RtcpAggregator::addNACK(uint8_t* buf, uint16_t seqNum, uint16_t blp, uint32_t sourceSsrc, uint32_t sinkSsrc) {
   ELOG_DEBUG("Setting PID %u, BLP %u", seqNum , blp);
-  RtcpHeader theNACK;
-  theNACK.setPacketType(RTCP_RTP_Feedback_PT);
-  theNACK.setBlockCount(1);
-  theNACK.setNackPid(seqNum);
-  theNACK.setNackBlp(blp);
-  theNACK.setSSRC(sinkSsrc);
-  theNACK.setSourceSSRC(sourceSsrc);
-  theNACK.setLength(3);
-  int nackLength = (theNACK.getLength()+1)*4;
+  RtcpHeader* theNACK = (RtcpHeader*)buf;
+  theNACK->setPacketType(RTCP_RTP_Feedback_PT);
+  theNACK->setBlockCount(1);
+  theNACK->setNackPid(seqNum);
+  theNACK->setNackBlp(blp);
+  theNACK->setSSRC(sinkSsrc);
+  theNACK->setSourceSSRC(sourceSsrc);
+  theNACK->setLength(3);
 
-  memcpy(buf, reinterpret_cast<uint8_t*>(&theNACK), nackLength);
-  return (len + nackLength);
+  return theNACK->getPacketSize();
 }
 
-void RtcpAggregator::resetData(boost::shared_ptr<RtcpData> data, uint32_t bandwidth) {
+void RtcpAggregator::resetData(RtcpDataPtr data, uint32_t bandwidth) {
   data->ratioLost = 0;
   data->requestRr = false;
   data->shouldReset = false;

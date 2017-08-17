@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <memory>
 
-#include "lib/ClockUtils.h"
+namespace erizo{
 
 using erizo::Worker;
 using erizo::SimulatedWorker;
@@ -156,4 +156,7 @@ void SimulatedWorker::executePastScheduledTasks() {
       ++iter;
     }
   }
+  // todo call clock_->advanceTime(duration);
+}
+
 }

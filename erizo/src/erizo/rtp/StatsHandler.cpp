@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "./MediaDefinitions.h"
-#include "./WebRtcConnection.h"
+#include "MediaDefinitions.h"
+#include "WebRtcConnection.h"
 
 
 
@@ -24,7 +24,7 @@ void StatsCalculator::update(WebRtcConnection *connection, std::shared_ptr<Stats
   }
 }
 
-void StatsCalculator::processPacket(std::shared_ptr<dataPacket> packet) {
+void StatsCalculator::processPacket(packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (packet->data);
   if (chead->isRtcp()) {
     processRtcpPacket(packet);
@@ -33,7 +33,7 @@ void StatsCalculator::processPacket(std::shared_ptr<dataPacket> packet) {
   }
 }
 
-void StatsCalculator::processRtpPacket(std::shared_ptr<dataPacket> packet) {
+void StatsCalculator::processRtpPacket(packetPtr packet) {
   char* buf = packet->data;
   int len = packet->length;
   RtpHeader* head = reinterpret_cast<RtpHeader*>(buf);
@@ -66,18 +66,14 @@ void StatsCalculator::incrStat(uint32_t ssrc, std::string stat) {
   getStatsInfo()[ssrc][stat]++;
 }
 
-void StatsCalculator::processRtcpPacket(std::shared_ptr<dataPacket> packet) {
+void StatsCalculator::processRtcpPacket(packetPtr packet) {
   char* buf = packet->data;
   int len = packet->length;
 
-  char* movingBuf = buf;
-  int rtcpLength = 0;
-  int totalLength = 0;
   uint32_t ssrc = 0;
 
   bool is_feedback_on_publisher = false;
-
-  RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(movingBuf);
+  RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(buf);
   if (chead->isFeedback()) {
     ssrc = chead->getSourceSSRC();
     if (!connection_->isSinkSSRC(ssrc)) {
@@ -91,12 +87,10 @@ void StatsCalculator::processRtcpPacket(std::shared_ptr<dataPacket> packet) {
   }
 
   ELOG_DEBUG("RTCP packet received, type: %u, size: %u, packetLength: %u", chead->getPacketType(),
-       ((ntohs(chead->length) + 1) * 4), len);
-  do {
-    movingBuf += rtcpLength;
-    RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(movingBuf);
-    rtcpLength = (ntohs(chead->length) + 1) * 4;
-    totalLength += rtcpLength;
+       chead->getPacketSize(), len);
+  RtcpAccessor access(buf, len);
+  while (chead = access.nextRtcp())
+  {
     ELOG_DEBUG("RTCP SubPacket: PT %d, SSRC %u, sourceSSRC %u, block count %d",
         chead->packettype, chead->getSSRC(), chead->getSourceSSRC(), chead->getBlockCount());
     switch (chead->packettype) {
@@ -167,7 +161,7 @@ void StatsCalculator::processRtcpPacket(std::shared_ptr<dataPacket> packet) {
         ELOG_DEBUG("Unknown RTCP Packet, %d", chead->packettype);
         break;
     }
-  } while (totalLength < len);
+  }
   notifyStats();
 }
 
@@ -186,7 +180,7 @@ void IncomingStatsHandler::notifyUpdate() {
              pipeline->getService<Stats>());
 }
 
-void IncomingStatsHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void IncomingStatsHandler::read(Context *ctx, packetPtr packet) {
   processPacket(packet);
   ctx->fireRead(std::move(packet));
 }
@@ -206,7 +200,7 @@ void OutgoingStatsHandler::notifyUpdate() {
              pipeline->getService<Stats>());
 }
 
-void OutgoingStatsHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void OutgoingStatsHandler::write(Context *ctx, packetPtr packet) {
   processPacket(packet);
   ctx->fireWrite(std::move(packet));
 }

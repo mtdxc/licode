@@ -5,13 +5,8 @@
 #define ERIZO_SRC_ERIZO_STATS_H_
 
 #include <string>
-#include <map>
-
-#include "./logger.h"
+#include "logger.h"
 #include "pipeline/Service.h"
-#include "rtp/RtpHeaders.h"
-#include "lib/Clock.h"
-
 #include "stats/StatNode.h"
 
 namespace erizo {

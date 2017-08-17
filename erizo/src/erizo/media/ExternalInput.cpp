@@ -1,14 +1,13 @@
 #include "media/ExternalInput.h"
-
-#include <boost/cstdint.hpp>
-#include <sys/time.h>
-#include <arpa/inet.h>
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavutil/mathematics.h>
 #include <libavutil/time.h>
-
+}
+#include "rtp/RtpHeaders.h"
 #include <cstdio>
 #include <cstring>
-
-#include "./WebRtcConnection.h"
 
 namespace erizo {
 DEFINE_LOGGER(ExternalInput, "media.ExternalInput");
@@ -27,7 +26,6 @@ ExternalInput::~ExternalInput() {
   thread_.join();
   if (needTranscoding_)
     encodeThread_.join();
-  av_free_packet(&avpacket_);
   if (context_ != NULL)
     avformat_free_context(context_);
   ELOG_DEBUG("ExternalInput closed");
@@ -38,9 +36,6 @@ int ExternalInput::init() {
   av_register_all();
   avcodec_register_all();
   avformat_network_init();
-  // open rtsp
-  av_init_packet(&avpacket_);
-  avpacket_.data = NULL;
   ELOG_DEBUG("Trying to open input from url %s", url_.c_str());
   int res = avformat_open_input(&context_, url_.c_str(), NULL, NULL);
   char errbuff[500];
@@ -100,7 +95,6 @@ int ExternalInput::init() {
       st = audio_st;
   }
 
-
   if (st->codec->codec_id == AV_CODEC_ID_VP8 || !om.hasVideo) {
     ELOG_DEBUG("No need for video transcoding, already VP8");
     video_time_base_ = st->time_base.den;
@@ -125,10 +119,9 @@ int ExternalInput::init() {
     needTranscoding_ = true;
     inCodec_.initDecoder(st->codec);
 
-    bufflen_ = st->codec->width*st->codec->height*3/2;
+    bufflen_ = st->codec->width * st->codec->height * 3/2;
     decodedBuffer_.reset((unsigned char*) malloc(bufflen_));
-
-
+    //@todo
     om.processorType = RTP_ONLY;
     om.videoCodec.codec = VIDEO_CODEC_VP8;
     om.videoCodec.bitRate = 1000000;
@@ -147,12 +140,10 @@ int ExternalInput::init() {
     op_->init(om, this);
   }
 
-  av_init_packet(&avpacket_);
-
-  thread_ = boost::thread(&ExternalInput::receiveLoop, this);
+  thread_ = std::thread(&ExternalInput::receiveLoop, this);
   running_ = true;
   if (needTranscoding_)
-    encodeThread_ = boost::thread(&ExternalInput::encodeLoop, this);
+    encodeThread_ = std::thread(&ExternalInput::encodeLoop, this);
 
   return true;
 }
@@ -164,7 +155,7 @@ int ExternalInput::sendPLI() {
 
 void ExternalInput::receiveRtpData(unsigned char* rtpdata, int len) {
   if (video_sink_ != nullptr) {
-    std::shared_ptr<dataPacket> packet = std::make_shared<dataPacket>(0, reinterpret_cast<char*>(rtpdata),
+    packetPtr packet = std::make_shared<dataPacket>(0, reinterpret_cast<char*>(rtpdata),
         len, VIDEO_PACKET);
     video_sink_->deliverVideoData(packet);
   }
@@ -175,7 +166,8 @@ void ExternalInput::receiveLoop() {
   int gotDecodedFrame = 0;
   int length;
   startTime_ = av_gettime();
-
+  AVPacket avpacket_;
+  av_init_packet(&avpacket_);
   ELOG_DEBUG("Start playing external input %s", url_.c_str() );
   while (av_read_frame(context_, &avpacket_) >= 0&& running_ == true) {
     AVPacket orig_pkt = avpacket_;
@@ -212,7 +204,7 @@ void ExternalInput::receiveLoop() {
         lastAudioPts_ = avpacket_.pts;
         length = op_->packageAudio(avpacket_.data, avpacket_.size, decodedBuffer_.get(), avpacket_.pts);
         if (length > 0) {
-          std::shared_ptr<dataPacket> packet = std::make_shared<dataPacket>(0,
+          packetPtr packet = std::make_shared<dataPacket>(0,
               reinterpret_cast<char*>(decodedBuffer_.get()), length, AUDIO_PACKET);
           audio_sink_->deliverAudioData(packet);
         }
@@ -220,6 +212,7 @@ void ExternalInput::receiveLoop() {
     }
     av_free_packet(&orig_pkt);
   }
+  av_free_packet(&avpacket_);
   ELOG_DEBUG("Ended stream to play %s", url_.c_str());
   running_ = false;
   av_read_pause(context_);

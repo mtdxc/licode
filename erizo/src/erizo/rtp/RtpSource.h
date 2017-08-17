@@ -14,16 +14,16 @@
 
 #include <string>
 
-#include "./MediaDefinitions.h"
-#include "./logger.h"
+#include "MediaDefinitions.h"
+#include "logger.h"
 
 namespace erizo {
-
+class Worker;
 class RtpSource: public MediaSource, public FeedbackSink {
   DECLARE_LOGGER();
 
  public:
-  RtpSource(const int mediaPort, const std::string& feedbackDir, const std::string& feedbackPort);
+  RtpSource(Worker* work, const int mediaPort, const std::string& feedbackDir, const std::string& feedbackPort);
   virtual ~RtpSource();
 
  private:
@@ -32,12 +32,9 @@ class RtpSource: public MediaSource, public FeedbackSink {
   boost::scoped_ptr<boost::asio::ip::udp::resolver> resolver_;
   boost::scoped_ptr<boost::asio::ip::udp::resolver::query> query_;
   boost::asio::ip::udp::resolver::iterator iterator_;
-  boost::asio::io_service io_service_;
-  boost::thread rtpSource_thread_;
   char* buffer_[LENGTH];
   void handleReceive(const::boost::system::error_code& error, size_t bytes_recvd); // NOLINT
-  void eventLoop();
-  int deliverFeedback_(std::shared_ptr<dataPacket> fb_packet) override;
+  int deliverFeedback_(packetPtr fb_packet) override;
 };
 
 

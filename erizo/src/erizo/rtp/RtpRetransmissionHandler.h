@@ -3,22 +3,24 @@
 
 #include <memory>
 #include <vector>
-
+#include "logger.h"
 #include "pipeline/Handler.h"
 #include "lib/Clock.h"
 #include "lib/TokenBucket.h"
 
-#include "./WebRtcConnection.h"
-#include "rtp/PacketBufferService.h"
-
-static constexpr uint kRetransmissionsBufferSize = 256;
+static constexpr uint32_t kRetransmissionsBufferSize = 256;
 static constexpr int kNackBlpSize = 16;
 
 static constexpr erizo::duration kTimeToUpdateBitrate = std::chrono::milliseconds(500);
-static constexpr float kMarginRtxBitrate = 0.1;
+static constexpr float kMarginRtxBitrate = 0.1f;
 static constexpr int kBurstSize = 1300 * 20;  // 20 packets with almost max size
 
 namespace erizo {
+class Stats;
+class WebRtcConnection;
+class PacketBufferService;
+class MovingIntervalRateStat;
+// 负责对对端发起的FIR请求进行响应
 class RtpRetransmissionHandler : public Handler {
  public:
   DECLARE_LOGGER();
@@ -32,15 +34,15 @@ class RtpRetransmissionHandler : public Handler {
     return "retransmissions";
   }
 
-  void read(Context *ctx, std::shared_ptr<dataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<dataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
+  void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:
   MovingIntervalRateStat& getRtxBitrateStat();
   uint64_t getBitrateCalculated();
   void calculateRtxBitrate();
-
+  // 为性能考虑,不测试系列号是否相同
  private:
   std::shared_ptr<erizo::Clock> clock_;
   WebRtcConnection *connection_;

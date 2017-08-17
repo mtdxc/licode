@@ -1,4 +1,5 @@
 #include "rtp/PacketBufferService.h"
+#include "rtp/RtpHeaders.h"
 
 namespace erizo {
 DEFINE_LOGGER(PacketBufferService, "rtp.PacketBufferService");
@@ -7,7 +8,7 @@ PacketBufferService::PacketBufferService(): audio_{kServicePacketBufferSize},
   video_{kServicePacketBufferSize} {
 }
 
-void PacketBufferService::insertPacket(std::shared_ptr<dataPacket> packet) {
+void PacketBufferService::insertPacket(packetPtr packet) {
   RtpHeader *head = reinterpret_cast<RtpHeader*> (packet->data);
   switch (packet->type) {
     case VIDEO_PACKET:
@@ -22,14 +23,10 @@ void PacketBufferService::insertPacket(std::shared_ptr<dataPacket> packet) {
   }
 }
 
-std::shared_ptr<dataPacket> PacketBufferService::getVideoPacket(uint16_t seq_num) {
+packetPtr PacketBufferService::getVideoPacket(uint16_t seq_num) {
   return video_[getIndexInBuffer(seq_num)];
 }
-std::shared_ptr<dataPacket> PacketBufferService::getAudioPacket(uint16_t seq_num) {
+packetPtr PacketBufferService::getAudioPacket(uint16_t seq_num) {
   return audio_[getIndexInBuffer(seq_num)];
 }
-uint16_t PacketBufferService::getIndexInBuffer(uint16_t seq_num) {
-  return seq_num % kServicePacketBufferSize;
-}
-
 }  // namespace erizo

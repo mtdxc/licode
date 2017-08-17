@@ -74,7 +74,7 @@ class LibNiceConnectionStartTest : public ::testing::Test {
     delete ice_config;
   }
 
-  boost::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
+  std::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
   MockLibNice* libnice;
   MockLibNiceConnectionListener* nice_listener;
   erizo::IceConfig* ice_config;
@@ -125,7 +125,7 @@ class LibNiceConnectionTest : public ::testing::Test {
     free(test_packet);
   }
 
-  boost::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
+  std::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
   MockLibNice* libnice;
   MockLibNiceConnectionListener* nice_listener;
   erizo::IceConfig* ice_config;
@@ -174,7 +174,7 @@ class LibNiceConnectionTwoComponentsTest : public ::testing::Test {
     delete ice_config;
   }
 
-  boost::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
+  std::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
   MockLibNice* libnice;
   MockLibNiceConnectionListener* nice_listener;
   erizo::IceConfig* ice_config;
@@ -246,6 +246,8 @@ TEST_F(LibNiceConnectionStartTest, start_Configures_Libnice_With_Remote_Credenti
       nice_listener,
       *ice_config);
   nice.start();
+  nice.setRemoteCredentials(kArbitraryRemoteCredentialUsername,
+    kArbitraryRemoteCredentialPassword);
 }
 
 TEST_F(LibNiceConnectionStartTest, start_Configures_Libnice_With_Port_Range) {

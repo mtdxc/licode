@@ -2,7 +2,6 @@
 #include <gtest/gtest.h>
 
 #include <lib/TokenBucket.h>
-#include <lib/ClockUtils.h>
 
 #include "../utils/Mocks.h"
 #include "../utils/Tools.h"

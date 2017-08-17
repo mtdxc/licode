@@ -4,14 +4,11 @@
 #ifndef ERIZO_SRC_ERIZO_MEDIA_CODECS_AUDIOCODEC_H_
 #define ERIZO_SRC_ERIZO_MEDIA_CODECS_AUDIOCODEC_H_
 
-extern "C" {
-  #include <libavutil/avutil.h>
-  #include <libavcodec/avcodec.h>
-}
-
-#include "./Codecs.h"
-#include "./logger.h"
-
+#include "Codecs.h"
+struct AVCodec;
+struct AVCodecContext;
+struct AVFrame;
+struct AVPacket;
 namespace erizo {
 
 class AudioEncoder {
@@ -36,6 +33,7 @@ class AudioDecoder {
  public:
   AudioDecoder();
   virtual ~AudioDecoder();
+
   int initDecoder(const AudioCodecInfo& info);
   int initDecoder(AVCodecContext* context);
   int decodeAudio(unsigned char* inBuff, int inBuffLen, unsigned char* outBuff, int outBuffLen, int* gotFrame);

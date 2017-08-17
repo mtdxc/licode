@@ -1,7 +1,6 @@
 #include "rtp/QualityFilterHandler.h"
 
-#include "./WebRtcConnection.h"
-#include "lib/ClockUtils.h"
+#include "WebRtcConnection.h"
 #include "rtp/RtpUtils.h"
 #include "rtp/RtpVP8Parser.h"
 
@@ -28,7 +27,7 @@ void QualityFilterHandler::disable() {
   enabled_ = false;
 }
 
-void QualityFilterHandler::handleFeedbackPackets(const std::shared_ptr<dataPacket> &packet) {
+void QualityFilterHandler::handleFeedbackPackets(packetPtr packet) {
   RtpUtils::forEachRRBlock(packet, [this](RtcpHeader *chead) {
     if (chead->packettype == RTCP_PS_Feedback_PT &&
           (chead->getBlockCount() == RTCP_PLI_FMT ||
@@ -39,7 +38,7 @@ void QualityFilterHandler::handleFeedbackPackets(const std::shared_ptr<dataPacke
   });
 }
 
-void QualityFilterHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void QualityFilterHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (chead->isFeedback() && enabled_ && is_scalable_) {
     handleFeedbackPackets(packet);
@@ -74,7 +73,7 @@ void QualityFilterHandler::sendPLI() {
   getContext()->fireRead(RtpUtils::createPLI(video_sink_ssrc_, video_source_ssrc_));
 }
 
-void QualityFilterHandler::changeSpatialLayerOnKeyframeReceived(const std::shared_ptr<dataPacket> &packet) {
+void QualityFilterHandler::changeSpatialLayerOnKeyframeReceived(packetPtr packet) {
   if (future_spatial_layer_ == -1) {
     return;
   }
@@ -93,7 +92,7 @@ void QualityFilterHandler::changeSpatialLayerOnKeyframeReceived(const std::share
   }
 }
 
-void QualityFilterHandler::detectVideoScalability(const std::shared_ptr<dataPacket> &packet) {
+void QualityFilterHandler::detectVideoScalability(packetPtr packet) {
   if (is_scalable_ || packet->type != VIDEO_PACKET) {
     return;
   }
@@ -103,7 +102,7 @@ void QualityFilterHandler::detectVideoScalability(const std::shared_ptr<dataPack
   }
 }
 
-void QualityFilterHandler::updatePictureID(const std::shared_ptr<dataPacket> &packet) {
+void QualityFilterHandler::updatePictureID(packetPtr packet) {
   if (packet->codec == "VP8") {
     RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
     unsigned char* start_buffer = reinterpret_cast<unsigned char*> (packet->data);
@@ -112,7 +111,7 @@ void QualityFilterHandler::updatePictureID(const std::shared_ptr<dataPacket> &pa
   }
 }
 
-void QualityFilterHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void QualityFilterHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
 
   detectVideoScalability(packet);

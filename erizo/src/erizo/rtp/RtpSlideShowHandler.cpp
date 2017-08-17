@@ -1,10 +1,7 @@
 #include "rtp/RtpSlideShowHandler.h"
-
-#include <vector>
-
-#include "./MediaDefinitions.h"
+#include "MediaDefinitions.h"
 #include "rtp/RtpUtils.h"
-
+#include "rtp/QualityManager.h"
 
 namespace erizo {
 
@@ -40,17 +37,19 @@ void RtpSlideShowHandler::notifyUpdate() {
     ELOG_DEBUG("Slideshow fallback mode enabled");
   } else {
     ELOG_DEBUG("Slideshow fallback mode disabled");
-  }
+}
   setSlideShowMode(fallback_slideshow_enabled || manual_slideshow_enabled);
 }
 
-void RtpSlideShowHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtpSlideShowHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (connection_->getVideoSinkSSRC() != chead->getSourceSSRC()) {
     ctx->fireRead(std::move(packet));
     return;
   }
-  RtpUtils::forEachRRBlock(packet, [this](RtcpHeader *chead) {
+  RtcpAccessor rtcp_acs(packet);
+  while (chead = rtcp_acs.nextRtcp())
+  {
     switch (chead->packettype) {
       case RTCP_Receiver_PT:
         {
@@ -62,7 +61,6 @@ void RtpSlideShowHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet)
           if (RtpUtils::sequenceNumberLessThan(input_seq_num.input, incoming_seq_num)) {
             chead->setSeqnumCycles(chead->getSeqnumCycles() - 1);
           }
-
           chead->setHighestSeqnum(input_seq_num.input);
           break;
         }
@@ -77,11 +75,11 @@ void RtpSlideShowHandler::read(Context *ctx, std::shared_ptr<dataPacket> packet)
       default:
         break;
     }
-  });
+  }
   ctx->fireRead(std::move(packet));
 }
 
-void RtpSlideShowHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet) {
+void RtpSlideShowHandler::write(Context *ctx, packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   RtcpHeader *rtcp_header = reinterpret_cast<RtcpHeader*>(packet->data);
   if (packet->type != VIDEO_PACKET || rtcp_header->isRtcp()) {
@@ -120,9 +118,9 @@ void RtpSlideShowHandler::write(Context *ctx, std::shared_ptr<dataPacket> packet
     last_keyframe_sent_time_ = clock_->now();
     ctx->fireWrite(std::move(packet));
   }
-}
+  }
 
-bool RtpSlideShowHandler::isVP8Keyframe(std::shared_ptr<dataPacket> packet) {
+bool RtpSlideShowHandler::isVP8Keyframe(packetPtr packet) {
   bool is_keyframe = false;
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   uint16_t seq_num = rtp_header->getSeqNumber();
@@ -143,7 +141,7 @@ bool RtpSlideShowHandler::isVP8Keyframe(std::shared_ptr<dataPacket> packet) {
   return is_keyframe;
 }
 
-bool RtpSlideShowHandler::isVP9Keyframe(std::shared_ptr<dataPacket> packet) {
+bool RtpSlideShowHandler::isVP9Keyframe(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   uint16_t seq_num = rtp_header->getSeqNumber();
   uint32_t timestamp = rtp_header->getTimestamp();

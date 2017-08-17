@@ -1,15 +1,10 @@
 /*
  * RtcpForwarder.cpp
  */
-#include "rtp/RtcpForwarder.h"
-
 #include <string>
-#include <cstring>
-
+#include "rtp/RtcpForwarder.h"
+#include "rtp/RtpHeaders.h"
 #include "lib/Clock.h"
-#include "lib/ClockUtils.h"
-
-using std::memcpy;
 
 namespace erizo {
 DEFINE_LOGGER(RtcpForwarder, "rtp.RtcpForwarder");
@@ -20,9 +15,9 @@ RtcpForwarder::RtcpForwarder(MediaSink* msink, MediaSource* msource, uint32_t ma
   }
 
 void RtcpForwarder::addSourceSsrc(uint32_t ssrc) {
-  boost::mutex::scoped_lock mlock(mapLock_);
+  std::lock_guard<std::mutex> mlock(mapLock_);
   if (rtcpData_.find(ssrc) == rtcpData_.end()) {
-    this->rtcpData_[ssrc] = boost::shared_ptr<RtcpData>(new RtcpData());
+    this->rtcpData_[ssrc] = RtcpDataPtr(new RtcpData());
     if (ssrc == this->rtcpSource_->getAudioSourceSSRC()) {
       ELOG_DEBUG("Adding new Audio source SSRC %u", ssrc);
       this->rtcpData_[ssrc]->mediaType = AUDIO_TYPE;
@@ -36,45 +31,43 @@ void RtcpForwarder::addSourceSsrc(uint32_t ssrc) {
 void RtcpForwarder::setPublisherBW(uint32_t bandwidth) {
 }
 
+RtcpDataPtr RtcpForwarder::getRtcpData(int ssrc) {
+  std::lock_guard<std::mutex> mlock(mapLock_);
+  return rtcpData_[ssrc];
+}
+
 void RtcpForwarder::analyzeSr(RtcpHeader* chead) {
   uint32_t recvSSRC = chead->getSSRC();
   // We try to add it just in case it is not there yet (otherwise its noop)
   this->addSourceSsrc(recvSSRC);
+  RtcpDataPtr theData = getRtcpData(recvSSRC);
+  std::lock_guard<std::mutex> lock(theData->dataLock);
 
-  boost::mutex::scoped_lock mlock(mapLock_);
-  boost::shared_ptr<RtcpData> theData = rtcpData_[recvSSRC];
-  boost::mutex::scoped_lock lock(theData->dataLock);
-  uint64_t now = ClockUtils::timePointToMs(clock::now());
+  uint64_t now = ClockUtils::msNow();
   uint32_t ntp;
   uint64_t theNTP = chead->getNtpTimestamp();
   ntp = (theNTP & (0xFFFFFFFF0000)) >> 16;
-  theData->senderReports.push_back(boost::shared_ptr<SrDelayData>( new SrDelayData(ntp, now)));
+  theData->senderReports.push_back(SrDataPtr(new SrDelayData(ntp, now)));
   // We only store the last 20 sr
   if (theData->senderReports.size() > 20) {
     theData->senderReports.pop_front();
   }
 }
+
 int RtcpForwarder::analyzeFeedback(char *buf, int len) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(buf);
   if (chead->isFeedback()) {
-    if (chead->getBlockCount() == 0 && (chead->getLength() + 1) * 4  == len) {
+    if (chead->getBlockCount() == 0 && chead->getPacketSize() == len) {
       ELOG_DEBUG("Ignoring empty RR");
       return 0;
     }
     uint32_t sourceSsrc = chead->getSourceSSRC();
     // We try to add it just in case it is not there yet (otherwise its noop)
-    this->addSourceSsrc(sourceSsrc);
+    addSourceSsrc(sourceSsrc);
 
-    char* movingBuf = buf;
-    int rtcpLength = 0;
-    int totalLength = 0;
     int currentBlock = 0;
-
-    do {
-      movingBuf+=rtcpLength;
-      chead = reinterpret_cast<RtcpHeader*>(movingBuf);
-      rtcpLength = (ntohs(chead->length) + 1) * 4;
-      totalLength += rtcpLength;
+    RtcpAccessor rtc_acs(buf, len);
+    while(chead = rtc_acs.nextRtcp()) {
       switch (chead->packettype) {
         case RTCP_SDES_PT:
           ELOG_DEBUG("SDES");
@@ -114,7 +107,7 @@ int RtcpForwarder::analyzeFeedback(char *buf, int len) {
           // We analyze NACK to avoid sending repeated NACKs
           break;
         case RTCP_PS_Feedback_PT:
-          //            ELOG_DEBUG("RTCP PS FB TYPE: %u", chead->getBlockCount() );
+          // ELOG_DEBUG("RTCP PS FB TYPE: %u", chead->getBlockCount() );
           switch (chead->getBlockCount()) {
             case RTCP_PLI_FMT:
               ELOG_DEBUG("PLI Message, currentBlock %d", currentBlock);
@@ -156,7 +149,7 @@ int RtcpForwarder::analyzeFeedback(char *buf, int len) {
           break;
       }
       currentBlock++;
-    } while (totalLength < len);
+    }
     return len;
   }
   return 0;
@@ -166,8 +159,7 @@ int RtcpForwarder::analyzeFeedback(char *buf, int len) {
 void RtcpForwarder::checkRtcpFb() {
 }
 
-int RtcpForwarder::addREMB(char* buf, int len, uint32_t bitrate) {
-  buf+=len;
+int RtcpForwarder::addREMB(char* buf, uint32_t bitrate) {
   RtcpHeader theREMB;
   theREMB.setPacketType(RTCP_PS_Feedback_PT);
   theREMB.setBlockCount(RTCP_AFB);
@@ -179,14 +171,13 @@ int RtcpForwarder::addREMB(char* buf, int len, uint32_t bitrate) {
   theREMB.setREMBBitRate(bitrate);
   theREMB.setREMBNumSSRC(1);
   theREMB.setREMBFeedSSRC(rtcpSource_->getVideoSourceSSRC());
-  int rembLength = (theREMB.getLength()+1)*4;
+  int rembLength = theREMB.getPacketSize();
 
   memcpy(buf, reinterpret_cast<uint8_t*>(&theREMB), rembLength);
-  return (len+rembLength);
+  return rembLength;
 }
 
-int RtcpForwarder::addNACK(char* buf, int len, uint16_t seqNum, uint16_t blp, uint32_t sourceSsrc, uint32_t sinkSsrc) {
-  buf += len;
+int RtcpForwarder::addNACK(char* buf, uint16_t seqNum, uint16_t blp, uint32_t sourceSsrc, uint32_t sinkSsrc) {
   ELOG_DEBUG("Setting PID %u, BLP %u", seqNum , blp);
   RtcpHeader theNACK;
   theNACK.setPacketType(RTCP_RTP_Feedback_PT);
@@ -196,9 +187,8 @@ int RtcpForwarder::addNACK(char* buf, int len, uint16_t seqNum, uint16_t blp, ui
   theNACK.setSSRC(sinkSsrc);
   theNACK.setSourceSSRC(sourceSsrc);
   theNACK.setLength(3);
-  int nackLength = (theNACK.getLength() + 1) * 4;
-
+  int nackLength = theNACK.getPacketSize();
   memcpy(buf, reinterpret_cast<uint8_t*>(&theNACK), nackLength);
-  return (len + nackLength);
+  return nackLength;
 }
 }  // namespace erizo

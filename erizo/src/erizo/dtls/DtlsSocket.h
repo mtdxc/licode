@@ -1,23 +1,18 @@
 #ifndef ERIZO_SRC_ERIZO_DTLS_DTLSSOCKET_H_
 #define ERIZO_SRC_ERIZO_DTLS_DTLSSOCKET_H_
 
-extern "C" {
-  #include <srtp2/srtp.h>
-}
+#include "logger.h"
+#include <mutex>
 
-#include <openssl/e_os2.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/crypto.h>
-#include <openssl/ssl.h>
+struct bio_st; typedef struct bio_st BIO;
+struct ssl_st; typedef struct ssl_st SSL;
+struct x509_st; typedef struct x509_st X509;
+struct evp_pkey_st; typedef struct evp_pkey_st EVP_PKEY;
+struct ssl_ctx_st; typedef struct ssl_ctx_st SSL_CTX;
+struct srtp_protection_profile_st;
+typedef struct srtp_protection_profile_st SRTP_PROTECTION_PROFILE;
 
-#include <boost/thread/mutex.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include <memory>
-#include <string>
-
-#include "../logger.h"
+struct srtp_policy_t;
 
 const int SRTP_MASTER_KEY_KEY_LEN = 16;
 const int SRTP_MASTER_KEY_SALT_LEN = 14;
@@ -26,39 +21,23 @@ static const int DTLS_MTU = 1472;
 namespace dtls {
 class DtlsSocketContext;
 
-class SrtpSessionKeys {
- public:
+class SrtpSessionKeys
+{
+public:
   SrtpSessionKeys() {
-    clientMasterKey = new unsigned char[SRTP_MASTER_KEY_KEY_LEN];
     clientMasterKeyLen = 0;
-    clientMasterSalt = new unsigned char[SRTP_MASTER_KEY_SALT_LEN];
     clientMasterSaltLen = 0;
-    serverMasterKey = new unsigned char[SRTP_MASTER_KEY_KEY_LEN];
     serverMasterKeyLen = 0;
-    serverMasterSalt = new unsigned char[SRTP_MASTER_KEY_SALT_LEN];
     serverMasterSaltLen = 0;
   }
-  ~SrtpSessionKeys() {
-    if (clientMasterKey) {
-      delete[] clientMasterKey; clientMasterKey = NULL;
-    }
-    if (serverMasterKey) {
-      delete[] serverMasterKey; serverMasterKey = NULL;
-    }
-    if (clientMasterSalt) {
-      delete[] clientMasterSalt; clientMasterSalt = NULL;
-    }
-    if (serverMasterSalt) {
-      delete[] serverMasterSalt; serverMasterSalt = NULL;
-    }
-  }
-  unsigned char *clientMasterKey;
+
+  unsigned char clientMasterKey[SRTP_MASTER_KEY_KEY_LEN];
+  unsigned char clientMasterSalt[SRTP_MASTER_KEY_SALT_LEN];
+  unsigned char serverMasterKey[SRTP_MASTER_KEY_KEY_LEN];
+  unsigned char serverMasterSalt[SRTP_MASTER_KEY_SALT_LEN];
   int clientMasterKeyLen;
-  unsigned char *serverMasterKey;
   int serverMasterKeyLen;
-  unsigned char *clientMasterSalt;
   int clientMasterSaltLen;
-  unsigned char *serverMasterSalt;
   int serverMasterSaltLen;
 };
 
@@ -69,7 +48,7 @@ class DtlsSocket {
   enum SocketType { Client, Server};
   // Creates an SSL socket, and if client sets state to connect_state and
   // if server sets state to accept_state.  Sets SSL BIO's.
-  DtlsSocket(DtlsSocketContext* socketContext, enum SocketType type);
+  DtlsSocket(DtlsSocketContext* socketContext, SocketType type);
   ~DtlsSocket();
 
   void close();
@@ -91,7 +70,7 @@ class DtlsSocket {
   void startClient();
 
   // Retreives the SRTP session keys from the Dtls session
-  SrtpSessionKeys* getSrtpSessionKeys();
+  bool getSrtpSessionKeys(SrtpSessionKeys* keys);
 
   // Utility fn to compute a certificates fingerprint
   static void computeFingerprint(X509 *cert, char *fingerprint);
@@ -121,12 +100,14 @@ class DtlsSocket {
 
   SocketType mSocketType;
   bool mHandshakeCompleted;
-  boost::mutex handshakeMutex_;
+  std::mutex handshakeMutex_;
 };
 
 class DtlsReceiver {
  public:
+  // notify when dtls need to send message to transport
   virtual void onDtlsPacket(DtlsSocketContext *ctx, const unsigned char* data, unsigned int len) = 0;
+  // notify when dtls key exchange okay!
   virtual void onHandshakeCompleted(DtlsSocketContext *ctx, std::string clientKey, std::string serverKey,
                                     std::string srtp_profile) = 0;
   virtual void onHandshakeFailed(DtlsSocketContext *ctx, const std::string error) = 0;
@@ -145,16 +126,19 @@ class DtlsSocketContext {
   void close();
 
   void start();
+  // pass data to DtlsSocket
   void read(const unsigned char* data, unsigned int len);
+  // notify DtlsReceiver to write data
   void write(const unsigned char* data, unsigned int len);
   void handshakeCompleted();
   void handshakeFailed(const char *err);
+  // callback
   void setDtlsReceiver(DtlsReceiver *recv);
   void setDtlsSocket(DtlsSocket *sock) {mSocket = sock;}
+
   std::string getFingerprint();
 
   enum PacketType { rtp, dtls, stun, unknown};
-
 
   // Creates a new DtlsSocket to be used as a client
   DtlsSocket* createClient();
