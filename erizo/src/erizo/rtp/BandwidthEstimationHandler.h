@@ -51,8 +51,8 @@ class BandwidthEstimationHandler: public Handler, public RemoteBitrateObserver,
     return "bwe";
   }
 
-  void read(Context *ctx, std::shared_ptr<DataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<DataPacket> packet) override;
+  void read(Context *ctx, PacketPtr packet) override;
+  void write(Context *ctx, PacketPtr packet) override;
   void notifyUpdate() override;
 
   void updateExtensionMaps(std::array<RTPExtensions, 10> video_map, std::array<RTPExtensions, 10> audio_map);
@@ -60,8 +60,8 @@ class BandwidthEstimationHandler: public Handler, public RemoteBitrateObserver,
  private:
   void process();
   void sendREMBPacket();
-  bool parsePacket(std::shared_ptr<DataPacket> packet);
-  RtpHeaderExtensionMap getHeaderExtensionMap(std::shared_ptr<DataPacket> packet) const;
+  bool parsePacket(PacketPtr packet);
+  RtpHeaderExtensionMap getHeaderExtensionMap(PacketPtr packet) const;
   void pickEstimatorFromHeader();
   void pickEstimator();
 

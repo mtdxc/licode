@@ -126,8 +126,8 @@ class InputProcessor: public MediaSink {
 
   bool initAudioUnpackager();
   bool initVideoUnpackager();
-  int deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<DataPacket> video_packet) override;
+  int deliverAudioData_(PacketPtr audio_packet) override;
+  int deliverVideoData_(PacketPtr video_packet) override;
   int deliverEvent_(MediaEventPtr event) override;
 
   int decodeAudio(unsigned char* inBuff, int inBuffLen, unsigned char* outBuff);

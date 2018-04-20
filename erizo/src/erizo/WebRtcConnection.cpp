@@ -517,14 +517,14 @@ void WebRtcConnection::onREMBFromTransport(RtcpHeader *chead, Transport *transpo
     });
 }
 
-void WebRtcConnection::onRtcpFromTransport(std::shared_ptr<DataPacket> packet, Transport *transport) {
+void WebRtcConnection::onRtcpFromTransport(PacketPtr packet, Transport *transport) {
   RtpUtils::forEachRtcpBlock(packet, [this, packet, transport](RtcpHeader *chead) {
     uint32_t ssrc = chead->isFeedback() ? chead->getSourceSSRC() : chead->getSSRC();
     if (chead->isREMB()) {
       onREMBFromTransport(chead, transport);
       return;
     }
-    std::shared_ptr<DataPacket> rtcp = std::make_shared<DataPacket>(*packet);
+    PacketPtr rtcp = std::make_shared<DataPacket>(*packet);
     rtcp->length = (ntohs(chead->length) + 1) * 4;
     std::memcpy(rtcp->data, chead, rtcp->length);
     forEachMediaStream([rtcp, transport, ssrc] (const std::shared_ptr<MediaStream> &media_stream) {
@@ -535,7 +535,7 @@ void WebRtcConnection::onRtcpFromTransport(std::shared_ptr<DataPacket> packet, T
   });
 }
 
-void WebRtcConnection::onTransportData(std::shared_ptr<DataPacket> packet, Transport *transport) {
+void WebRtcConnection::onTransportData(PacketPtr packet, Transport *transport) {
   if (getCurrentState() != CONN_READY) {
     return;
   }
@@ -718,13 +718,13 @@ WebRTCEvent WebRtcConnection::getCurrentState() {
   return global_state_;
 }
 
-void WebRtcConnection::write(std::shared_ptr<DataPacket> packet) {
+void WebRtcConnection::write(PacketPtr packet) {
   asyncTask([packet] (std::shared_ptr<WebRtcConnection> connection) {
     connection->syncWrite(packet);
   });
 }
 
-void WebRtcConnection::syncWrite(std::shared_ptr<DataPacket> packet) {
+void WebRtcConnection::syncWrite(PacketPtr packet) {
   if (!sending_) {
     return;
   }

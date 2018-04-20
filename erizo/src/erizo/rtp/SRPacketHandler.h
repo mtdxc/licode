@@ -27,8 +27,8 @@ class SRPacketHandler: public Handler {
      return "sr_handler";
   }
 
-  void read(Context *ctx, std::shared_ptr<DataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<DataPacket> packet) override;
+  void read(Context *ctx, PacketPtr packet) override;
+  void write(Context *ctx, PacketPtr packet) override;
   void notifyUpdate() override;
 
  private:
@@ -43,8 +43,8 @@ class SRPacketHandler: public Handler {
   MediaStream* stream_;
   std::map<uint32_t, std::shared_ptr<SRInfo>> sr_info_map_;
 
-  void handleRtpPacket(std::shared_ptr<DataPacket> packet);
-  void handleSR(std::shared_ptr<DataPacket> packet);
+  void handleRtpPacket(PacketPtr packet);
+  void handleSR(PacketPtr packet);
 };
 }  // namespace erizo
 

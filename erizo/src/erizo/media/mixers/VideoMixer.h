@@ -42,8 +42,8 @@ class VideoMixer : public MediaSink, public RawDataReceiver, public RTPDataRecei
   * @param peerId the peerId
   */
   void removePublisher(int peerSSRC);
-  int deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<DataPacket> video_packet) override;
+  int deliverAudioData_(PacketPtr audio_packet) override;
+  int deliverVideoData_(PacketPtr video_packet) override;
 
   void receiveRawData(const RawDataPacket& packet) override;
   void receiveRtpData(unsigned char* rtpdata, int len) override;

@@ -102,9 +102,9 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
 
   void getJSONStats(std::function<void(std::string)> callback);
 
-  virtual void onTransportData(std::shared_ptr<DataPacket> packet, Transport *transport);
+  virtual void onTransportData(PacketPtr packet, Transport *transport);
 
-  void sendPacketAsync(std::shared_ptr<DataPacket> packet);
+  void sendPacketAsync(PacketPtr packet);
 
   void setTransportInfo(std::string audio_info, std::string video_info);
 
@@ -115,8 +115,8 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
 
   void setMetadata(std::map<std::string, std::string> metadata);
 
-  void read(std::shared_ptr<DataPacket> packet);
-  void write(std::shared_ptr<DataPacket> packet);
+  void read(PacketPtr packet);
+  void write(PacketPtr packet);
 
   void enableHandler(const std::string &name);
   void disableHandler(const std::string &name);
@@ -156,10 +156,10 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   }
 
  private:
-  void sendPacket(std::shared_ptr<DataPacket> packet);
-  int deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<DataPacket> video_packet) override;
-  int deliverFeedback_(std::shared_ptr<DataPacket> fb_packet) override;
+  void sendPacket(PacketPtr packet);
+  int deliverAudioData_(PacketPtr audio_packet) override;
+  int deliverVideoData_(PacketPtr video_packet) override;
+  int deliverFeedback_(PacketPtr fb_packet) override;
   int deliverEvent_(MediaEventPtr event) override;
   void initializePipeline();
   void transferLayerStats(std::string spatial, std::string temporal);
@@ -218,7 +218,7 @@ class PacketReader : public InboundHandler {
     return "reader";
   }
 
-  void read(Context *ctx, std::shared_ptr<DataPacket> packet) override {
+  void read(Context *ctx, PacketPtr packet) override {
     media_stream_->read(std::move(packet));
   }
 
@@ -240,7 +240,7 @@ class PacketWriter : public OutboundHandler {
     return "writer";
   }
 
-  void write(Context *ctx, std::shared_ptr<DataPacket> packet) override {
+  void write(Context *ctx, PacketPtr packet) override {
     media_stream_->write(std::move(packet));
   }
 

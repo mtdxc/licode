@@ -18,6 +18,7 @@ using testing::Eq;
 using testing::Args;
 using testing::AtLeast;
 using erizo::DataPacket;
+using erizo::PacketPtr;
 using erizo::ExtMap;
 using erizo::IceConfig;
 using erizo::RtpMap;
@@ -130,7 +131,7 @@ class WebRtcConnectionTest :
   std::shared_ptr<erizo::SimulatedClock> simulated_clock;
   std::shared_ptr<erizo::SimulatedWorker> simulated_worker;
   std::shared_ptr<erizo::IOWorker> io_worker;
-  std::queue<std::shared_ptr<DataPacket>> packet_queue;
+  std::queue<PacketPtr> packet_queue;
 };
 
 TEST_P(WebRtcConnectionTest, forwardRembToStreams_When_StreamTheyExist) {

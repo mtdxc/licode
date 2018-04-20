@@ -30,20 +30,20 @@ class QualityFilterHandler: public Handler, public std::enable_shared_from_this<
      return "quality_filter";
   }
 
-  void read(Context *ctx, std::shared_ptr<DataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<DataPacket> packet) override;
+  void read(Context *ctx, PacketPtr packet) override;
+  void write(Context *ctx, PacketPtr packet) override;
   void notifyUpdate() override;
 
  private:
   void sendPLI();
   void checkLayers();
-  void handleFeedbackPackets(const std::shared_ptr<DataPacket> &packet);
+  void handleFeedbackPackets(const PacketPtr &packet);
   bool checkSSRCChange(uint32_t ssrc);
-  void changeSpatialLayerOnKeyframeReceived(const std::shared_ptr<DataPacket> &packet);
-  void detectVideoScalability(const std::shared_ptr<DataPacket> &packet);
-  void updatePictureID(const std::shared_ptr<DataPacket> &packet, int new_picture_id);
-  void updateTL0PicIdx(const std::shared_ptr<DataPacket> &packet, uint8_t new_tl0_pic_idx);
-  void removeVP8OptionalPayload(const std::shared_ptr<DataPacket> &packet);
+  void changeSpatialLayerOnKeyframeReceived(const PacketPtr &packet);
+  void detectVideoScalability(const PacketPtr &packet);
+  void updatePictureID(const PacketPtr &packet, int new_picture_id);
+  void updateTL0PicIdx(const PacketPtr &packet, uint8_t new_tl0_pic_idx);
+  void removeVP8OptionalPayload(const PacketPtr &packet);
 
  private:
   std::shared_ptr<QualityManager> quality_manager_;

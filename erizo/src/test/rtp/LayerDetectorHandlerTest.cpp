@@ -23,6 +23,7 @@ using ::testing::Args;
 using ::testing::Return;
 using ::testing::AllOf;
 using erizo::DataPacket;
+using erizo::PacketPtr;
 using erizo::packetType;
 using erizo::AUDIO_PACKET;
 using erizo::VIDEO_PACKET;
@@ -93,7 +94,7 @@ class LayerDetectorHandlerVp8Test : public erizo::BaseHandlerTest,
 
   std::shared_ptr<PacketCodecParser> codec_parser_handler;
   std::shared_ptr<LayerDetectorHandler> layer_detector_handler;
-  std::shared_ptr<DataPacket> packet;
+  PacketPtr packet;
   int ssrc;
   int tid;
   int spatial_layer_id;

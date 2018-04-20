@@ -324,11 +324,11 @@ void ExternalOutput::initializePipeline() {
   pipeline_initialized_ = true;
 }
 
-void ExternalOutput::write(std::shared_ptr<DataPacket> packet) {
+void ExternalOutput::write(PacketPtr packet) {
   queueData(packet->data, packet->length, packet->type);
 }
 
-void ExternalOutput::queueDataAsync(std::shared_ptr<DataPacket> copied_packet) {
+void ExternalOutput::queueDataAsync(PacketPtr copied_packet) {
   asyncTask([copied_packet] (std::shared_ptr<ExternalOutput> this_ptr) {
     if (!this_ptr->pipeline_initialized_) {
       return;
@@ -337,20 +337,20 @@ void ExternalOutput::queueDataAsync(std::shared_ptr<DataPacket> copied_packet) {
   });
 }
 
-int ExternalOutput::deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) {
-  std::shared_ptr<DataPacket> copied_packet = std::make_shared<DataPacket>(*audio_packet);
+int ExternalOutput::deliverAudioData_(PacketPtr audio_packet) {
+  PacketPtr copied_packet = std::make_shared<DataPacket>(*audio_packet);
   copied_packet->type = AUDIO_PACKET;
   queueDataAsync(copied_packet);
   return 0;
 }
 
-int ExternalOutput::deliverVideoData_(std::shared_ptr<DataPacket> video_packet) {
+int ExternalOutput::deliverVideoData_(PacketPtr video_packet) {
   if (video_source_ssrc_ == 0) {
     RtpHeader* h = reinterpret_cast<RtpHeader*>(video_packet->data);
     video_source_ssrc_ = h->getSSRC();
   }
 
-  std::shared_ptr<DataPacket> copied_packet = std::make_shared<DataPacket>(*video_packet);
+  PacketPtr copied_packet = std::make_shared<DataPacket>(*video_packet);
   copied_packet->type = VIDEO_PACKET;
   ext_processor_.processRtpExtensions(copied_packet);
   queueDataAsync(copied_packet);
@@ -512,7 +512,7 @@ int ExternalOutput::sendFirPacket() {
       pli_header.setLength(2);
       char *buf = reinterpret_cast<char*>(&pli_header);
       int len = (pli_header.getLength() + 1) * 4;
-      std::shared_ptr<DataPacket> pli_packet = std::make_shared<DataPacket>(0, buf, len, VIDEO_PACKET);
+      PacketPtr pli_packet = std::make_shared<DataPacket>(0, buf, len, VIDEO_PACKET);
       fb_sink_->deliverFeedback(pli_packet);
       return len;
     }

@@ -31,20 +31,20 @@ class RtpSlideShowHandler : public Handler {
     return "slideshow";
   }
 
-  void read(Context *ctx, std::shared_ptr<DataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<DataPacket> packet) override;
+  void read(Context *ctx, PacketPtr packet) override;
+  void write(Context *ctx, PacketPtr packet) override;
   void notifyUpdate() override;
 
   void setSlideShowMode(bool activated);
 
  private:
-  bool isVP8OrH264Keyframe(std::shared_ptr<DataPacket> packet);
-  bool isVP9Keyframe(std::shared_ptr<DataPacket> packet);
+  bool isVP8OrH264Keyframe(PacketPtr packet);
+  bool isVP9Keyframe(PacketPtr packet);
   void maybeUpdateHighestSeqNum(uint16_t seq_num);
   void resetKeyframeBuilding();
   void consolidateKeyframe();
   void maybeSendStoredKeyframe();
-  void storeKeyframePacket(std::shared_ptr<DataPacket> packet);
+  void storeKeyframePacket(PacketPtr packet);
 
  private:
   std::shared_ptr<Clock> clock_;
@@ -59,8 +59,8 @@ class RtpSlideShowHandler : public Handler {
   uint32_t current_keyframe_timestamp_;
   uint32_t last_timestamp_received_;
 
-  std::vector<std::shared_ptr<DataPacket>> keyframe_buffer_;
-  std::vector<std::shared_ptr<DataPacket>> stored_keyframe_;
+  std::vector<PacketPtr> keyframe_buffer_;
+  std::vector<PacketPtr> stored_keyframe_;
   time_point last_keyframe_sent_time_;
 };
 }  // namespace erizo

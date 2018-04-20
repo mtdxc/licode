@@ -18,17 +18,17 @@ class PacketBufferService: public Service {
 
   PacketBufferService(const PacketBufferService&& service);
 
-  void insertPacket(std::shared_ptr<DataPacket> packet);
+  void insertPacket(PacketPtr packet);
 
-  std::shared_ptr<DataPacket> getVideoPacket(uint16_t seq_num);
-  std::shared_ptr<DataPacket> getAudioPacket(uint16_t seq_num);
+  PacketPtr getVideoPacket(uint16_t seq_num);
+  PacketPtr getAudioPacket(uint16_t seq_num);
 
  private:
   uint16_t getIndexInBuffer(uint16_t seq_num);
 
  private:
-  std::vector<std::shared_ptr<DataPacket>> audio_;
-  std::vector<std::shared_ptr<DataPacket>> video_;
+  std::vector<PacketPtr> audio_;
+  std::vector<PacketPtr> video_;
 };
 
 }  // namespace erizo

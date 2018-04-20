@@ -38,12 +38,12 @@ namespace erizo {
     receive_Thread_.join();
   }
 
-  int RtpSink::deliverVideoData_(std::shared_ptr<DataPacket> video_packet) {
+  int RtpSink::deliverVideoData_(PacketPtr video_packet) {
     this->queueData(video_packet->data, video_packet->length, VIDEO_PACKET);
     return 0;
   }
 
-  int RtpSink::deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) {
+  int RtpSink::deliverAudioData_(PacketPtr audio_packet) {
     this->queueData(audio_packet->data, audio_packet->length, AUDIO_PACKET);
     return 0;
   }

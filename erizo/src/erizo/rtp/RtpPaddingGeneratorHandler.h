@@ -28,15 +28,15 @@ class RtpPaddingGeneratorHandler: public Handler, public std::enable_shared_from
     return "padding-generator";
   }
 
-  void read(Context *ctx, std::shared_ptr<DataPacket> packet) override;
-  void write(Context *ctx, std::shared_ptr<DataPacket> packet) override;
+  void read(Context *ctx, PacketPtr packet) override;
+  void write(Context *ctx, PacketPtr packet) override;
   void notifyUpdate() override;
 
  private:
-  void sendPaddingPacket(std::shared_ptr<DataPacket> packet, uint8_t padding_size);
-  void onPacketWithMarkerSet(std::shared_ptr<DataPacket> packet);
-  bool isHigherSequenceNumber(std::shared_ptr<DataPacket> packet);
-  void onVideoPacket(std::shared_ptr<DataPacket> packet);
+  void sendPaddingPacket(PacketPtr packet, uint8_t padding_size);
+  void onPacketWithMarkerSet(PacketPtr packet);
+  bool isHigherSequenceNumber(PacketPtr packet);
+  void onVideoPacket(PacketPtr packet);
 
   uint64_t getStat(std::string stat_name);
   uint64_t getTargetBitrate();

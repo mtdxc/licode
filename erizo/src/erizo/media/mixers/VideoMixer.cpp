@@ -38,11 +38,11 @@ VideoMixer::~VideoMixer() {
   delete op; op = NULL;
 }
 
-int VideoMixer::deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) {
+int VideoMixer::deliverAudioData_(PacketPtr audio_packet) {
   return 0;
 }
 
-int VideoMixer::deliverVideoData_(std::shared_ptr<DataPacket> video_packet) {
+int VideoMixer::deliverVideoData_(PacketPtr video_packet) {
   return 0;
 }
 

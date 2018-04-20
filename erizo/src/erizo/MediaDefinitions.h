@@ -70,6 +70,7 @@ struct DataPacket {
   std::string codec;
   unsigned int clock_rate = 0;
 };
+using PacketPtr = std::shared_ptr<DataPacket>;
 
 class Monitor {
  protected:
@@ -90,11 +91,11 @@ using MediaEventPtr = std::shared_ptr<MediaEvent>;
 class FeedbackSink {
  public:
     virtual ~FeedbackSink() {}
-    int deliverFeedback(std::shared_ptr<DataPacket> data_packet) {
+    int deliverFeedback(PacketPtr data_packet) {
         return this->deliverFeedback_(data_packet);
     }
  private:
-    virtual int deliverFeedback_(std::shared_ptr<DataPacket> data_packet) = 0;
+    virtual int deliverFeedback_(PacketPtr data_packet) = 0;
 };
 
 class FeedbackSource {
@@ -120,10 +121,10 @@ class MediaSink: public virtual Monitor {
     FeedbackSource* sink_fb_source_;
 
  public:
-    int deliverAudioData(std::shared_ptr<DataPacket> data_packet) {
+    int deliverAudioData(PacketPtr data_packet) {
         return this->deliverAudioData_(data_packet);
     }
-    int deliverVideoData(std::shared_ptr<DataPacket> data_packet) {
+    int deliverVideoData(PacketPtr data_packet) {
         return this->deliverVideoData_(data_packet);
     }
     uint32_t getVideoSinkSSRC() {
@@ -161,8 +162,8 @@ class MediaSink: public virtual Monitor {
     virtual void close() = 0;
 
  private:
-    virtual int deliverAudioData_(std::shared_ptr<DataPacket> data_packet) = 0;
-    virtual int deliverVideoData_(std::shared_ptr<DataPacket> data_packet) = 0;
+    virtual int deliverAudioData_(PacketPtr data_packet) = 0;
+    virtual int deliverVideoData_(PacketPtr data_packet) = 0;
     virtual int deliverEvent_(MediaEventPtr event) = 0;
 };
 

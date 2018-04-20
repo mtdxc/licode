@@ -23,12 +23,12 @@ class RtcpRrGenerator {
       std::shared_ptr<Clock> the_clock = std::make_shared<SteadyClock>());
 
   explicit RtcpRrGenerator(const RtcpRrGenerator&& handler);  // NOLINT
-  bool handleRtpPacket(std::shared_ptr<DataPacket> packet);
-  void handleSr(std::shared_ptr<DataPacket> packet);
-  std::shared_ptr<DataPacket> generateReceiverReport();
+  bool handleRtpPacket(PacketPtr packet);
+  void handleSr(PacketPtr packet);
+  PacketPtr generateReceiverReport();
 
  private:
-  bool isRetransmitOfOldPacket(std::shared_ptr<DataPacket> packet);
+  bool isRetransmitOfOldPacket(PacketPtr packet);
   int getAudioClockRate(uint8_t payload_type);
   int getVideoClockRate(uint8_t payload_type);
   uint16_t selectInterval();

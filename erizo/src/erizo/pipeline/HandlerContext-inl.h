@@ -45,7 +45,7 @@ class PipelineContext {
 class InboundLink {
  public:
   virtual ~InboundLink() = default;
-  virtual void read(std::shared_ptr<DataPacket> packet) = 0;
+  virtual void read(PacketPtr packet) = 0;
   virtual void readEOF() = 0;
   virtual void transportActive() = 0;
   virtual void transportInactive() = 0;
@@ -54,7 +54,7 @@ class InboundLink {
 class OutboundLink {
  public:
   virtual ~OutboundLink() = default;
-  virtual void write(std::shared_ptr<DataPacket> packet) = 0;
+  virtual void write(PacketPtr packet) = 0;
   virtual void close() = 0;
 };
 
@@ -171,7 +171,7 @@ class ContextImpl
   ~ContextImpl() = default;
 
   // HandlerContext overrides
-  void fireRead(std::shared_ptr<DataPacket> packet) override {
+  void fireRead(PacketPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     if (this->nextIn_) {
       this->nextIn_->read(std::move(packet));
@@ -199,7 +199,7 @@ class ContextImpl
     }
   }
 
-  void fireWrite(std::shared_ptr<DataPacket> packet) override {
+  void fireWrite(PacketPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     if (this->nextOut_) {
       this->nextOut_->write(std::move(packet));
@@ -222,7 +222,7 @@ class ContextImpl
   }
 
   // InboundLink overrides
-  void read(std::shared_ptr<DataPacket> packet) override {
+  void read(PacketPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     this->handler_->read(this, std::move(packet));
   }
@@ -243,7 +243,7 @@ class ContextImpl
   }
 
   // OutboundLink overrides
-  void write(std::shared_ptr<DataPacket> packet) override {
+  void write(PacketPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     this->handler_->write(this, std::move(packet));
   }
@@ -277,7 +277,7 @@ class InboundContextImpl
   ~InboundContextImpl() = default;
 
   // InboundHandlerContext overrides
-  void fireRead(std::shared_ptr<DataPacket> packet) override {
+  void fireRead(PacketPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     if (this->nextIn_) {
       this->nextIn_->read(std::move(packet));
@@ -314,7 +314,7 @@ class InboundContextImpl
   }
 
   // InboundLink overrides
-  void read(std::shared_ptr<DataPacket> packet) override {
+  void read(PacketPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     this->handler_->read(this, std::move(packet));
   }
@@ -358,7 +358,7 @@ class OutboundContextImpl
   ~OutboundContextImpl() = default;
 
   // OutboundHandlerContext overrides
-  void fireWrite(std::shared_ptr<DataPacket> packet) override {
+  void fireWrite(PacketPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     if (this->nextOut_) {
       return this->nextOut_->write(std::move(packet));
@@ -381,7 +381,7 @@ class OutboundContextImpl
   }
 
   // OutboundLink overrides
-  void write(std::shared_ptr<DataPacket> packet) override {
+  void write(PacketPtr packet) override {
     auto guard = this->pipelineWeak_.lock();
     return this->handler_->write(this, std::move(packet));
   }

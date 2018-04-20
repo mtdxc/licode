@@ -23,7 +23,6 @@ namespace erizo {
 
 DEFINE_LOGGER(LibNiceConnection, "LibNiceConnection")
 
-
 void cb_nice_recv(NiceAgent* agent, guint stream_id, guint component_id,
     guint len, gchar* buf, gpointer user_data) {
   if (user_data == NULL || len == 0) {

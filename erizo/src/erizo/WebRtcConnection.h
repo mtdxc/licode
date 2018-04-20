@@ -118,7 +118,7 @@ class WebRtcConnection: public TransportListener, public LogContext,
    */
   WebRTCEvent getCurrentState();
 
-  void onTransportData(std::shared_ptr<DataPacket> packet, Transport *transport) override;
+  void onTransportData(PacketPtr packet, Transport *transport) override;
 
   void updateState(TransportState state, Transport * transport) override;
 
@@ -126,8 +126,8 @@ class WebRtcConnection: public TransportListener, public LogContext,
 
   void setMetadata(std::map<std::string, std::string> metadata);
 
-  void write(std::shared_ptr<DataPacket> packet);
-  void syncWrite(std::shared_ptr<DataPacket> packet);
+  void write(PacketPtr packet);
+  void syncWrite(PacketPtr packet);
 
   void asyncTask(std::function<void(std::shared_ptr<WebRtcConnection>)> f);
 
@@ -157,7 +157,7 @@ class WebRtcConnection: public TransportListener, public LogContext,
   void onRemoteSdpsSetToMediaStreams(std::string stream_id);
   std::string getJSONCandidate(const std::string& mid, const std::string& sdp);
   void trackTransportInfo();
-  void onRtcpFromTransport(std::shared_ptr<DataPacket> packet, Transport *transport);
+  void onRtcpFromTransport(PacketPtr packet, Transport *transport);
   void onREMBFromTransport(RtcpHeader *chead, Transport *transport);
   void maybeNotifyWebRtcConnectionEvent(const WebRTCEvent& event, const std::string& message,
         const std::string& stream_id = "");
