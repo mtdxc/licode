@@ -23,7 +23,7 @@ namespace erizo {
     if (audio_packet->length <= 0)
       return 0;
 
-    boost::unique_lock<boost::mutex> lock(monitor_mutex_);
+    AutoLock lock(monitor_mutex_);
     if (subscribers.empty())
       return 0;
 
@@ -49,7 +49,7 @@ namespace erizo {
       }
       return 0;
     }
-    boost::unique_lock<boost::mutex> lock(monitor_mutex_);
+    AutoLock lock(monitor_mutex_);
     if (subscribers.empty())
       return 0;
     std::map<std::string, std::shared_ptr<MediaSink>>::iterator it;
@@ -75,7 +75,7 @@ namespace erizo {
   }
 
   int OneToManyProcessor::deliverEvent_(MediaEventPtr event) {
-    boost::unique_lock<boost::mutex> lock(monitor_mutex_);
+    AutoLock lock(monitor_mutex_);
     if (subscribers.empty())
       return 0;
     std::map<std::string, std::shared_ptr<MediaSink>>::iterator it;
@@ -126,7 +126,7 @@ namespace erizo {
     ELOG_DEBUG("OneToManyProcessor closeAll");
     feedbackSink_ = nullptr;
     publisher.reset();
-    boost::unique_lock<boost::mutex> lock(monitor_mutex_);
+    AutoLock lock(monitor_mutex_);
     std::map<std::string, std::shared_ptr<MediaSink>>::iterator it = subscribers.begin();
     while (it != subscribers.end()) {
       if ((*it).second != nullptr) {

@@ -48,8 +48,8 @@ class LibNiceConnection : public IceConnection {
    */
   void start() override;
   bool setRemoteCandidates(const std::vector<CandidateInfo> &candidates, bool is_bundle) override;
-  void gatheringDone(uint stream_id);
-  void getCandidate(uint stream_id, uint component_id, const std::string &foundation);
+  void gatheringDone(uint32_t stream_id);
+  void getCandidate(uint32_t stream_id, uint32_t component_id, const std::string &foundation);
   void setRemoteCredentials(const std::string& username, const std::string& password) override;
   int sendData(unsigned int component_id, const void* buf, int len) override;
 

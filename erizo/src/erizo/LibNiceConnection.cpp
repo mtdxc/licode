@@ -326,12 +326,12 @@ bool LibNiceConnection::setRemoteCandidates(const std::vector<CandidateInfo> &ca
   return true;
 }
 
-void LibNiceConnection::gatheringDone(uint stream_id) {
+void LibNiceConnection::gatheringDone(uint32_t stream_id) {
   ELOG_DEBUG("%s message: gathering done, stream_id: %u", toLog(), stream_id);
   updateIceState(IceState::CANDIDATES_RECEIVED);
 }
 
-void LibNiceConnection::getCandidate(uint stream_id, uint component_id, const std::string &foundation) {
+void LibNiceConnection::getCandidate(uint32_t stream_id, uint32_t component_id, const std::string &foundation) {
   GSList* lcands = lib_nice_->NiceAgentGetLocalCandidates(agent_, stream_id, component_id);
   // We only want to get the new candidates
   if (candsDelivered_ <= g_slist_length(lcands)) {

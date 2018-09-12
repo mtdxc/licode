@@ -1,10 +1,12 @@
 #include "thread/IOWorker.h"
-
+#ifdef HAS_NICER
 extern "C" {
 #include <r_errors.h>
 #include <async_wait.h>
 #include <async_timer.h>
 }
+#endif // HAS_NICER
+
 
 #include <chrono>  // NOLINT
 
@@ -31,6 +33,7 @@ void IOWorker::start(std::shared_ptr<std::promise<void>> start_promise) {
     start_promise->set_value();
     while (!closed_) {
       int events;
+#ifdef HAS_NICER
       struct timeval towait = {0, 100000};
       struct timeval tv;
       int r = NR_async_event_wait2(&events, &towait);
@@ -39,6 +42,7 @@ void IOWorker::start(std::shared_ptr<std::promise<void>> start_promise) {
       }
       gettimeofday(&tv, 0);
       NR_async_timer_update_time(&tv);
+#endif
       std::vector<Task> tasks;
       {
         std::unique_lock<std::mutex> lock(task_mutex_);

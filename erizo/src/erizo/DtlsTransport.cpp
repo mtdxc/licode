@@ -10,17 +10,16 @@
 
 #include "./SrtpChannel.h"
 #include "./LibNiceConnection.h"
+#ifdef HAS_NICER
 #include "./NicerConnection.h"
-
-using erizo::TimeoutChecker;
-using erizo::DtlsTransport;
-using dtls::DtlsSocketContext;
+#endif
+using namespace erizo;
 
 DEFINE_LOGGER(DtlsTransport, "DtlsTransport");
 DEFINE_LOGGER(TimeoutChecker, "TimeoutChecker");
 
 using std::memcpy;
-
+using namespace dtls;
 static std::mutex dtls_mutex;
 
 TimeoutChecker::TimeoutChecker(DtlsTransport* transport, dtls::DtlsSocketContext* ctx)
@@ -110,7 +109,9 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, c
     iceConfig_.username = username;
     iceConfig_.password = password;
     if (iceConfig_.use_nicer) {
+#ifdef HAS_NICER
       ice_ = NicerConnection::create(io_worker_, iceConfig_);
+#endif
     } else {
       ice_.reset(LibNiceConnection::create(iceConfig_));
     }
@@ -129,7 +130,7 @@ DtlsTransport::~DtlsTransport() {
 
 void DtlsTransport::start() {
   ice_->setIceListener(shared_from_this());
-  ice_->copyLogContextFrom(*this);
+  ice_->copyLogContextFrom(this);
   ELOG_DEBUG("%s message: starting ice", toLog());
   ice_->start();
 }

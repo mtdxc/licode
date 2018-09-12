@@ -345,14 +345,14 @@ void RtcpAggregator::checkRtcpFb() {
       }
       rtcpData->last_rr_was_scheduled = now;
       // schedule next packet
-      unsigned int thread_number = 0;
 #ifdef WIN32
-      thread_number = GetCurrentThreadId();
+      float random = (rand() % 100 + 50) / 100.0;
 #else
+      unsigned int thread_number = 0;
       std::string thread_id = boost::lexical_cast<std::string>(boost::this_thread::get_id());
       sscanf(thread_id.c_str(), "%x", &thread_number);
-#endif // WIN32
       float random = (rand_r(&thread_number) % 100 + 50) / 100.0;
+#endif // WIN32
 
       if (rtcpData->mediaType == AUDIO_TYPE) {
         rtcpData->nextPacketInMs = RTCP_AUDIO_INTERVAL*random;

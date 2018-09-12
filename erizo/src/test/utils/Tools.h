@@ -36,7 +36,7 @@ class PacketTools {
     return std::make_shared<DataPacket>(0, reinterpret_cast<char*>(header), sizeof(erizo::RtpHeader), type);
   }
 
-  static std::shared_ptr<DataPacket> createNack(uint ssrc, uint source_ssrc, uint16_t seq_number,
+  static std::shared_ptr<DataPacket> createNack(uint32_t ssrc, uint32_t source_ssrc, uint16_t seq_number,
                                                 packetType type, int additional_packets = 0) {
     erizo::RtcpHeader *nack = new erizo::RtcpHeader();
     nack->setPacketType(RTCP_RTP_Feedback_PT);
@@ -51,7 +51,7 @@ class PacketTools {
     return std::make_shared<DataPacket>(0, buf, len, type);
   }
 
-  static std::shared_ptr<DataPacket> createReceiverReport(uint ssrc, uint source_ssrc,
+  static std::shared_ptr<DataPacket> createReceiverReport(uint32_t ssrc, uint32_t source_ssrc,
                                                           uint16_t highest_seq_num, packetType type,
                                                           uint32_t last_sender_report = 0, uint32_t fraction_lost = 0) {
     erizo::RtcpHeader *receiver_report = new erizo::RtcpHeader();
@@ -68,7 +68,7 @@ class PacketTools {
     return std::make_shared<DataPacket>(0, buf, len, type);
   }
 
-  static std::shared_ptr<DataPacket> createSenderReport(uint ssrc, packetType type,
+  static std::shared_ptr<DataPacket> createSenderReport(uint32_t ssrc, packetType type,
       uint32_t packets_sent = 0, uint32_t octets_sent = 0, uint64_t ntp_timestamp = 0) {
     erizo::RtcpHeader *sender_report = new erizo::RtcpHeader();
     sender_report->setPacketType(RTCP_Sender_PT);
@@ -160,10 +160,13 @@ class PacketTools {
     header->setSeqNumber(seq_number);
     header->setSSRC(kVideoSsrc);
     header->setTimestamp(timestamp);
-    const int packet_length = nal_1_length + nal_2_length + 17;  // 17 = 12 rtp header + 1 stap header +
+    int packet_length = nal_1_length + nal_2_length + 17;  // 17 = 12 rtp header + 1 stap header +
                                                                  // 2 nalu_1 header + 2 nalu_2 header
-    char packet_buffer[packet_length];
-    memset(packet_buffer, 0, packet_length);
+	auto packet = std::make_shared<DataPacket>();
+	packet->type = VIDEO_PACKET;
+	packet->comp = 0;
+	packet-> length = packet_length;
+    char* packet_buffer = packet->data;
     char* data_pointer;
     unsigned char* ptr;
     memcpy(packet_buffer, reinterpret_cast<char*>(header), header->getHeaderLength());
@@ -183,9 +186,6 @@ class PacketTools {
     *ptr = nal_2_length;
     ++ptr;  // step out nalu size field
     ptr += nal_2_len;
-
-    auto packet = std::make_shared<DataPacket>(0, static_cast<char*>(packet_buffer), packet_length, VIDEO_PACKET);
-
     return packet;
   }
 
@@ -283,12 +283,12 @@ class BaseHandlerTest  {
 
   virtual void internalSetUp() {
     simulated_clock = std::make_shared<erizo::SimulatedClock>();
-    simulated_worker = std::make_shared<erizo::SimulatedWorker>(simulated_clock);
-    simulated_worker->start();
+    //simulated_worker = std::make_shared<erizo::SimulatedWorker>(simulated_clock);
+    //simulated_worker->start();
     io_worker = std::make_shared<erizo::IOWorker>();
     io_worker->start();
-    connection = std::make_shared<erizo::MockWebRtcConnection>(simulated_worker, io_worker, ice_config, rtp_maps);
-    media_stream = std::make_shared<erizo::MockMediaStream>(simulated_worker, connection, "", "", rtp_maps);
+    //connection = std::make_shared<erizo::MockWebRtcConnection>(simulated_worker, io_worker, ice_config, rtp_maps);
+    //media_stream = std::make_shared<erizo::MockMediaStream>(simulated_worker, connection, "", "", rtp_maps);
     processor = std::make_shared<erizo::MockRtcpProcessor>();
     quality_manager = std::make_shared<erizo::MockQualityManager>();
     packet_buffer_service = std::make_shared<erizo::PacketBufferService>();
@@ -325,7 +325,7 @@ class BaseHandlerTest  {
 
   virtual void executeTasksInNextMs(int time) {
     for (int step = 0; step < time + 1; step++) {
-      simulated_worker->executePastScheduledTasks();
+      //simulated_worker->executePastScheduledTasks();
       simulated_clock->advanceTime(std::chrono::milliseconds(1));
     }
   }
@@ -344,7 +344,7 @@ class BaseHandlerTest  {
   std::shared_ptr<erizo::Reader> reader;
   std::shared_ptr<erizo::Writer> writer;
   std::shared_ptr<erizo::SimulatedClock> simulated_clock;
-  std::shared_ptr<erizo::SimulatedWorker> simulated_worker;
+  //std::shared_ptr<erizo::SimulatedWorker> simulated_worker;
   std::shared_ptr<erizo::IOWorker> io_worker;
   std::shared_ptr<erizo::PacketBufferService> packet_buffer_service;
   std::queue<std::shared_ptr<DataPacket>> packet_queue;

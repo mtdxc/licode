@@ -10,7 +10,7 @@
 #include "Stats.h"
 #include "rtp/PacketBufferService.h"
 
-static constexpr uint kRetransmissionsBufferSize = 256;
+static constexpr uint32_t kRetransmissionsBufferSize = 256;
 static constexpr int kNackBlpSize = 16;
 
 static constexpr erizo::duration kTimeToUpdateBitrate = std::chrono::milliseconds(500);

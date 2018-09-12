@@ -105,7 +105,7 @@ TEST_F(RtcpRrGeneratorTest, shouldReportHighestSeqnumWithRollover) {
 
 TEST_F(RtcpRrGeneratorTest, shouldReportDelaySinceLastSr) {
   int kArbitraryTimePassedInMs = 500;
-  uint kArbitratyTimePassed = kArbitraryTimePassedInMs * 65536/1000;
+  uint32_t kArbitratyTimePassed = kArbitraryTimePassedInMs * 65536/1000;
   auto first_packet = erizo::PacketTools::createDataPacket(erizo::kArbitrarySeqNumber, VIDEO_PACKET);
   auto sender_report = erizo::PacketTools::createSenderReport(erizo::kVideoSsrc, VIDEO_PACKET);
   sender_report->received_time_ms = erizo::ClockUtils::timePointToMs(clock->now());

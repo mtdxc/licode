@@ -50,7 +50,7 @@ TEST_F(MovingIntervalRateStatTest, shouldCalculateAverageForLessThanWindowSize) 
     moving_interval_stat+=(100+10*i);
     advanceClockMs(100);
   }
-  EXPECT_EQ(moving_interval_stat.value(), uint((100 + 110 + 120)/3));
+  EXPECT_EQ(moving_interval_stat.value(), ((100 + 110 + 120)/3));
 }
 
 

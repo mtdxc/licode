@@ -1,6 +1,6 @@
 #ifndef ERIZO_SRC_TEST_UTILS_MOCKS_H_
 #define ERIZO_SRC_TEST_UTILS_MOCKS_H_
-
+#include <gmock/gmock.h>
 #include <WebRtcConnection.h>
 #include <pipeline/Handler.h>
 #include <rtp/RtcpProcessor.h>

@@ -94,9 +94,9 @@ void QualityManager::notifyQualityUpdate() {
 }
 
 bool QualityManager::doesLayerMeetConstraints(int spatial_layer, int temporal_layer) {
-  if (static_cast<uint>(spatial_layer) > video_frame_width_list_.size() ||
-      static_cast<uint>(spatial_layer) > video_frame_height_list_.size() ||
-      static_cast<uint>(temporal_layer) > video_frame_rate_list_.size()) {
+  if (spatial_layer > video_frame_width_list_.size() ||
+	  spatial_layer > video_frame_height_list_.size() ||
+      temporal_layer > video_frame_rate_list_.size()) {
         return true;
   }
   if (spatial_layer == 0 && temporal_layer == 0) {

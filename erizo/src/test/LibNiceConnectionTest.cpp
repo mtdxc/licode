@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-
+#include <gmock/gmock.h>
 #include <LibNiceConnection.h>
 #include <lib/LibNiceInterface.h>
 #include <nice/nice.h>
@@ -110,8 +110,7 @@ class LibNiceConnectionTest : public ::testing::Test {
     EXPECT_CALL(*libnice, NiceAgentSetPortRange(_, _, _, _, _)).Times(0);
     EXPECT_CALL(*libnice, NiceAgentSetRelayInfo(_, _, _, _, _, _, _)).Times(0);
 
-    nice_connection = new erizo::LibNiceConnection(libnice_pointer,
-        *ice_config);
+    nice_connection = new erizo::LibNiceConnection(libnice_pointer, *ice_config);
     nice_connection->setIceListener(nice_listener);
     nice_connection->start();
   }
@@ -122,7 +121,7 @@ class LibNiceConnectionTest : public ::testing::Test {
     free(test_packet);
   }
 
-  boost::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
+  std::shared_ptr<erizo::LibNiceInterface> libnice_pointer;
   MockLibNice* libnice;
   std::shared_ptr<MockLibNiceConnectionListener> nice_listener;
   erizo::IceConfig* ice_config;

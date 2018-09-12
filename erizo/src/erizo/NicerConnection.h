@@ -49,7 +49,7 @@ class NicerConnection : public IceConnection, public std::enable_shared_from_thi
 
   void start() override;
   bool setRemoteCandidates(const std::vector<CandidateInfo> &candidates, bool is_bundle) override;
-  void gatheringDone(uint stream_id);
+  void gatheringDone(uint32_t stream_id);
   void onCandidate(nr_ice_media_stream *stream, int component_id, nr_ice_candidate *candidate);
   void setRemoteCredentials(const std::string& username, const std::string& password) override;
   int sendData(unsigned int component_id, const void* buf, int len) override;

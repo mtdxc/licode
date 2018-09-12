@@ -19,8 +19,6 @@ typedef struct _NiceAgent NiceAgent;
 typedef struct _GMainContext GMainContext;
 typedef struct _GMainLoop GMainLoop;
 
-typedef unsigned int uint;
-
 namespace erizo {
 
 // forward declarations

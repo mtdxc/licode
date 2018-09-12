@@ -120,12 +120,6 @@
     <ClCompile Include="erizo\DtlsTransport.cpp">
       <Filter>Source files\erizo</Filter>
     </ClCompile>
-    <ClCompile Include="erizo\IceConnection.cpp">
-      <Filter>Source files\erizo</Filter>
-    </ClCompile>
-    <ClCompile Include="erizo\LibNiceConnection.cpp">
-      <Filter>Source files\erizo</Filter>
-    </ClCompile>
     <ClCompile Include="erizo\logger.cpp">
       <Filter>Source files\erizo</Filter>
     </ClCompile>
@@ -252,13 +246,7 @@
     <ClCompile Include="erizo\rtp\RtpRetransmissionHandler.cpp">
       <Filter>Source files\erizo\rtp</Filter>
     </ClCompile>
-    <ClCompile Include="erizo\rtp\RtpSink.cpp">
-      <Filter>Source files\erizo\rtp</Filter>
-    </ClCompile>
     <ClCompile Include="erizo\rtp\RtpSlideShowHandler.cpp">
-      <Filter>Source files\erizo\rtp</Filter>
-    </ClCompile>
-    <ClCompile Include="erizo\rtp\RtpSource.cpp">
       <Filter>Source files\erizo\rtp</Filter>
     </ClCompile>
     <ClCompile Include="erizo\rtp\RtpTrackMuteHandler.cpp">
@@ -323,9 +311,6 @@
     </ClCompile>
     <ClCompile Include="test\lib\TokenBucketTest.cpp">
       <Filter>Source files\test\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="test\media\SyntheticInputTest.cpp">
-      <Filter>Source files\test\media</Filter>
     </ClCompile>
     <ClCompile Include="test\rtp\BandwidthEstimationHandlerTest.cpp">
       <Filter>Source files\test\rtp</Filter>
@@ -410,6 +395,12 @@
     </ClCompile>
     <ClCompile Include="test\media\DepacketizerTest.cpp">
       <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\IceConnection.cpp">
+      <Filter>Source files\erizo\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\LibNiceConnection.cpp">
+      <Filter>Source files\erizo\lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

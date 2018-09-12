@@ -58,9 +58,7 @@
     <ClCompile Include="erizo\rtp\RtpPaddingGeneratorHandler.cpp" />
     <ClCompile Include="erizo\rtp\RtpPaddingRemovalHandler.cpp" />
     <ClCompile Include="erizo\rtp\RtpRetransmissionHandler.cpp" />
-    <ClCompile Include="erizo\rtp\RtpSink.cpp" />
     <ClCompile Include="erizo\rtp\RtpSlideShowHandler.cpp" />
-    <ClCompile Include="erizo\rtp\RtpSource.cpp" />
     <ClCompile Include="erizo\rtp\RtpTrackMuteHandler.cpp" />
     <ClCompile Include="erizo\rtp\RtpUtils.cpp" />
     <ClCompile Include="erizo\rtp\RtpVP8Fragmenter.cpp" />
@@ -85,7 +83,6 @@
     <ClCompile Include="test\lib\TokenBucketTest.cpp" />
     <ClCompile Include="test\main.cpp" />
     <ClCompile Include="test\media\DepacketizerTest.cpp" />
-    <ClCompile Include="test\media\SyntheticInputTest.cpp" />
     <ClCompile Include="test\OneToManyProcessorTest.cpp" />
     <ClCompile Include="test\PacketTest.cpp" />
     <ClCompile Include="test\rtp\BandwidthEstimationHandlerTest.cpp" />
@@ -235,7 +232,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0501;NOMINMAX;WIN32_LEAN_AND_MEAN;NOMINMAX;BOOST_REGEX_NO_LIB;WEBRTC_WIN;__STDC_CONSTANT_MACROS;_DEBUG;WIN32_LEAN_AND_MEAN;_CONSOLE;_LIB;HAVE_CONFIG_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>erizo;third_party\webrtc\src;third_party\ffmpeg\include;third_party\openssl\include;third_party\libsrtp\include;third_party\libsrtp\crypto\include;third_party\libnice;third_party\libnice\agent;third_party\libnice\glib\include\glib-2.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>erizo;third_party\webrtc\src;third_party\gtest\include;third_party\ffmpeg\include;third_party\openssl\include;third_party\libsrtp\include;third_party\libsrtp\crypto\include;third_party\libnice;third_party\libnice\agent;third_party\libnice\glib\include\glib-2.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DisableSpecificWarnings>4244</DisableSpecificWarnings>
       <ShowIncludes>false</ShowIncludes>
@@ -243,8 +240,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>third_party\ffmpeg\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libnice.lib;webrtc.lib;gtestd.lib;srtp2.lib;avcodec.lib;avformat.lib;avutil.lib;libeay32MD.lib;ssleay32MD.lib;glib-2.0.lib;gobject-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>third_party\ffmpeg\lib;third_party\libnice\glib\lib;third_party\openssl;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;libnice.lib;webrtc.lib;gtestd.lib;srtp2.lib;avcodec.lib;avformat.lib;avutil.lib;libeay32.lib;ssleay32.lib;glib-2.0.lib;gobject-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -252,14 +249,14 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0501;NOMINMAX;WIN32_LEAN_AND_MEAN;NOMINMAX;BOOST_REGEX_NO_LIB;WEBRTC_WIN;__STDC_CONSTANT_MACROS;NDEBUG;_CONSOLE;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>erizo;third_party\webrtc\src;third_party\ffmpeg\include;third_party\openssl\include;third_party\libsrtp\include;third_party\libsrtp\crypto\include;third_party\libnice;third_party\libnice\agent;third_party\libnice\glib\include\glib-2.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>erizo;third_party\webrtc\src;third_party\gtest\include;third_party\ffmpeg\include;third_party\openssl\include;third_party\libsrtp\include;third_party\libsrtp\crypto\include;third_party\libnice;third_party\libnice\agent;third_party\libnice\glib\include\glib-2.0;third_party\nicer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DisableSpecificWarnings>4244</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>libnice.lib;webrtc.lib;gtest.lib;gmock.lib;srtp2.lib;avcodec.lib;avformat.lib;avutil.lib;libeay32MD.lib;ssleay32MD.lib;glib-2.0.lib;gobject-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>third_party\ffmpeg\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;libnice.lib;webrtc.lib;gtest.lib;gmock.lib;srtp2.lib;avcodec.lib;avformat.lib;avutil.lib;libeay32.lib;ssleay32.lib;glib-2.0.lib;gobject-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>third_party\ffmpeg\lib;third_party\libnice\glib\lib;third_party\openssl;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>

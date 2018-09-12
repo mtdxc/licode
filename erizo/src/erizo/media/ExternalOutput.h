@@ -108,8 +108,8 @@ class ExternalOutput : public MediaSink, public RawDataReceiver, public Feedback
   std::vector<RtpMap> rtp_mappings_;
   enum AVCodecID video_codec_;
   enum AVCodecID audio_codec_;
-  std::map<uint, RtpMap> video_maps_;
-  std::map<uint, RtpMap> audio_maps_;
+  std::map<uint32_t, RtpMap> video_maps_;
+  std::map<uint32_t, RtpMap> audio_maps_;
   RtpMap video_map_;
   RtpMap audio_map_;
   bool pipeline_initialized_;

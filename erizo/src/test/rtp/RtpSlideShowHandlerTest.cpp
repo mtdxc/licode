@@ -239,8 +239,8 @@ TEST_F(RtpSlideShowHandlerTest, shouldAdjustSequenceNumberAfterSlideShow) {
       pipeline->write(packet_queue.front());
       packet_queue.pop();
     }
-    uint ssrc = media_stream->getVideoSourceSSRC();
-    uint source_ssrc = media_stream->getVideoSinkSSRC();
+    uint32_t ssrc = media_stream->getVideoSourceSSRC();
+    uint32_t source_ssrc = media_stream->getVideoSinkSSRC();
     auto nack = erizo::PacketTools::createNack(ssrc, source_ssrc,
                                 erizo::kArbitrarySeqNumber + packets_after_handler, VIDEO_PACKET);
     pipeline->read(nack);

@@ -113,7 +113,7 @@ void LayerDetectorHandler::parseLayerInfoFromVP8(std::shared_ptr<DataPacket> pac
     packet->is_keyframe = false;
   }
 
-  if (payload->frameWidth != -1 && static_cast<uint>(payload->frameWidth) != video_frame_width_list_[position]) {
+  if (payload->frameWidth != -1 && payload->frameWidth != video_frame_width_list_[position]) {
     video_frame_width_list_[position] = payload->frameWidth;
     video_frame_height_list_[position] = payload->frameHeight;
     notifyLayerInfoChangedEvent();
@@ -162,7 +162,7 @@ void LayerDetectorHandler::parseLayerInfoFromVP9(std::shared_ptr<DataPacket> pac
   }
   bool resolution_changed = false;
   if (payload->resolutions.size() > 0) {
-    for (uint position = 0; position < payload->resolutions.size(); position++) {
+    for (int position = 0; position < payload->resolutions.size(); position++) {
       resolution_changed = true;
       video_frame_width_list_[position] = payload->resolutions[position].width;
       video_frame_height_list_[position] = payload->resolutions[position].height;

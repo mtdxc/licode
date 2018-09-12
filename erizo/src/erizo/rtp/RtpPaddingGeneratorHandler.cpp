@@ -107,7 +107,7 @@ void RtpPaddingGeneratorHandler::sendPaddingPacket(std::shared_ptr<DataPacket> p
 void RtpPaddingGeneratorHandler::onPacketWithMarkerSet(std::shared_ptr<DataPacket> packet) {
   marker_rate_++;
 
-  for (uint i = 0; i < number_of_full_padding_packets_; i++) {
+  for (int i = 0; i < number_of_full_padding_packets_; i++) {
     sendPaddingPacket(packet, kMaxPaddingSize);
   }
 
