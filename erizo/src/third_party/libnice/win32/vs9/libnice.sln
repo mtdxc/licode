@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dependencies", "dependencies", "{D3264B88-D38F-41E4-A2CB-C53644913D75}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libnice", "libnice.vcxproj", "{550C7FB8-DBFE-4364-B26A-DAF7158CD878}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glib", "glib.vcxproj", "{DD34FAC7-C1A2-4F29-8C96-3F053B47D714}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{550C7FB8-DBFE-4364-B26A-DAF7158CD878}.Debug|Win32.ActiveCfg = Debug|Win32
+		{550C7FB8-DBFE-4364-B26A-DAF7158CD878}.Debug|Win32.Build.0 = Debug|Win32
+		{550C7FB8-DBFE-4364-B26A-DAF7158CD878}.Release|Win32.ActiveCfg = Release|Win32
+		{550C7FB8-DBFE-4364-B26A-DAF7158CD878}.Release|Win32.Build.0 = Release|Win32
+		{DD34FAC7-C1A2-4F29-8C96-3F053B47D714}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DD34FAC7-C1A2-4F29-8C96-3F053B47D714}.Debug|Win32.Build.0 = Debug|Win32
+		{DD34FAC7-C1A2-4F29-8C96-3F053B47D714}.Release|Win32.ActiveCfg = Release|Win32
+		{DD34FAC7-C1A2-4F29-8C96-3F053B47D714}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DD34FAC7-C1A2-4F29-8C96-3F053B47D714} = {D3264B88-D38F-41E4-A2CB-C53644913D75}
+	EndGlobalSection
+EndGlobal
