@@ -153,9 +153,6 @@
     <ClCompile Include="erizo\dtls\DtlsSocket.cpp">
       <Filter>Source files\erizo\dtls</Filter>
     </ClCompile>
-    <ClCompile Include="erizo\lib\LibNiceInterfaceImpl.cpp">
-      <Filter>Source files\erizo\lib</Filter>
-    </ClCompile>
     <ClCompile Include="erizo\lib\TokenBucket.cpp">
       <Filter>Source files\erizo\lib</Filter>
     </ClCompile>
@@ -293,9 +290,6 @@
     </ClCompile>
     <ClCompile Include="erizo\thread\Worker.cpp">
       <Filter>Source files\erizo\thread</Filter>
-    </ClCompile>
-    <ClCompile Include="test\LibNiceConnectionTest.cpp">
-      <Filter>Source files\test</Filter>
     </ClCompile>
     <ClCompile Include="test\main.cpp">
       <Filter>Source files\test</Filter>

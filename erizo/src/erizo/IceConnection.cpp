@@ -20,7 +20,6 @@ IceConnection::IceConnection(const IceConfig& ice_config) : ice_state_{INITIAL},
   }
 
 IceConnection::~IceConnection() {
-  this->listener_.reset();
 }
 
 void IceConnection::setIceListener(std::weak_ptr<IceConnectionListener> listener) {
@@ -39,12 +38,11 @@ const std::string& IceConnection::getLocalPassword() const {
   return upass_;
 }
 
-
 IceState IceConnection::checkIceState() {
   return ice_state_;
 }
 
-std::string IceConnection::iceStateToString(IceState state) const {
+const char* IceConnection::iceStateToString(IceState state) {
   switch (state) {
     case IceState::INITIAL:             return "initial";
     case IceState::FINISHED:            return "finished";
@@ -59,13 +57,13 @@ void IceConnection::updateIceState(IceState state) {
   if (state <= ice_state_) {
     if (state != IceState::READY)
       ELOG_WARN("%s message: unexpected ice state transition, iceState: %s,  newIceState: %s",
-                 toLog(), iceStateToString(ice_state_).c_str(), iceStateToString(state).c_str());
+                 toLog(), iceStateToString(ice_state_), iceStateToString(state));
     return;
   }
 
   ELOG_INFO("%s message: iceState transition, ice_config_.transport_name: %s, iceState: %s, newIceState: %s, this: %p",
              toLog(), ice_config_.transport_name.c_str(),
-             iceStateToString(ice_state_).c_str(), iceStateToString(state).c_str(), this);
+             iceStateToString(ice_state_), iceStateToString(state), this);
   this->ice_state_ = state;
   switch (ice_state_) {
     case IceState::FINISHED:
@@ -82,7 +80,7 @@ void IceConnection::updateIceState(IceState state) {
   }
 
   // Important: send this outside our state lock.  Otherwise, serious risk of deadlock.
-  if (auto listener = this->listener_.lock()) {
+  if (auto listener = listener_.lock()) {
     listener->updateIceState(state, this);
   }
 }

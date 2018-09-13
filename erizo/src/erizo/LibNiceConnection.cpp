@@ -59,9 +59,9 @@ void cb_new_selected_pair(NiceAgent *agent, guint stream_id, guint component_id,
   conn->updateComponentState(component_id, IceState::READY);
 }
 
-LibNiceConnection::LibNiceConnection(std::shared_ptr<LibNiceInterface> libnice, const IceConfig& ice_config)
-  : IceConnection{ice_config},
-    lib_nice_{libnice}, agent_{NULL}, loop_{NULL}, candsDelivered_{0}, receivedLastCandidate_{false} {
+LibNiceConnection::LibNiceConnection(const IceConfig& ice_config)
+  : IceConnection{ice_config}, 
+	agent_{NULL}, loop_{NULL}, candsDelivered_{0}, receivedLastCandidate_{false} {
   #if !GLIB_CHECK_VERSION(2, 35, 0)
   g_type_init();
   #endif
@@ -136,7 +136,7 @@ void LibNiceConnection::onData(unsigned int component_id, char* buf, int len) {
 int LibNiceConnection::sendData(unsigned int component_id, const void* buf, int len) {
   int val = -1;
   if (this->checkIceState() == IceState::READY) {
-    val = lib_nice_->NiceAgentSend(agent_, 1, component_id, len, reinterpret_cast<const gchar*>(buf));
+    val = nice_agent_send(agent_, 1, component_id, len, reinterpret_cast<const gchar*>(buf));
   }
   if (val != len) {
     ELOG_DEBUG("%s message: Sending less data than expected, sent: %d, to_send: %d", toLog(), val, len);
@@ -153,7 +153,7 @@ void LibNiceConnection::start() {
     ELOG_DEBUG("%s message: creating Nice Agent", toLog());
     nice_debug_enable(FALSE);
     // Create a nice agent
-    agent_ = lib_nice_->NiceAgentNew(context_);
+    agent_ = nice_agent_new(context_, NICE_COMPATIBILITY_RFC5245);
     loop_ = g_main_loop_new(context_, FALSE);
     m_Thread_ = std::thread(&LibNiceConnection::mainLoop, this);
     GValue controllingMode = { 0 };
@@ -167,7 +167,7 @@ void LibNiceConnection::start() {
     g_object_set_property(G_OBJECT(agent_), "max-connectivity-checks", &checks);
 
 
-    if (ice_config_.stun_server.compare("") != 0 && ice_config_.stun_port != 0) {
+    if (ice_config_.stun_server.length() != 0 && ice_config_.stun_port != 0) {
       GValue val = { 0 }, val2 = { 0 };
       g_value_init(&val, G_TYPE_STRING);
       g_value_set_string(&val, ice_config_.stun_server.c_str());
@@ -193,9 +193,9 @@ void LibNiceConnection::start() {
 
     // Create a new stream and start gathering candidates
     ELOG_DEBUG("%s message: adding stream, iceComponents: %d", toLog(), ice_config_.ice_components);
-    lib_nice_->NiceAgentAddStream(agent_, ice_config_.ice_components);
+    nice_agent_add_stream(agent_, ice_config_.ice_components);
     gchar *ufrag = NULL, *upass = NULL;
-    lib_nice_->NiceAgentGetLocalCredentials(agent_, 1, &ufrag, &upass);
+    nice_agent_get_local_credentials(agent_, 1, &ufrag, &upass);
     ufrag_ = std::string(ufrag); g_free(ufrag);
     upass_ = std::string(upass); g_free(upass);
 
@@ -209,40 +209,44 @@ void LibNiceConnection::start() {
     if (ice_config_.min_port != 0 && ice_config_.max_port != 0) {
       ELOG_DEBUG("%s message: setting port range, min_port: %d, max_port: %d",
                  toLog(), ice_config_.min_port, ice_config_.max_port);
-      lib_nice_->NiceAgentSetPortRange(agent_, (guint)1, (guint)1, (guint)ice_config_.min_port,
+      nice_agent_set_port_range(agent_, (guint)1, (guint)1, (guint)ice_config_.min_port,
           (guint)ice_config_.max_port);
     }
 
     if (!ice_config_.network_interface.empty()) {
-      const char* public_ip = lib_nice_->NiceInterfacesGetIpForInterface(ice_config_.network_interface.c_str());
+      const char* public_ip = nice_interfaces_get_ip_for_interface((gchar*)ice_config_.network_interface.c_str());
       if (public_ip) {
-        lib_nice_->NiceAgentAddLocalAddress(agent_, public_ip);
+				NiceAddress addr;
+				nice_address_init(&addr);
+				nice_address_set_from_string(&addr, public_ip);
+				nice_agent_add_local_address(agent_, &addr);
       }
     }
 
-    if (ice_config_.turn_server.compare("") != 0 && ice_config_.turn_port != 0) {
+    if (ice_config_.turn_server.length() != 0 && ice_config_.turn_port != 0) {
       ELOG_DEBUG("%s message: configuring TURN, turn_server: %s , turn_port: %d, turn_username: %s, turn_pass: %s",
                  toLog(), ice_config_.turn_server.c_str(),
           ice_config_.turn_port, ice_config_.turn_username.c_str(), ice_config_.turn_pass.c_str());
 
       for (unsigned int i = 1; i <= ice_config_.ice_components ; i++) {
-        lib_nice_->NiceAgentSetRelayInfo(agent_,
+				nice_agent_set_relay_info(agent_,
             1,
             i,
             ice_config_.turn_server.c_str(),     // TURN Server IP
             ice_config_.turn_port,               // TURN Server PORT
             ice_config_.turn_username.c_str(),   // Username
-            ice_config_.turn_pass.c_str());       // Pass
+            ice_config_.turn_pass.c_str(),       // Pass
+					  NICE_RELAY_TYPE_TURN_UDP); 
       }
     }
 
     if (agent_) {
       for (unsigned int i = 1; i <= ice_config_.ice_components; i++) {
-        lib_nice_->NiceAgentAttachRecv(agent_, 1, i, context_, reinterpret_cast<void*>(cb_nice_recv), this);
+        nice_agent_attach_recv(agent_, 1, i, context_, reinterpret_cast<NiceAgentRecvFunc>(cb_nice_recv), this);
       }
     }
     ELOG_DEBUG("%s message: gathering, this: %p", toLog(), this);
-    lib_nice_->NiceAgentGatherCandidates(agent_, 1);
+    nice_agent_gather_candidates(agent_, 1);
 }
 
 void LibNiceConnection::mainLoop() {
@@ -320,7 +324,7 @@ bool LibNiceConnection::setRemoteCandidates(const std::vector<CandidateInfo> &ca
     candList = g_slist_prepend(candList, thecandidate);
   }
   // TODO(pedro): Set Component Id properly, now fixed at 1
-  lib_nice_->NiceAgentSetRemoteCandidates(agent_, (guint) 1, 1, candList);
+  nice_agent_set_remote_candidates(agent_, (guint) 1, 1, candList);
   g_slist_free_full(candList, (GDestroyNotify)&nice_candidate_free);
 
   return true;
@@ -332,7 +336,7 @@ void LibNiceConnection::gatheringDone(uint32_t stream_id) {
 }
 
 void LibNiceConnection::getCandidate(uint32_t stream_id, uint32_t component_id, const std::string &foundation) {
-  GSList* lcands = lib_nice_->NiceAgentGetLocalCandidates(agent_, stream_id, component_id);
+  GSList* lcands = nice_agent_get_local_candidates(agent_, stream_id, component_id);
   // We only want to get the new candidates
   if (candsDelivered_ <= g_slist_length(lcands)) {
     lcands = g_slist_nth(lcands, (candsDelivered_));
@@ -403,7 +407,7 @@ void LibNiceConnection::getCandidate(uint32_t stream_id, uint32_t component_id, 
 void LibNiceConnection::setRemoteCredentials(const std::string& username, const std::string& password) {
   ELOG_DEBUG("%s message: setting remote credentials, ufrag: %s, pass: %s",
              toLog(), username.c_str(), password.c_str());
-  lib_nice_->NiceAgentSetRemoteCredentials(agent_, (guint) 1, username.c_str(), password.c_str());
+  nice_agent_set_remote_credentials(agent_, (guint) 1, username.c_str(), password.c_str());
 }
 
 void LibNiceConnection::updateComponentState(unsigned int component_id, IceState state) {
@@ -447,7 +451,7 @@ CandidatePair LibNiceConnection::getSelectedPair() {
   char ipaddr[NICE_ADDRESS_STRING_LEN];
   CandidatePair selectedPair;
   NiceCandidate* local, *remote;
-  lib_nice_->NiceAgentGetSelectedPair(agent_, 1, 1, &local, &remote);
+  nice_agent_get_selected_pair(agent_, 1, 1, &local, &remote);
   nice_address_to_string(&local->addr, ipaddr);
   selectedPair.erizoCandidateIp = std::string(ipaddr);
   selectedPair.erizoCandidatePort = nice_address_get_port(&local->addr);
@@ -469,6 +473,6 @@ void LibNiceConnection::setReceivedLastCandidate(bool hasReceived) {
 }
 
 LibNiceConnection* LibNiceConnection::create(const IceConfig& ice_config) {
-  return new LibNiceConnection(std::shared_ptr<LibNiceInterface>(new LibNiceInterfaceImpl()), ice_config);
+  return new LibNiceConnection(ice_config);
 }
 } /* namespace erizo */

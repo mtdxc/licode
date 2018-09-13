@@ -13,7 +13,6 @@
 #include "./MediaDefinitions.h"
 #include "./SdpInfo.h"
 #include "./logger.h"
-#include "lib/LibNiceInterface.h"
 
 typedef struct _NiceAgent NiceAgent;
 typedef struct _GMainContext GMainContext;
@@ -50,16 +49,7 @@ class IceConfig {
     bool use_nicer;
     IceConfig()
       : media_type{MediaType::OTHER},
-        transport_name{""},
-        connection_id{""},
         ice_components{0},
-        username{""},
-        password{""},
-        turn_server{""},
-        turn_username{""},
-        turn_pass{""},
-        stun_server{""},
-        network_interface{""},
         stun_port{0},
         turn_port{0},
         min_port{0},
@@ -88,7 +78,6 @@ class IceConnection : public LogContext {
 
  public:
   explicit IceConnection(const IceConfig& ice_config);
-
   virtual ~IceConnection();
 
   virtual void start() = 0;
@@ -109,8 +98,7 @@ class IceConnection : public LogContext {
   virtual const std::string& getLocalUsername() const;
   virtual const std::string& getLocalPassword() const;
 
- private:
-  virtual std::string iceStateToString(IceState state) const;
+  static const char* iceStateToString(IceState state);
 
  protected:
   inline std::string toLog() const {

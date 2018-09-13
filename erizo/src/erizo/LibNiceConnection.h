@@ -15,7 +15,6 @@
 #include "./MediaDefinitions.h"
 #include "./SdpInfo.h"
 #include "./logger.h"
-#include "lib/LibNiceInterface.h"
 #include <condition_variable>
 typedef struct _NiceAgent NiceAgent;
 typedef struct _GMainContext GMainContext;
@@ -40,7 +39,7 @@ class LibNiceConnection : public IceConnection {
   DECLARE_LOGGER();
 
  public:
-  LibNiceConnection(std::shared_ptr<LibNiceInterface> libnice, const IceConfig& ice_config);
+  LibNiceConnection(const IceConfig& ice_config);
 
   virtual ~LibNiceConnection();
   /**
@@ -65,7 +64,6 @@ class LibNiceConnection : public IceConnection {
   void mainLoop();
 
  private:
-  std::shared_ptr<LibNiceInterface> lib_nice_;
   NiceAgent* agent_;
   GMainContext* context_;
   GMainLoop* loop_;

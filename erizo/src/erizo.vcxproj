@@ -20,7 +20,6 @@
     <ClCompile Include="erizo\dtls\DtlsSocket.cpp" />
     <ClCompile Include="erizo\IceConnection.cpp" />
     <ClCompile Include="erizo\LibNiceConnection.cpp" />
-    <ClCompile Include="erizo\lib\LibNiceInterfaceImpl.cpp" />
     <ClCompile Include="erizo\lib\TokenBucket.cpp" />
     <ClCompile Include="erizo\logger.cpp" />
     <ClCompile Include="erizo\MediaDefinitions.cpp" />
@@ -79,7 +78,6 @@
     <ClCompile Include="erizo\thread\ThreadPool.cpp" />
     <ClCompile Include="erizo\thread\Worker.cpp" />
     <ClCompile Include="erizo\WebRtcConnection.cpp" />
-    <ClCompile Include="test\LibNiceConnectionTest.cpp" />
     <ClCompile Include="test\lib\TokenBucketTest.cpp" />
     <ClCompile Include="test\main.cpp" />
     <ClCompile Include="test\media\DepacketizerTest.cpp" />
@@ -255,7 +253,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>ws2_32.lib;libnice.lib;webrtc.lib;gtest.lib;gmock.lib;srtp2.lib;avcodec.lib;avformat.lib;avutil.lib;libeay32.lib;ssleay32.lib;glib-2.0.lib;gobject-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;libnice.lib;webrtc.lib;gtest.lib;srtp2.lib;avcodec.lib;avformat.lib;avutil.lib;libeay32.lib;ssleay32.lib;glib-2.0.lib;gobject-2.0.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>third_party\ffmpeg\lib;third_party\libnice\glib\lib;third_party\openssl;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
