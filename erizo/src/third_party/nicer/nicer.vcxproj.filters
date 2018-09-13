@@ -1,0 +1,559 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="crypto\nr_crypto.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="crypto\nr_crypto_openssl.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="event\async_timer.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="event\async_wait.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ice\ice_candidate.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ice\ice_candidate_pair.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ice\ice_codeword.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ice\ice_component.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ice\ice_ctx.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ice\ice_media_stream.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ice\ice_parser.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ice\ice_peer_ctx.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ice\ice_socket.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="log\r_log.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="log\r_log_plugin.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="net\local_addr.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="net\nr_interface_prioritizer.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="net\nr_proxy_tunnel.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="net\nr_resolver.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="net\nr_socket.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="net\nr_socket_local.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="net\nr_socket_multi_tcp.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="net\nr_socket_wrapper.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="net\transport_addr.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="net\transport_addr_reg.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="plugin\api\api_force.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="plugin\internal\nr_plugin_int.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\c2ru.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\nrregctl.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\nrregistryctl.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\registry.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\registry_local.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\registry_plugin.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\registrycb.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\registryd.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\regrpc_client.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\regrpc_client_cb.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\regrpc_clnt.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\regrpc_server.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\regrpc_svc.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="registry\regrpc_xdr.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="share\nr_startup.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="share\nrappkit_static_plugins.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stats\nrstats.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stats\nrstats_app.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stats\nrstats_memory.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\addrs.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\ifaddrs-android.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\nr_socket_buffered_stun.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\nr_socket_turn.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\stun_build.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\stun_client_ctx.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\stun_codec.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\stun_hint.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\stun_msg.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\stun_proc.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\stun_server_ctx.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\stun_util.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stun\turn_client_ctx.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="testua\CallHandler.cxx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="testua\CommandLineParser.cxx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="testua\testUA.cxx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="testua\UserAgent.cxx">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\byteorder.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\cb_args.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\escape.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\filename.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\getopt.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\hex.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\ice_util.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\mbslen.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\mem_util.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\mutex.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\p_buf.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\ssl_util.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\util.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\util_db.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\debug.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\r_assoc.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\r_assoc_test.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\r_bitfield.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\r_crc32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\r_data.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\r_errors.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\r_list.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\r_memory.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\r_replace.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\r_time.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="util\libekr\threads\pthreads\pthread.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="crypto\nr_crypto.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="crypto\nr_crypto_openssl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="event\async_timer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="event\async_wait.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="event\async_wait_int.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ice\codewords.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ice\ice_candidate.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ice\ice_candidate_pair.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ice\ice_codeword.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ice\ice_component.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ice\ice_ctx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ice\ice_handler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ice\ice_media_stream.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ice\ice_peer_ctx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ice\ice_reg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ice\ice_socket.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="log\r_log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="net\local_addr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="net\nr_interface_prioritizer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="net\nr_proxy_tunnel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="net\nr_resolver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="net\nr_socket.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="net\nr_socket_local.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="net\nr_socket_multi_tcp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="net\nr_socket_wrapper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="net\transport_addr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="net\transport_addr_reg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin\api\api_force.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin\internal\nr_plugin_int.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="registry\c2ru.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="registry\registry.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="registry\registry_int.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="registry\registry_vtbl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="registry\regrpc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="registry\regrpc_client.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="share\nr_api.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="share\nr_common.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="share\nr_dynlib.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="share\nr_reg_keys.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="share\nr_startup.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stats\nrstats.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stats\nrstats_int.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\addrs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\ifaddrs-android.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\nr_socket_buffered_stun.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\nr_socket_turn.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\stun.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\stun_build.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\stun_client_ctx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\stun_codec.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\stun_hint.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\stun_msg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\stun_proc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\stun_reg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\stun_server_ctx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\stun_util.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stun\turn_client_ctx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="testua\CallHandler.hxx">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="testua\CommandLineParser.hxx">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="testua\UserAgent.hxx">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\byteorder.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\cb_args.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\escape.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\getopt.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\hex.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\ice_util.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\mbslen.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\mem_util.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\mutex.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\p_buf.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\ssl_util.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\util.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\util_db.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\assoc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\debug.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_assoc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_bitfield.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_common.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_crc32.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_data.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_defaults.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_errors.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_includes.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_list.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_macros.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_memory.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_thread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_time.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util\libekr\r_types.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="net\targets.mk" />
+    <None Include="registry\regrpc.x" />
+  </ItemGroup>
+</Project>

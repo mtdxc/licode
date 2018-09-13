@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="crypto\nr_crypto.c" />
+    <ClCompile Include="crypto\nr_crypto_openssl.c" />
+    <ClCompile Include="event\async_timer.c" />
+    <ClCompile Include="event\async_wait.c" />
+    <ClCompile Include="ice\ice_candidate.c" />
+    <ClCompile Include="ice\ice_candidate_pair.c" />
+    <ClCompile Include="ice\ice_codeword.c" />
+    <ClCompile Include="ice\ice_component.c" />
+    <ClCompile Include="ice\ice_ctx.c" />
+    <ClCompile Include="ice\ice_media_stream.c" />
+    <ClCompile Include="ice\ice_parser.c" />
+    <ClCompile Include="ice\ice_peer_ctx.c" />
+    <ClCompile Include="ice\ice_socket.c" />
+    <ClCompile Include="log\r_log.c" />
+    <ClCompile Include="log\r_log_plugin.c" />
+    <ClCompile Include="net\local_addr.c" />
+    <ClCompile Include="net\nr_interface_prioritizer.c" />
+    <ClCompile Include="net\nr_proxy_tunnel.c" />
+    <ClCompile Include="net\nr_resolver.c" />
+    <ClCompile Include="net\nr_socket.c" />
+    <ClCompile Include="net\nr_socket_local.c" />
+    <ClCompile Include="net\nr_socket_multi_tcp.c" />
+    <ClCompile Include="net\nr_socket_wrapper.c" />
+    <ClCompile Include="net\transport_addr.c" />
+    <ClCompile Include="net\transport_addr_reg.c" />
+    <ClCompile Include="plugin\api\api_force.c" />
+    <ClCompile Include="plugin\internal\nr_plugin_int.c" />
+    <ClCompile Include="registry\c2ru.c" />
+    <ClCompile Include="registry\nrregctl.c" />
+    <ClCompile Include="registry\nrregistryctl.c" />
+    <ClCompile Include="registry\registry.c" />
+    <ClCompile Include="registry\registrycb.c" />
+    <ClCompile Include="registry\registryd.c" />
+    <ClCompile Include="registry\registry_local.c" />
+    <ClCompile Include="registry\registry_plugin.c" />
+    <ClCompile Include="registry\regrpc_client.c" />
+    <ClCompile Include="registry\regrpc_client_cb.c" />
+    <ClCompile Include="registry\regrpc_clnt.c" />
+    <ClCompile Include="registry\regrpc_server.c" />
+    <ClCompile Include="registry\regrpc_svc.c" />
+    <ClCompile Include="registry\regrpc_xdr.c" />
+    <ClCompile Include="share\nrappkit_static_plugins.c" />
+    <ClCompile Include="share\nr_startup.c" />
+    <ClCompile Include="stats\nrstats.c" />
+    <ClCompile Include="stats\nrstats_app.c" />
+    <ClCompile Include="stats\nrstats_memory.c" />
+    <ClCompile Include="stun\addrs.c" />
+    <ClCompile Include="stun\ifaddrs-android.c" />
+    <ClCompile Include="stun\nr_socket_buffered_stun.c" />
+    <ClCompile Include="stun\nr_socket_turn.c" />
+    <ClCompile Include="stun\stun_build.c" />
+    <ClCompile Include="stun\stun_client_ctx.c" />
+    <ClCompile Include="stun\stun_codec.c" />
+    <ClCompile Include="stun\stun_hint.c" />
+    <ClCompile Include="stun\stun_msg.c" />
+    <ClCompile Include="stun\stun_proc.c" />
+    <ClCompile Include="stun\stun_server_ctx.c" />
+    <ClCompile Include="stun\stun_util.c" />
+    <ClCompile Include="stun\turn_client_ctx.c" />
+    <ClCompile Include="testua\CallHandler.cxx" />
+    <ClCompile Include="testua\CommandLineParser.cxx" />
+    <ClCompile Include="testua\testUA.cxx" />
+    <ClCompile Include="testua\UserAgent.cxx" />
+    <ClCompile Include="util\byteorder.c" />
+    <ClCompile Include="util\cb_args.c" />
+    <ClCompile Include="util\escape.c" />
+    <ClCompile Include="util\filename.c" />
+    <ClCompile Include="util\getopt.c" />
+    <ClCompile Include="util\hex.c" />
+    <ClCompile Include="util\ice_util.c" />
+    <ClCompile Include="util\libekr\debug.c" />
+    <ClCompile Include="util\libekr\r_assoc.c" />
+    <ClCompile Include="util\libekr\r_assoc_test.c" />
+    <ClCompile Include="util\libekr\r_bitfield.c" />
+    <ClCompile Include="util\libekr\r_crc32.c" />
+    <ClCompile Include="util\libekr\r_data.c" />
+    <ClCompile Include="util\libekr\r_errors.c" />
+    <ClCompile Include="util\libekr\r_list.c" />
+    <ClCompile Include="util\libekr\r_memory.c" />
+    <ClCompile Include="util\libekr\r_replace.c" />
+    <ClCompile Include="util\libekr\r_time.c" />
+    <ClCompile Include="util\libekr\threads\pthreads\pthread.c" />
+    <ClCompile Include="util\mbslen.c" />
+    <ClCompile Include="util\mem_util.c" />
+    <ClCompile Include="util\mutex.c" />
+    <ClCompile Include="util\p_buf.c" />
+    <ClCompile Include="util\ssl_util.c" />
+    <ClCompile Include="util\util.c" />
+    <ClCompile Include="util\util_db.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="crypto\nr_crypto.h" />
+    <ClInclude Include="crypto\nr_crypto_openssl.h" />
+    <ClInclude Include="event\async_timer.h" />
+    <ClInclude Include="event\async_wait.h" />
+    <ClInclude Include="event\async_wait_int.h" />
+    <ClInclude Include="ice\codewords.h" />
+    <ClInclude Include="ice\ice_candidate.h" />
+    <ClInclude Include="ice\ice_candidate_pair.h" />
+    <ClInclude Include="ice\ice_codeword.h" />
+    <ClInclude Include="ice\ice_component.h" />
+    <ClInclude Include="ice\ice_ctx.h" />
+    <ClInclude Include="ice\ice_handler.h" />
+    <ClInclude Include="ice\ice_media_stream.h" />
+    <ClInclude Include="ice\ice_peer_ctx.h" />
+    <ClInclude Include="ice\ice_reg.h" />
+    <ClInclude Include="ice\ice_socket.h" />
+    <ClInclude Include="log\r_log.h" />
+    <ClInclude Include="net\local_addr.h" />
+    <ClInclude Include="net\nr_interface_prioritizer.h" />
+    <ClInclude Include="net\nr_proxy_tunnel.h" />
+    <ClInclude Include="net\nr_resolver.h" />
+    <ClInclude Include="net\nr_socket.h" />
+    <ClInclude Include="net\nr_socket_local.h" />
+    <ClInclude Include="net\nr_socket_multi_tcp.h" />
+    <ClInclude Include="net\nr_socket_wrapper.h" />
+    <ClInclude Include="net\transport_addr.h" />
+    <ClInclude Include="net\transport_addr_reg.h" />
+    <ClInclude Include="plugin\api\api_force.h" />
+    <ClInclude Include="plugin\internal\nr_plugin_int.h" />
+    <ClInclude Include="registry\c2ru.h" />
+    <ClInclude Include="registry\registry.h" />
+    <ClInclude Include="registry\registry_int.h" />
+    <ClInclude Include="registry\registry_vtbl.h" />
+    <ClInclude Include="registry\regrpc.h" />
+    <ClInclude Include="registry\regrpc_client.h" />
+    <ClInclude Include="share\nr_api.h" />
+    <ClInclude Include="share\nr_common.h" />
+    <ClInclude Include="share\nr_dynlib.h" />
+    <ClInclude Include="share\nr_reg_keys.h" />
+    <ClInclude Include="share\nr_startup.h" />
+    <ClInclude Include="stats\nrstats.h" />
+    <ClInclude Include="stats\nrstats_int.h" />
+    <ClInclude Include="stun\addrs.h" />
+    <ClInclude Include="stun\ifaddrs-android.h" />
+    <ClInclude Include="stun\nr_socket_buffered_stun.h" />
+    <ClInclude Include="stun\nr_socket_turn.h" />
+    <ClInclude Include="stun\stun.h" />
+    <ClInclude Include="stun\stun_build.h" />
+    <ClInclude Include="stun\stun_client_ctx.h" />
+    <ClInclude Include="stun\stun_codec.h" />
+    <ClInclude Include="stun\stun_hint.h" />
+    <ClInclude Include="stun\stun_msg.h" />
+    <ClInclude Include="stun\stun_proc.h" />
+    <ClInclude Include="stun\stun_reg.h" />
+    <ClInclude Include="stun\stun_server_ctx.h" />
+    <ClInclude Include="stun\stun_util.h" />
+    <ClInclude Include="stun\turn_client_ctx.h" />
+    <ClInclude Include="testua\CallHandler.hxx" />
+    <ClInclude Include="testua\CommandLineParser.hxx" />
+    <ClInclude Include="testua\UserAgent.hxx" />
+    <ClInclude Include="util\byteorder.h" />
+    <ClInclude Include="util\cb_args.h" />
+    <ClInclude Include="util\escape.h" />
+    <ClInclude Include="util\getopt.h" />
+    <ClInclude Include="util\hex.h" />
+    <ClInclude Include="util\ice_util.h" />
+    <ClInclude Include="util\libekr\assoc.h" />
+    <ClInclude Include="util\libekr\debug.h" />
+    <ClInclude Include="util\libekr\r_assoc.h" />
+    <ClInclude Include="util\libekr\r_bitfield.h" />
+    <ClInclude Include="util\libekr\r_common.h" />
+    <ClInclude Include="util\libekr\r_crc32.h" />
+    <ClInclude Include="util\libekr\r_data.h" />
+    <ClInclude Include="util\libekr\r_defaults.h" />
+    <ClInclude Include="util\libekr\r_errors.h" />
+    <ClInclude Include="util\libekr\r_includes.h" />
+    <ClInclude Include="util\libekr\r_list.h" />
+    <ClInclude Include="util\libekr\r_macros.h" />
+    <ClInclude Include="util\libekr\r_memory.h" />
+    <ClInclude Include="util\libekr\r_thread.h" />
+    <ClInclude Include="util\libekr\r_time.h" />
+    <ClInclude Include="util\libekr\r_types.h" />
+    <ClInclude Include="util\mbslen.h" />
+    <ClInclude Include="util\mem_util.h" />
+    <ClInclude Include="util\mutex.h" />
+    <ClInclude Include="util\p_buf.h" />
+    <ClInclude Include="util\ssl_util.h" />
+    <ClInclude Include="util\util.h" />
+    <ClInclude Include="util\util_db.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="net\targets.mk" />
+    <None Include="registry\regrpc.x" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{E3A2E43A-D864-49C7-9C96-0F676025B7CF}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>nicer</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
