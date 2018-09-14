@@ -18,7 +18,7 @@ void PacketCodecParser::disable() {
   enabled_ = false;
 }
 
-void PacketCodecParser::read(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void PacketCodecParser::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (!chead->isRtcp() && enabled_) {
     RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);

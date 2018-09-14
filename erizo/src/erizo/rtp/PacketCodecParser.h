@@ -22,7 +22,7 @@ class PacketCodecParser: public InboundHandler {
      return "packet_codec_parser";
   }
 
-  void read(Context *ctx, std::shared_ptr<DataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:

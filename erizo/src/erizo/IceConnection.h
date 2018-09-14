@@ -21,7 +21,7 @@ typedef struct _GMainLoop GMainLoop;
 namespace erizo {
 
 // forward declarations
-typedef std::shared_ptr<DataPacket> packetPtr;
+typedef packetPtr packetPtr;
 class CandidateInfo;
 class WebRtcConnection;
 class IceConnection;

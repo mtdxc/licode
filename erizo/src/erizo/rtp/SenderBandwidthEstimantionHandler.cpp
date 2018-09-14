@@ -56,7 +56,7 @@ void SenderBandwidthEstimationHandler::notifyUpdate() {
   initialized_ = true;
 }
 
-void SenderBandwidthEstimationHandler::read(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void SenderBandwidthEstimationHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (chead->isFeedback()) {
     char* packet_pointer = packet->data;
@@ -140,7 +140,7 @@ void SenderBandwidthEstimationHandler::read(Context *ctx, std::shared_ptr<DataPa
   ctx->fireRead(std::move(packet));
 }
 
-void SenderBandwidthEstimationHandler::write(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void SenderBandwidthEstimationHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (!chead->isRtcp() && packet->type == VIDEO_PACKET) {
     period_packets_sent_++;

@@ -160,7 +160,7 @@ class Pipeline : public PipelineBase {
 
   ~Pipeline();
 
-  void read(std::shared_ptr<DataPacket> packet);
+  void read(packetPtr packet);
 
   void readEOF();
 
@@ -168,7 +168,7 @@ class Pipeline : public PipelineBase {
 
   void transportInactive();
 
-  void write(std::shared_ptr<DataPacket> packet);
+  void write(packetPtr packet);
 
   void close();
 

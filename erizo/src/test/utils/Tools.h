@@ -23,7 +23,7 @@ inline unsigned char change_bit(unsigned char val, int num, bool bitval) {
 
 class PacketTools {
  public:
-  static std::shared_ptr<DataPacket> createDataPacket(uint16_t seq_number, packetType type) {
+  static packetPtr createDataPacket(uint16_t seq_number, packetType type) {
     erizo::RtpHeader *header = new erizo::RtpHeader();
     header->setSeqNumber(seq_number);
 
@@ -36,7 +36,7 @@ class PacketTools {
     return std::make_shared<DataPacket>(0, reinterpret_cast<char*>(header), sizeof(erizo::RtpHeader), type);
   }
 
-  static std::shared_ptr<DataPacket> createNack(uint32_t ssrc, uint32_t source_ssrc, uint16_t seq_number,
+  static packetPtr createNack(uint32_t ssrc, uint32_t source_ssrc, uint16_t seq_number,
                                                 packetType type, int additional_packets = 0) {
     erizo::RtcpHeader *nack = new erizo::RtcpHeader();
     nack->setPacketType(RTCP_RTP_Feedback_PT);
@@ -51,7 +51,7 @@ class PacketTools {
     return std::make_shared<DataPacket>(0, buf, len, type);
   }
 
-  static std::shared_ptr<DataPacket> createReceiverReport(uint32_t ssrc, uint32_t source_ssrc,
+  static packetPtr createReceiverReport(uint32_t ssrc, uint32_t source_ssrc,
                                                           uint16_t highest_seq_num, packetType type,
                                                           uint32_t last_sender_report = 0, uint32_t fraction_lost = 0) {
     erizo::RtcpHeader *receiver_report = new erizo::RtcpHeader();
@@ -68,7 +68,7 @@ class PacketTools {
     return std::make_shared<DataPacket>(0, buf, len, type);
   }
 
-  static std::shared_ptr<DataPacket> createSenderReport(uint32_t ssrc, packetType type,
+  static packetPtr createSenderReport(uint32_t ssrc, packetType type,
       uint32_t packets_sent = 0, uint32_t octets_sent = 0, uint64_t ntp_timestamp = 0) {
     erizo::RtcpHeader *sender_report = new erizo::RtcpHeader();
     sender_report->setPacketType(RTCP_Sender_PT);
@@ -83,7 +83,7 @@ class PacketTools {
     return std::make_shared<DataPacket>(0, buf, len, type);
   }
 
-  static std::shared_ptr<DataPacket> createVP8Packet(uint16_t seq_number, bool is_keyframe, bool is_marker) {
+  static packetPtr createVP8Packet(uint16_t seq_number, bool is_keyframe, bool is_marker) {
     erizo::RtpHeader *header = new erizo::RtpHeader();
     header->setPayloadType(96);
     header->setSeqNumber(seq_number);
@@ -106,7 +106,7 @@ class PacketTools {
     return packet;
   }
 
-  static std::shared_ptr<DataPacket> createVP8Packet(uint16_t seq_number, uint32_t timestamp,
+  static packetPtr createVP8Packet(uint16_t seq_number, uint32_t timestamp,
       bool is_keyframe, bool is_marker) {
     erizo::RtpHeader *header = new erizo::RtpHeader();
     header->setPayloadType(96);
@@ -131,7 +131,7 @@ class PacketTools {
     return packet;
   }
 
-  static std::shared_ptr<DataPacket> createH264SingleNalPacket(uint16_t seq_number, uint32_t timestamp,
+  static packetPtr createH264SingleNalPacket(uint16_t seq_number, uint32_t timestamp,
       bool is_keyframe) {
     erizo::RtpHeader *header = new erizo::RtpHeader();
     header->setPayloadType(97);
@@ -153,7 +153,7 @@ class PacketTools {
     return packet;
   }
 
-  static std::shared_ptr<DataPacket> createH264AggregatedPacket(uint16_t seq_number, uint32_t timestamp,
+  static packetPtr createH264AggregatedPacket(uint16_t seq_number, uint32_t timestamp,
       uint8_t nal_1_length, uint8_t nal_2_length) {
     erizo::RtpHeader *header = new erizo::RtpHeader();
     header->setPayloadType(97);
@@ -189,7 +189,7 @@ class PacketTools {
     return packet;
   }
 
-  static std::shared_ptr<DataPacket> createH264FragmentedPacket(uint16_t seq_number, uint32_t timestamp,
+  static packetPtr createH264FragmentedPacket(uint16_t seq_number, uint32_t timestamp,
       bool is_start, bool is_end, bool is_keyframe) {
     erizo::RtpHeader *header = new erizo::RtpHeader();
     header->setPayloadType(97);
@@ -217,7 +217,7 @@ class PacketTools {
     return packet;
   }
 
-  static std::shared_ptr<DataPacket> createVP9Packet(uint16_t seq_number, bool is_keyframe, bool is_marker) {
+  static packetPtr createVP9Packet(uint16_t seq_number, bool is_keyframe, bool is_marker) {
     erizo::RtpHeader *header = new erizo::RtpHeader();
     header->setPayloadType(98);
     header->setSeqNumber(seq_number);
@@ -347,7 +347,7 @@ class BaseHandlerTest  {
   //std::shared_ptr<erizo::SimulatedWorker> simulated_worker;
   std::shared_ptr<erizo::IOWorker> io_worker;
   std::shared_ptr<erizo::PacketBufferService> packet_buffer_service;
-  std::queue<std::shared_ptr<DataPacket>> packet_queue;
+  std::queue<packetPtr> packet_queue;
 };
 
 class HandlerTest : public ::testing::Test, public BaseHandlerTest {

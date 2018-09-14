@@ -49,15 +49,15 @@ class LayerDetectorHandler: public InboundHandler, public std::enable_shared_fro
      return "layer_detector";
   }
 
-  void read(Context *ctx, std::shared_ptr<DataPacket> packet) override;
+  void read(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 
  private:
-  void parseLayerInfoFromVP8(std::shared_ptr<DataPacket> packet);
-  void parseLayerInfoFromVP9(std::shared_ptr<DataPacket> packet);
-  void parseLayerInfoFromH264(std::shared_ptr<DataPacket> packet);
+  void parseLayerInfoFromVP8(packetPtr packet);
+  void parseLayerInfoFromVP9(packetPtr packet);
+  void parseLayerInfoFromH264(packetPtr packet);
   int getSsrcPosition(uint32_t ssrc);
-  void addTemporalLayerAndCalculateRate(const std::shared_ptr<DataPacket> &packet, int temporal_layer, bool new_frame);
+  void addTemporalLayerAndCalculateRate(const packetPtr &packet, int temporal_layer, bool new_frame);
   void notifyLayerInfoChangedEvent();
   void notifyLayerInfoChangedEventMaybe();
 

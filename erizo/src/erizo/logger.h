@@ -24,8 +24,6 @@
 #include <utility>
 #include <type_traits>
 #include <mutex>
-typedef std::mutex Mutex;
-typedef std::unique_lock<Mutex> AutoLock;
 
 #define ELOG_MAX_BUFFER_SIZE 10000
 

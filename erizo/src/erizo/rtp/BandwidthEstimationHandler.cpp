@@ -141,7 +141,7 @@ void BandwidthEstimationHandler::updateExtensionMap(bool is_video, std::array<RT
   }
 }
 
-void BandwidthEstimationHandler::read(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void BandwidthEstimationHandler::read(Context *ctx, packetPtr packet) {
   if (!initialized_) {
     ctx->fireRead(std::move(packet));
     return;
@@ -165,7 +165,7 @@ void BandwidthEstimationHandler::read(Context *ctx, std::shared_ptr<DataPacket> 
   ctx->fireRead(std::move(packet));
 }
 
-bool BandwidthEstimationHandler::parsePacket(std::shared_ptr<DataPacket> packet) {
+bool BandwidthEstimationHandler::parsePacket(packetPtr packet) {
   const uint8_t* buffer = reinterpret_cast<uint8_t*>(packet->data);
   size_t length = packet->length;
   webrtc::RtpUtility::RtpHeaderParser rtp_parser(buffer, length);
@@ -174,7 +174,7 @@ bool BandwidthEstimationHandler::parsePacket(std::shared_ptr<DataPacket> packet)
   return rtp_parser.Parse(&header_, &map);
 }
 
-RtpHeaderExtensionMap BandwidthEstimationHandler::getHeaderExtensionMap(std::shared_ptr<DataPacket> packet) const {
+RtpHeaderExtensionMap BandwidthEstimationHandler::getHeaderExtensionMap(packetPtr packet) const {
   RtpHeaderExtensionMap map;
   switch (packet->type) {
     case VIDEO_PACKET:
@@ -190,7 +190,7 @@ RtpHeaderExtensionMap BandwidthEstimationHandler::getHeaderExtensionMap(std::sha
   }
 }
 
-void BandwidthEstimationHandler::write(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void BandwidthEstimationHandler::write(Context *ctx, packetPtr packet) {
   ctx->fireWrite(std::move(packet));
 }
 

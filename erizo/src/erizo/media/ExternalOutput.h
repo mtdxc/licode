@@ -50,7 +50,7 @@ class ExternalOutput : public MediaSink, public RawDataReceiver, public Feedback
 
   void close() override;
 
-  void write(std::shared_ptr<DataPacket> packet);
+  void write(packetPtr packet);
 
   void notifyUpdateToHandlers() override;
 
@@ -122,10 +122,10 @@ class ExternalOutput : public MediaSink, public RawDataReceiver, public Feedback
   int sendFirPacket();
   void asyncTask(std::function<void(std::shared_ptr<ExternalOutput>)> f);
   void queueData(char* buffer, int length, packetType type);
-  void queueDataAsync(std::shared_ptr<DataPacket> copied_packet);
+  void queueDataAsync(packetPtr copied_packet);
   void sendLoop();
-  int deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) override;
-  int deliverVideoData_(std::shared_ptr<DataPacket> video_packet) override;
+  int deliverAudioData_(packetPtr audio_packet) override;
+  int deliverVideoData_(packetPtr video_packet) override;
   int deliverEvent_(MediaEventPtr event) override;
   void writeAudioData(char* buf, int len);
   void writeVideoData(char* buf, int len);
@@ -148,7 +148,7 @@ class ExternalOuputWriter : public OutboundHandler {
     return "writer";
   }
 
-  void write(Context *ctx, std::shared_ptr<DataPacket> packet) override {
+  void write(Context *ctx, packetPtr packet) override {
     if (auto output = output_.lock()) {
       output->write(std::move(packet));
     }

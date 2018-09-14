@@ -369,21 +369,21 @@ void MediaStream::initializePipeline() {
   pipeline_initialized_ = true;
 }
 
-int MediaStream::deliverAudioData_(std::shared_ptr<DataPacket> audio_packet) {
+int MediaStream::deliverAudioData_(packetPtr audio_packet) {
   if (audio_enabled_) {
     sendPacketAsync(std::make_shared<DataPacket>(*audio_packet));
   }
   return audio_packet->length;
 }
 
-int MediaStream::deliverVideoData_(std::shared_ptr<DataPacket> video_packet) {
+int MediaStream::deliverVideoData_(packetPtr video_packet) {
   if (video_enabled_) {
     sendPacketAsync(std::make_shared<DataPacket>(*video_packet));
   }
   return video_packet->length;
 }
 
-int MediaStream::deliverFeedback_(std::shared_ptr<DataPacket> fb_packet) {
+int MediaStream::deliverFeedback_(packetPtr fb_packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(fb_packet->data);
   uint32_t recvSSRC = chead->getSourceSSRC();
   if (chead->isREMB()) {
@@ -422,12 +422,12 @@ int MediaStream::deliverEvent_(MediaEventPtr event) {
   return 1;
 }
 
-void MediaStream::onTransportData(std::shared_ptr<DataPacket> incoming_packet, Transport *transport) {
+void MediaStream::onTransportData(packetPtr incoming_packet, Transport *transport) {
   if ((audio_sink_ == nullptr && video_sink_ == nullptr && fb_sink_ == nullptr)) {
     return;
   }
 
-  std::shared_ptr<DataPacket> packet = std::make_shared<DataPacket>(*incoming_packet);
+  packetPtr packet = std::make_shared<DataPacket>(*incoming_packet);
 
   if (transport->mediaType == AUDIO_TYPE) {
     packet->type = AUDIO_PACKET;
@@ -460,7 +460,7 @@ void MediaStream::onTransportData(std::shared_ptr<DataPacket> incoming_packet, T
   });
 }
 
-void MediaStream::read(std::shared_ptr<DataPacket> packet) {
+void MediaStream::read(packetPtr packet) {
   char* buf = packet->data;
   int len = packet->length;
   // PROCESS RTCP
@@ -551,7 +551,7 @@ void MediaStream::sendPLIToFeedback() {
   }
 }
 // changes the outgoing payload type for in the given data packet
-void MediaStream::sendPacketAsync(std::shared_ptr<DataPacket> packet) {
+void MediaStream::sendPacketAsync(packetPtr packet) {
   if (!sending_) {
     return;
   }
@@ -701,7 +701,7 @@ void MediaStream::parseIncomingPayloadType(char *buf, int len, packetType type) 
   }
 }
 
-void MediaStream::write(std::shared_ptr<DataPacket> packet) {
+void MediaStream::write(packetPtr packet) {
   if (connection_) {
     connection_->write(packet);
   }
@@ -740,7 +740,7 @@ void MediaStream::asyncTask(std::function<void(std::shared_ptr<MediaStream>)> f)
   });
 }
 
-void MediaStream::sendPacket(std::shared_ptr<DataPacket> p) {
+void MediaStream::sendPacket(packetPtr p) {
   if (!sending_) {
     return;
   }

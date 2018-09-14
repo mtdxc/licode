@@ -51,7 +51,7 @@ class Handler : public HandlerBase<HandlerContext> {
   virtual void disable() = 0;
   virtual std::string getName() = 0;
 
-  virtual void read(Context* ctx, std::shared_ptr<DataPacket> packet) = 0;
+  virtual void read(Context* ctx, packetPtr packet) = 0;
   virtual void readEOF(Context* ctx) {
     ctx->fireReadEOF();
   }
@@ -62,7 +62,7 @@ class Handler : public HandlerBase<HandlerContext> {
     ctx->fireTransportInactive();
   }
 
-  virtual void write(Context* ctx, std::shared_ptr<DataPacket> packet) = 0;
+  virtual void write(Context* ctx, packetPtr packet) = 0;
   virtual void close(Context* ctx) {
     return ctx->fireClose();
   }
@@ -84,7 +84,7 @@ class InboundHandler : public HandlerBase<InboundHandlerContext> {
 
   virtual std::string getName() = 0;
 
-  virtual void read(Context* ctx, std::shared_ptr<DataPacket> packet) = 0;
+  virtual void read(Context* ctx, packetPtr packet) = 0;
   virtual void readEOF(Context* ctx) {
     ctx->fireReadEOF();
   }
@@ -111,7 +111,7 @@ class OutboundHandler : public HandlerBase<OutboundHandlerContext> {
 
   virtual std::string getName() = 0;
 
-  virtual void write(Context* ctx, std::shared_ptr<DataPacket> packet) = 0;
+  virtual void write(Context* ctx, packetPtr packet) = 0;
   virtual void close(Context* ctx) {
     return ctx->fireClose();
   }
@@ -134,11 +134,11 @@ class HandlerAdapter : public Handler {
     return "adapter";
   }
 
-  void read(Context* ctx, std::shared_ptr<DataPacket> packet) override {
+  void read(Context* ctx, packetPtr packet) override {
     ctx->fireRead(std::move(packet));
   }
 
-  void write(Context* ctx, std::shared_ptr<DataPacket> packet) override {
+  void write(Context* ctx, packetPtr packet) override {
     return ctx->fireWrite(std::move(packet));
   }
 

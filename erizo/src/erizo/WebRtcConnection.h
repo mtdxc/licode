@@ -116,17 +116,14 @@ class WebRtcConnection: public TransportListener, public LogContext,
    */
   WebRTCEvent getCurrentState();
 
-  void onTransportData(std::shared_ptr<DataPacket> packet, Transport *transport) override;
-
+  void onTransportData(packetPtr packet, Transport *transport) override;
   void updateState(TransportState state, Transport * transport) override;
-
   void onCandidate(const CandidateInfo& cand, Transport *transport) override;
 
   void setMetadata(std::map<std::string, std::string> metadata);
 
-  void write(std::shared_ptr<DataPacket> packet);
-  void syncWrite(std::shared_ptr<DataPacket> packet);
-
+  void write(packetPtr packet);
+  void syncWrite(packetPtr packet);
   void asyncTask(std::function<void(std::shared_ptr<WebRtcConnection>)> f);
 
   bool isAudioMuted() { return audio_muted_; }
@@ -155,7 +152,7 @@ class WebRtcConnection: public TransportListener, public LogContext,
   void onRemoteSdpsSetToMediaStreams(std::string stream_id);
   std::string getJSONCandidate(const std::string& mid, const std::string& sdp);
   void trackTransportInfo();
-  void onRtcpFromTransport(std::shared_ptr<DataPacket> packet, Transport *transport);
+  void onRtcpFromTransport(packetPtr packet, Transport *transport);
   void onREMBFromTransport(RtcpHeader *chead, Transport *transport);
   void maybeNotifyWebRtcConnectionEvent(const WebRTCEvent& event, const std::string& message,
         const std::string& stream_id = "");

@@ -40,7 +40,7 @@ void FecReceiverHandler::notifyUpdate() {
   }
 }
 
-void FecReceiverHandler::write(Context *ctx, std::shared_ptr<DataPacket> packet) {
+void FecReceiverHandler::write(Context *ctx, packetPtr packet) {
   if (enabled_ && packet->type == VIDEO_PACKET) {
     RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
     if (rtp_header->getPayloadType() == RED_90000_PT) {

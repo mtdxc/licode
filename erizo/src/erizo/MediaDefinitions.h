@@ -9,7 +9,8 @@
 #include <memory>
 
 namespace erizo {
-
+  typedef std::mutex Mutex;
+  typedef std::unique_lock<Mutex> AutoLock;
 enum packetType {
     VIDEO_PACKET,
     AUDIO_PACKET,
@@ -44,7 +45,7 @@ typedef std::shared_ptr<DataPacket> packetPtr;
 
 class Monitor {
  protected:
-    std::mutex monitor_mutex_;
+    Mutex monitor_mutex_;
 };
 
 class MediaEvent {
@@ -60,11 +61,11 @@ using MediaEventPtr = std::shared_ptr<MediaEvent>;
 class FeedbackSink {
  public:
     virtual ~FeedbackSink() {}
-    int deliverFeedback(std::shared_ptr<DataPacket> data_packet) {
+    int deliverFeedback(packetPtr data_packet) {
         return this->deliverFeedback_(data_packet);
     }
  private:
-    virtual int deliverFeedback_(std::shared_ptr<DataPacket> data_packet) = 0;
+    virtual int deliverFeedback_(packetPtr data_packet) = 0;
 };
 
 class FeedbackSource {
@@ -90,26 +91,26 @@ class MediaSink: public virtual Monitor {
     FeedbackSource* sink_fb_source_;
 
  public:
-    int deliverAudioData(std::shared_ptr<DataPacket> data_packet) {
+    int deliverAudioData(packetPtr data_packet) {
         return this->deliverAudioData_(data_packet);
     }
-    int deliverVideoData(std::shared_ptr<DataPacket> data_packet) {
+    int deliverVideoData(packetPtr data_packet) {
         return this->deliverVideoData_(data_packet);
     }
     uint32_t getVideoSinkSSRC() {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         return video_sink_ssrc_;
     }
     void setVideoSinkSSRC(uint32_t ssrc) {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         video_sink_ssrc_ = ssrc;
     }
     uint32_t getAudioSinkSSRC() {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         return audio_sink_ssrc_;
     }
     void setAudioSinkSSRC(uint32_t ssrc) {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         audio_sink_ssrc_ = ssrc;
     }
     bool isVideoSinkSSRC(uint32_t ssrc) {
@@ -119,7 +120,7 @@ class MediaSink: public virtual Monitor {
       return ssrc == audio_sink_ssrc_;
     }
     FeedbackSource* getFeedbackSource() {
-     std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         return sink_fb_source_;
     }
     int deliverEvent(MediaEventPtr event) {
@@ -131,8 +132,8 @@ class MediaSink: public virtual Monitor {
     virtual void close() = 0;
 
  private:
-    virtual int deliverAudioData_(std::shared_ptr<DataPacket> data_packet) = 0;
-    virtual int deliverVideoData_(std::shared_ptr<DataPacket> data_packet) = 0;
+    virtual int deliverAudioData_(packetPtr data_packet) = 0;
+    virtual int deliverVideoData_(packetPtr data_packet) = 0;
     virtual int deliverEvent_(MediaEventPtr event) = 0;
 };
 
@@ -153,32 +154,32 @@ class MediaSource: public virtual Monitor {
 
  public:
     void setAudioSink(MediaSink* audio_sink) {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         this->audio_sink_ = audio_sink;
     }
     void setVideoSink(MediaSink* video_sink) {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         this->video_sink_ = video_sink;
     }
     void setEventSink(MediaSink* event_sink) {
-      std::lock_guard<std::mutex> lock(monitor_mutex_);
+      AutoLock lock(monitor_mutex_);
       this->event_sink_ = event_sink;
     }
 
     FeedbackSink* getFeedbackSink() {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         return source_fb_sink_;
     }
     virtual int sendPLI() = 0;
     uint32_t getVideoSourceSSRC() {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         if (video_source_ssrc_list_.empty()) {
           return 0;
         }
         return video_source_ssrc_list_[0];
     }
     void setVideoSourceSSRC(uint32_t ssrc) {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         if (video_source_ssrc_list_.empty()) {
           video_source_ssrc_list_.push_back(ssrc);
           return;
@@ -186,19 +187,19 @@ class MediaSource: public virtual Monitor {
         video_source_ssrc_list_[0] = ssrc;
     }
     std::vector<uint32_t> getVideoSourceSSRCList() {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         return video_source_ssrc_list_;  //  return by copy to avoid concurrent access
     }
     void setVideoSourceSSRCList(const std::vector<uint32_t>& new_ssrc_list) {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         video_source_ssrc_list_ = new_ssrc_list;
     }
     uint32_t getAudioSourceSSRC() {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         return audio_source_ssrc_;
     }
     void setAudioSourceSSRC(uint32_t ssrc) {
-        std::lock_guard<std::mutex> lock(monitor_mutex_);
+        AutoLock lock(monitor_mutex_);
         audio_source_ssrc_ = ssrc;
     }
 

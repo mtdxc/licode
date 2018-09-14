@@ -4,7 +4,7 @@
 
 #include <srtp.h>
 #include <nice/nice.h>
-
+#include "MediaDefinitions.h"
 #include <string>
 
 #include "SrtpChannel.h"
