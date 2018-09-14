@@ -101,11 +101,6 @@ class IceConnection : public LogContext {
   static const char* iceStateToString(IceState state);
 
  protected:
-  inline std::string toLog() const {
-    return "id: " + ice_config_.connection_id + ", " + printLogContext();
-  }
-
- protected:
   std::weak_ptr<IceConnectionListener> listener_;
   IceState ice_state_;
   IceConfig ice_config_;

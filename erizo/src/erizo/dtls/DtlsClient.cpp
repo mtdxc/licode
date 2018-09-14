@@ -299,11 +299,11 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
       assert(len >= 1);
 
       if ((data[0] == 0)   || (data[0] == 1))
-      return stun;
+        return stun;
       if ((data[0] >= 128) && (data[0] <= 191))
-      return rtp;
+        return rtp;
       if ((data[0] >= 20)  && (data[0] <= 64))
-      return dtls;
+        return dtls;
 
       return unknown;
     }

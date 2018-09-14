@@ -38,12 +38,12 @@ class SimulatedClock : public Clock {
 
 class ClockUtils {
 public:
-  static inline int64_t durationToMs(erizo::duration duration) {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+  static inline int64_t durationToMs(duration dur) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
   }
 
-  static inline uint64_t timePointToMs(erizo::time_point time_point) {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(time_point.time_since_epoch()).count();
+  static inline uint64_t timePointToMs(time_point tp) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();
   }
 };
 

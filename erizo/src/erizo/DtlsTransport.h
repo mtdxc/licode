@@ -21,7 +21,7 @@ class DtlsTransport : dtls::DtlsReceiver, public Transport {
                 std::string username, std::string password, bool isServer, std::shared_ptr<Worker> worker,
                 std::shared_ptr<IOWorker> io_worker);
   virtual ~DtlsTransport();
-  void connectionStateChanged(IceState newState);
+
   std::string getMyFingerprint() const;
   static bool isDtlsPacket(const char* buf, int len);
   void start() override;

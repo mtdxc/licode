@@ -6,8 +6,6 @@
 
 void LogContext::setLogContext(std::map<std::string, std::string> context)
 {
-	context_ = context;
-	return;
 	context_log_ = "";
 	for (const std::pair<std::string, std::string> &item : context) {
 		context_log_ += item.first + ": " + item.second + ", ";

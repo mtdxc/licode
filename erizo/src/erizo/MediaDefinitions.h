@@ -18,21 +18,17 @@ enum packetType {
 
 struct DataPacket {
   DataPacket() = default;
-
   DataPacket(int comp_, const char *data_, int length_, packetType type_, uint64_t received_time_ms_);
-
   DataPacket(int comp_, const char *data_, int length_, packetType type_);
-
   DataPacket(int comp_, const unsigned char *data_, int length_);
 
   bool belongsToSpatialLayer(int spatial_layer_);
-
   bool belongsToTemporalLayer(int temporal_layer_);
 
   int comp;
+  packetType type;
   char data[1500];
   int length;
-  packetType type;
   uint64_t received_time_ms;
   // why save vector in this?
   std::vector<int> compatible_spatial_layers;
@@ -59,7 +55,6 @@ class MediaEvent {
     return "event";
   }
 };
-
 using MediaEventPtr = std::shared_ptr<MediaEvent>;
 
 class FeedbackSink {

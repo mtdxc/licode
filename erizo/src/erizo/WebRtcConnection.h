@@ -44,8 +44,7 @@ enum WebRTCEvent {
 
 class WebRtcConnectionEventListener {
  public:
-    virtual ~WebRtcConnectionEventListener() {
-    }
+    virtual ~WebRtcConnectionEventListener() {}
     virtual void notifyEvent(WebRTCEvent newEvent, const std::string& message, const std::string &stream_id = "") = 0;
 };
 

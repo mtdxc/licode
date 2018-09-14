@@ -70,7 +70,7 @@ class LibNiceConnection : public IceConnection {
 
   unsigned int candsDelivered_;
 
-  std::thread m_Thread_;
+  std::thread thread_;
   Mutex close_mutex_;
   std::condition_variable cond_;
 

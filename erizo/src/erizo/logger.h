@@ -184,9 +184,8 @@ public:
   virtual ~LogContext() {}
 
   void setLogContext(std::map<std::string, std::string> context);
-
   void copyLogContextFrom(LogContext *log_context) {
-    setLogContext(log_context->context_);
+		context_log_ = log_context->context_log_;
   }
 
   const char* printLogContext() const {
@@ -199,9 +198,9 @@ public:
   
   #define Info(fmt, ...) LogStr(logger, fmt, ##__VA_ARGS__);
   #define Warn(fmt, ...) LogStr(logger, fmt, ##__VA_ARGS__);
+	#define Debug(fmt, ...) LogStr(logger, fmt, ##__VA_ARGS__);
 private:
   std::string context_log_;
-  std::map<std::string, std::string> context_;
 };
 /**
 * @brief Trace日志调试封装类.

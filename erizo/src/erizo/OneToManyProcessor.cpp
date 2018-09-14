@@ -92,29 +92,29 @@ namespace erizo {
     ELOG_DEBUG("Adding subscriber");
     AutoLock lock(monitor_mutex_);
     ELOG_DEBUG("From %u, %u ", publisher->getAudioSourceSSRC(), publisher->getVideoSourceSSRC());
-    subscriber_stream->setAudioSinkSSRC(this->publisher->getAudioSourceSSRC());
-    subscriber_stream->setVideoSinkSSRC(this->publisher->getVideoSourceSSRC());
+    subscriber_stream->setAudioSinkSSRC(publisher->getAudioSourceSSRC());
+    subscriber_stream->setVideoSinkSSRC(publisher->getVideoSourceSSRC());
     ELOG_DEBUG("Subscribers ssrcs: Audio %u, video, %u from %u, %u ",
                subscriber_stream->getAudioSinkSSRC(), subscriber_stream->getVideoSinkSSRC(),
-               this->publisher->getAudioSourceSSRC() , this->publisher->getVideoSourceSSRC());
+               publisher->getAudioSourceSSRC() , publisher->getVideoSourceSSRC());
     FeedbackSource* fbsource = subscriber_stream->getFeedbackSource();
 
     if (fbsource != nullptr) {
       ELOG_DEBUG("adding fbsource");
       fbsource->setFeedbackSink(this);
     }
-    if (this->subscribers.find(peer_id) != subscribers.end()) {
+    if (subscribers.find(peer_id) != subscribers.end()) {
         ELOG_WARN("This OTM already has a subscriber with peer_id %s, substituting it", peer_id.c_str());
         this->subscribers.erase(peer_id);
     }
-    this->subscribers[peer_id] = subscriber_stream;
+    subscribers[peer_id] = subscriber_stream;
   }
 
   void OneToManyProcessor::removeSubscriber(const std::string& peer_id) {
     ELOG_DEBUG("Remove subscriber %s", peer_id.c_str());
     AutoLock lock(monitor_mutex_);
-    if (this->subscribers.find(peer_id) != subscribers.end()) {
-      this->subscribers.erase(peer_id);
+    if (subscribers.find(peer_id) != subscribers.end()) {
+      subscribers.erase(peer_id);
     }
   }
 

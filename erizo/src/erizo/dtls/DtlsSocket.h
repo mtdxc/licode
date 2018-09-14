@@ -26,37 +26,21 @@ class DtlsSocketContext;
 class SrtpSessionKeys {
  public:
   SrtpSessionKeys() {
-    clientMasterKey = new unsigned char[SRTP_MASTER_KEY_KEY_LEN];
     clientMasterKeyLen = 0;
-    clientMasterSalt = new unsigned char[SRTP_MASTER_KEY_SALT_LEN];
     clientMasterSaltLen = 0;
-    serverMasterKey = new unsigned char[SRTP_MASTER_KEY_KEY_LEN];
     serverMasterKeyLen = 0;
-    serverMasterSalt = new unsigned char[SRTP_MASTER_KEY_SALT_LEN];
     serverMasterSaltLen = 0;
   }
   ~SrtpSessionKeys() {
-    if (clientMasterKey) {
-      delete[] clientMasterKey; clientMasterKey = NULL;
-    }
-    if (serverMasterKey) {
-      delete[] serverMasterKey; serverMasterKey = NULL;
-    }
-    if (clientMasterSalt) {
-      delete[] clientMasterSalt; clientMasterSalt = NULL;
-    }
-    if (serverMasterSalt) {
-      delete[] serverMasterSalt; serverMasterSalt = NULL;
-    }
   }
-  unsigned char *clientMasterKey;
-  int clientMasterKeyLen;
-  unsigned char *serverMasterKey;
+  unsigned char serverMasterKey[SRTP_MASTER_KEY_KEY_LEN];
+  unsigned char serverMasterSalt[SRTP_MASTER_KEY_SALT_LEN];
+  unsigned char clientMasterKey[SRTP_MASTER_KEY_KEY_LEN];
+  unsigned char clientMasterSalt[SRTP_MASTER_KEY_SALT_LEN];
   int serverMasterKeyLen;
-  unsigned char *clientMasterSalt;
-  int clientMasterSaltLen;
-  unsigned char *serverMasterSalt;
   int serverMasterSaltLen;
+  int clientMasterKeyLen;
+  int clientMasterSaltLen;
 };
 
 class DtlsSocket {
@@ -148,6 +132,7 @@ class DtlsSocketContext {
   void write(const unsigned char* data, unsigned int len);
   void handshakeCompleted();
   void handshakeFailed(const char *err);
+
   void setDtlsReceiver(DtlsReceiver *recv);
   void setDtlsSocket(DtlsSocket *sock) {mSocket = sock;}
   std::string getFingerprint() const;

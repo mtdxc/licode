@@ -11,8 +11,9 @@ extern "C" {
 #include <libavutil/mathematics.h>
 #include <libavutil/time.h>
 }
-
+#ifndef WIN32
 #pragma GCC diagnostic pop
+#endif
 
 #include <string>
 #include <map>
