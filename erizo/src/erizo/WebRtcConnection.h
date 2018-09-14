@@ -19,8 +19,8 @@
 #include "lib/Clock.h"
 #include "pipeline/Handler.h"
 #include "pipeline/Service.h"
-#include "rtp/QualityManager.h"
-#include "rtp/PacketBufferService.h"
+//#include "rtp/QualityManager.h"
+//#include "rtp/PacketBufferService.h"
 
 namespace erizo {
 
@@ -161,7 +161,6 @@ class WebRtcConnection: public TransportListener, public LogContext,
   std::string connection_id_;
   bool audio_enabled_;
   bool video_enabled_;
-  bool trickle_enabled_;
   bool slide_show_mode_;
   bool sending_;
   int bundle_;

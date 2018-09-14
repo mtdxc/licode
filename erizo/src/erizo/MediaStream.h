@@ -29,16 +29,14 @@ namespace erizo {
 
 class MediaStreamStatsListener {
  public:
-    virtual ~MediaStreamStatsListener() {
-    }
+    virtual ~MediaStreamStatsListener() {}
     virtual void notifyStats(const std::string& message) = 0;
 };
 
 
 class MediaStreamEventListener {
  public:
-    virtual ~MediaStreamEventListener() {
-    }
+    virtual ~MediaStreamEventListener() {}
     virtual void notifyMediaStreamEvent(const std::string& type, const std::string& message) = 0;
 };
 /**
@@ -91,7 +89,6 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
    * Sets the Event Listener for this MediaStream
    */
   void setMediaStreamEventListener(MediaStreamEventListener* listener);
-
   void notifyMediaStreamEvent(const std::string& type, const std::string& message);
 
   /**
