@@ -16,7 +16,7 @@ class QualityManager: public Service, public std::enable_shared_from_this<Qualit
  public:
   static constexpr duration kMinLayerSwitchInterval = std::chrono::seconds(10);
   static constexpr duration kActiveLayerInterval = std::chrono::milliseconds(500);
-  static constexpr float kIncreaseLayerBitrateThreshold = 0.1;
+  static constexpr float kIncreaseLayerBitrateThreshold = 0.1f;
 
  public:
   explicit QualityManager(std::shared_ptr<Clock> the_clock = std::make_shared<SteadyClock>());

@@ -14,7 +14,7 @@ static constexpr uint32_t kRetransmissionsBufferSize = 256;
 static constexpr int kNackBlpSize = 16;
 
 static constexpr erizo::duration kTimeToUpdateBitrate = std::chrono::milliseconds(500);
-static constexpr float kMarginRtxBitrate = 0.1;
+static constexpr float kMarginRtxBitrate = 0.1f;
 static constexpr int kBurstSize = 1300 * 20;  // 20 packets with almost max size
 
 namespace erizo {

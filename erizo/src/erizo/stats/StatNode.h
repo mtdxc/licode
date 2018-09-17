@@ -15,10 +15,6 @@ class StatNode {
   StatNode() {}
   virtual ~StatNode() {}
 
-  virtual StatNode& operator[](std::string key);
-
-  virtual StatNode& operator[](uint64_t key) { return (*this)[std::to_string(key)]; }
-
   template <typename Node>
   void insertStat(std::string key, Node&& stat) {  // NOLINT
     // forward ensures that Node type is passed to make_shared(). It would otherwise pass StatNode.
@@ -28,23 +24,24 @@ class StatNode {
     node_map_.insert(std::make_pair(key, std::make_shared<Node>(std::forward<Node>(stat))));
   }
 
-  virtual bool hasChild(std::string name) { return node_map_.find(name) != node_map_.end(); }
+  virtual StatNode& operator[](std::string key);
+  virtual StatNode& operator[](uint64_t key) { return (*this)[std::to_string(key)]; }
 
+  virtual bool hasChild(std::string name) { return node_map_.find(name) != node_map_.end(); }
   virtual bool hasChild(uint64_t value) { return hasChild(std::to_string(value)); }
 
   virtual StatNode& operator+=(uint64_t value) { return *this; }
-
   virtual StatNode operator++(int value) { return StatNode{}; }
-
   virtual uint64_t value() { return 0; }
 
-  virtual const std::map<std::string, std::shared_ptr<StatNode>>& getMap() {return node_map_;}
+  typedef std::map<std::string, std::shared_ptr<StatNode>> StatMap;
+  virtual const StatMap& getMap() {return node_map_;}
 
   virtual std::string toString();
 
  private:
   bool is_node_{false};
-  std::map<std::string, std::shared_ptr<StatNode>> node_map_;
+  StatMap node_map_;
 };
 
 class StringStat : public StatNode {
@@ -54,15 +51,10 @@ class StringStat : public StatNode {
   explicit StringStat(const StringStat &string_stat) : text_{string_stat.text_} {}
   virtual ~StringStat() {}
 
+  std::string toString() override;
   StatNode& operator=(std::string text);
 
   StatNode operator++(int value) override { return StringStat{text_}; }
-
-  StatNode& operator+=(uint64_t value) override { return *this; }
-
-  std::string toString() override;
-
-  uint64_t value() override { return 0; }
 
  private:
   std::string text_;
@@ -77,11 +69,9 @@ class CumulativeStat : public StatNode {
   StatNode& operator=(uint64_t initial);
 
   StatNode operator++(int value) override;
-
   StatNode& operator+=(uint64_t value) override;
 
   std::string toString() override { return std::to_string(total_); }
-
   uint64_t value() override { return total_; }
 
  private:
@@ -107,13 +97,14 @@ class RateStat : public StatNode {
   void checkPeriod();
 
  private:
-  duration period_;
-  double scale_;
-  time_point calculation_start_;
-  uint64_t last_;
-  uint64_t total_;
-  uint64_t current_period_total_;
-  uint64_t last_period_calculated_rate_;
+  double scale_; ///< 放大倍数
+  duration period_; ///< 统计周期
+  time_point calculation_start_; ///< 开始时间
+  uint64_t last_; ///< 最后值
+  uint64_t total_; ///< 总采样数
+  uint64_t current_period_total_; ///< 周期内的累加
+  // 上周期速率: current_period_total_ * scale / period_
+  uint64_t last_period_calculated_rate_; 
   std::shared_ptr<Clock> clock_;
 };
 
@@ -124,14 +115,12 @@ class MovingIntervalRateStat : public StatNode {
   virtual ~MovingIntervalRateStat();
 
   StatNode operator++(int value) override;
-
   StatNode& operator+=(uint64_t value) override;
 
   uint64_t value() override;
   uint64_t value(duration stat_interval);
 
   std::string toString() override;
-
 
  private:
   void add(uint64_t value);
@@ -149,22 +138,21 @@ class MovingIntervalRateStat : public StatNode {
   uint64_t accumulated_intervals_;
   uint64_t current_window_start_ms_;
   uint64_t current_window_end_ms_;
-  std::shared_ptr<std::vector<uint64_t>> sample_vector_;
+  std::vector<uint64_t> sample_vector_;
   bool initialized_;
   std::shared_ptr<Clock> clock_;
 };
 
+// 取window_size_个采样的平均值
 class MovingAverageStat : public StatNode {
  public:
   explicit MovingAverageStat(uint32_t window_size);
   virtual ~MovingAverageStat();
 
   StatNode operator++(int value) override;
-
   StatNode& operator+=(uint64_t value) override;
 
   uint64_t value() override;
-
   uint64_t value(uint32_t sample_number);
 
   std::string toString() override;
@@ -174,9 +162,12 @@ class MovingAverageStat : public StatNode {
   double getAverage(uint32_t sample_number);
 
  private:
-  std::shared_ptr<std::vector<uint64_t>> sample_vector_;
+  // 采样数组，大小为window_size_
+  std::vector<uint64_t> sample_vector_;
   uint32_t window_size_;
+  // 写位置, 每写一个+1
   uint64_t next_sample_position_;
+  // 实时计算的平均值
   double current_average_;
 };
 

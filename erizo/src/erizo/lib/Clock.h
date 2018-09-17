@@ -12,6 +12,7 @@ using duration = std::chrono::steady_clock::duration;
 class Clock {
  public:
   virtual time_point now() = 0;
+  int64_t msTime() { return std::chrono::duration_cast<std::chrono::milliseconds>(now().time_since_epoch()).count(); }
 };
 
 class SteadyClock : public Clock {
@@ -46,6 +47,5 @@ public:
     return std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();
   }
 };
-
 }  // namespace erizo
 #endif  // ERIZO_SRC_ERIZO_LIB_CLOCK_H_

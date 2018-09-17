@@ -46,21 +46,6 @@
     <Filter Include="Header files\test">
       <UniqueIdentifier>{9ebbc1ab-93e7-4302-8aef-ece1abe5fa1e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header files\test\lib">
-      <UniqueIdentifier>{2c10f2f4-9797-4e3f-9c7e-25e99bd61832}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header files\test\media">
-      <UniqueIdentifier>{c79f3b97-d21c-4fcc-84f6-d913163f98fd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header files\test\rtp">
-      <UniqueIdentifier>{5f3b261e-d4c9-4532-96af-6f06301293bb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header files\test\stats">
-      <UniqueIdentifier>{a7b355a0-a2a1-4af3-9187-fc1a573c788d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header files\test\thread">
-      <UniqueIdentifier>{131b83ea-4eeb-45cc-8632-9f9fd2e27ed5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header files\test\utils">
       <UniqueIdentifier>{a7110fa5-15af-4880-9da5-9c2b6624d747}</UniqueIdentifier>
     </Filter>
@@ -375,26 +360,26 @@
     <ClCompile Include="test\thread\SchedulerTest.cpp">
       <Filter>Source files\test\thread</Filter>
     </ClCompile>
-    <ClCompile Include="erizo\rtp\PacketCodecParser.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
-    <ClCompile Include="erizo\media\Depacketizer.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
-    <ClCompile Include="erizo\rtp\RtpH264Parser.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
-    <ClCompile Include="erizo\MediaStream.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
-    <ClCompile Include="test\media\DepacketizerTest.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="erizo\IceConnection.cpp">
       <Filter>Source files\erizo\lib</Filter>
     </ClCompile>
     <ClCompile Include="erizo\LibNiceConnection.cpp">
       <Filter>Source files\erizo\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\media\Depacketizer.cpp">
+      <Filter>Source files\erizo\media</Filter>
+    </ClCompile>
+    <ClCompile Include="test\media\DepacketizerTest.cpp">
+      <Filter>Source files\test\media</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\MediaStream.cpp">
+      <Filter>Source files\erizo</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\PacketCodecParser.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\rtp\RtpH264Parser.cpp">
+      <Filter>Source files\erizo\rtp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -635,20 +620,20 @@
     <ClInclude Include="test\utils\Tools.h">
       <Filter>Header files\test\utils</Filter>
     </ClInclude>
-    <ClInclude Include="erizo\rtp\PacketCodecParser.h">
-      <Filter>Header files</Filter>
+    <ClInclude Include="erizo\media\Depacketizer.h">
+      <Filter>Header files\erizo\media</Filter>
     </ClInclude>
     <ClInclude Include="erizo\pipeline\HandlerManager.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
-    <ClInclude Include="erizo\media\Depacketizer.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
-    <ClInclude Include="erizo\rtp\RtpH264Parser.h">
-      <Filter>Header files</Filter>
+      <Filter>Header files\erizo\pipeline</Filter>
     </ClInclude>
     <ClInclude Include="erizo\MediaStream.h">
-      <Filter>Header files</Filter>
+      <Filter>Header files\erizo</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\RtpH264Parser.h">
+      <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\rtp\PacketCodecParser.h">
+      <Filter>Header files\erizo\rtp</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

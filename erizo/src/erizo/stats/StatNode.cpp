@@ -108,8 +108,8 @@ MovingIntervalRateStat::MovingIntervalRateStat(duration interval_size, uint32_t 
   std::shared_ptr<Clock> the_clock): interval_size_ms_{ClockUtils::durationToMs(interval_size)},
   intervals_in_window_{intervals}, scale_{scale}, calculation_start_ms_{0}, current_interval_{0},
   accumulated_intervals_{0}, current_window_start_ms_{0}, current_window_end_ms_{0},
-  sample_vector_{std::make_shared<std::vector<uint64_t>>(intervals, 0)},
   initialized_{false}, clock_{the_clock} {
+  sample_vector_.resize(intervals, 0);
 }
 
 MovingIntervalRateStat::~MovingIntervalRateStat() {
@@ -127,7 +127,7 @@ StatNode& MovingIntervalRateStat::operator+=(uint64_t value) {
 }
 
 void MovingIntervalRateStat::add(uint64_t value) {
-  uint64_t now_ms = ClockUtils::timePointToMs(clock_->now());
+  uint64_t now_ms = clock_->msTime();
   if (!initialized_) {
     calculation_start_ms_ = now_ms;
     initialized_ = true;
@@ -135,34 +135,34 @@ void MovingIntervalRateStat::add(uint64_t value) {
     current_window_start_ms_ = now_ms;
     current_window_end_ms_ = now_ms + accumulated_intervals_ * interval_size_ms_;
   }
-  int32_t intervals_to_pass = (now_ms - current_window_end_ms_) / interval_size_ms_;
 
+  int32_t intervals_to_pass = (now_ms - current_window_end_ms_) / interval_size_ms_;
   if (intervals_to_pass > 0) {
     if (static_cast<uint32_t>(intervals_to_pass) >= intervals_in_window_) {
-      sample_vector_->assign(intervals_in_window_, 0);
+      sample_vector_.assign(intervals_in_window_, 0);
       uint32_t corresponding_interval = getIntervalForTimeMs(now_ms);
       current_interval_ = corresponding_interval;
       accumulated_intervals_ += intervals_to_pass;
-      (*sample_vector_.get())[current_interval_]+= value;
+      sample_vector_[current_interval_]+= value;
       updateWindowTimes();
       return;
     }
     for (int i = 0; i < intervals_to_pass; i++) {
       current_interval_ = getNextInterval(current_interval_);
-      (*sample_vector_.get())[current_interval_] = 0;
+      sample_vector_[current_interval_] = 0;
       accumulated_intervals_++;
     }
   }
 
   uint32_t corresponding_interval = getIntervalForTimeMs(now_ms);
   if (corresponding_interval != current_interval_) {
-    (*sample_vector_.get())[corresponding_interval] = 0;
+    sample_vector_[corresponding_interval] = 0;
     accumulated_intervals_++;
     updateWindowTimes();
     current_interval_ = corresponding_interval;
   }
 
-  (*sample_vector_.get())[current_interval_]+= value;
+  sample_vector_[current_interval_]+= value;
 }
 
 uint64_t MovingIntervalRateStat::value() {
@@ -197,17 +197,17 @@ uint64_t MovingIntervalRateStat::calculateRateForInterval(uint64_t interval_to_c
   uint32_t moving_interval =  getNextInterval(current_interval_ + intervals_to_pass);
   do {
     added_intervals++;
-    total_sum += (*sample_vector_.get())[moving_interval];
+    total_sum += sample_vector_[moving_interval];
     moving_interval = getNextInterval(moving_interval);
   } while (moving_interval != current_interval_);
 
   double last_value_part_in_interval = static_cast<double>(now_ms - (current_window_end_ms_ - interval_size_ms_))
     /interval_size_ms_;
-  double proportional_value = last_value_part_in_interval * (*sample_vector_.get())[current_interval_];
+  double proportional_value = last_value_part_in_interval * sample_vector_[current_interval_];
   if (last_value_part_in_interval < 1) {
     total_sum += proportional_value;
   } else {
-    total_sum += (*sample_vector_.get())[current_interval_];
+    total_sum += sample_vector_[current_interval_];
     last_value_part_in_interval = 0;
     added_intervals++;
   }
@@ -231,8 +231,8 @@ void MovingIntervalRateStat::updateWindowTimes() {
 }
 
 MovingAverageStat::MovingAverageStat(uint32_t window_size)
-  :sample_vector_{std::make_shared<std::vector<uint64_t>>(window_size, 0)},
-  window_size_{window_size}, next_sample_position_{0}, current_average_{0} {
+  : window_size_{window_size}, next_sample_position_{0}, current_average_{0} {
+	sample_vector_.resize(window_size, 0);
 }
 
 MovingAverageStat::~MovingAverageStat() {
@@ -263,10 +263,9 @@ std::string MovingAverageStat::toString() {
 
 void MovingAverageStat::add(uint64_t value) {
   if (next_sample_position_ < window_size_) {
-    current_average_  = static_cast<double>(current_average_ * next_sample_position_ + value)
-      / (next_sample_position_ + 1);
+    current_average_  = static_cast<double>(current_average_ * next_sample_position_ + value) / (next_sample_position_ + 1);
   } else {
-    uint64_t old_value = (*sample_vector_.get())[next_sample_position_ % window_size_];
+    uint64_t old_value = sample_vector_[next_sample_position_ % window_size_];
     if (value > old_value) {
       current_average_ = current_average_ + static_cast<double>(value - old_value) / window_size_;
     } else {
@@ -274,7 +273,7 @@ void MovingAverageStat::add(uint64_t value) {
     }
   }
 
-  (*sample_vector_.get())[next_sample_position_ % window_size_] = value;
+  sample_vector_[next_sample_position_ % window_size_] = value;
   next_sample_position_++;
 }
 
@@ -286,7 +285,7 @@ double MovingAverageStat::getAverage(uint32_t sample_number) {
   sample_number = std::min(static_cast<uint64_t>(sample_number), current_sample_position);
   uint64_t calculated_sum = 0;
   for (uint32_t i = 0; i < sample_number;  i++) {
-    calculated_sum += (*sample_vector_.get())[(current_sample_position - i) % window_size_];
+    calculated_sum += sample_vector_[(current_sample_position - i) % window_size_];
   }
   return static_cast<double>(calculated_sum)/sample_number;
 }

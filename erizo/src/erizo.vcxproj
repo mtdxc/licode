@@ -234,6 +234,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DisableSpecificWarnings>4244</DisableSpecificWarnings>
       <ShowIncludes>false</ShowIncludes>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -250,6 +251,7 @@
       <AdditionalIncludeDirectories>erizo;third_party\webrtc\src;third_party\gtest\include;third_party\ffmpeg\include;third_party\openssl\include;third_party\libsrtp\include;third_party\libsrtp\crypto\include;third_party\libnice;third_party\libnice\agent;third_party\libnice\glib\include\glib-2.0;third_party\nicer\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DisableSpecificWarnings>4244</DisableSpecificWarnings>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
