@@ -41,7 +41,6 @@ class IceConfig {
     std::string transport_name;
     std::string connection_id;
     unsigned int ice_components;
-    std::string username, password;
     std::string turn_server, turn_username, turn_pass;
     std::string stun_server, network_interface;
     uint16_t stun_port, turn_port, min_port, max_port;

@@ -71,7 +71,7 @@ void TimeoutChecker::scheduleNext() {
 
 DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, const std::string& connection_id,
                             bool bundle, bool rtcp_mux, std::weak_ptr<TransportListener> transport_listener,
-                            const IceConfig& iceConfig, std::string username, std::string password,
+                            const IceConfig& iceConfig, 
                             bool isServer, std::shared_ptr<Worker> worker, std::shared_ptr<IOWorker> io_worker):
   Transport(med, transport_name, connection_id, bundle, rtcp_mux, transport_listener, iceConfig, worker, io_worker),
   readyRtp(false), readyRtcp(false), isServer_(isServer) {
@@ -106,8 +106,6 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, c
     iceConfig_.transport_name = transport_name;
     iceConfig_.media_type = med;
     iceConfig_.ice_components = comps;
-    iceConfig_.username = username;
-    iceConfig_.password = password;
     if (iceConfig_.use_nicer) {
 #ifdef HAS_NICER
       ice_ = NicerConnection::create(io_worker_, iceConfig_);

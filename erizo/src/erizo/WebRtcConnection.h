@@ -60,7 +60,7 @@ class WebRtcConnection: public TransportListener, public LogContext,
    */
   WebRtcConnection(std::shared_ptr<Worker> worker, std::shared_ptr<IOWorker> io_worker,
       const std::string& connection_id, const IceConfig& ice_config,
-      const std::vector<RtpMap> rtp_mappings, const std::vector<erizo::ExtMap> ext_mappings,
+      const std::vector<RtpMap>& rtp_mappings, const std::vector<erizo::ExtMap>& ext_mappings,
       WebRtcConnectionEventListener* listener);
   /**
    * Destructor.
@@ -169,7 +169,7 @@ class WebRtcConnection: public TransportListener, public LogContext,
   std::shared_ptr<Stats> stats_;
   WebRTCEvent global_state_;
 
-  std::mutex update_state_mutex_;
+  std::mutex state_mutex_;
   std::mutex event_listener_mutex_;
 
   std::shared_ptr<Worker> worker_;

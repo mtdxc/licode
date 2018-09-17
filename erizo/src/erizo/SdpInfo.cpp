@@ -49,7 +49,7 @@ namespace erizo {
   static const std::string kFidGroup = "FID";
 
 
-  SdpInfo::SdpInfo(const std::vector<RtpMap> rtp_mappings) : internalPayloadVector_{rtp_mappings} {
+  SdpInfo::SdpInfo(const std::vector<RtpMap>& rtp_mappings) : internalPayloadVector_{rtp_mappings} {
     isBundle = false;
     isRtcpMux = false;
     isFingerprint = false;

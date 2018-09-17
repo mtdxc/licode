@@ -159,7 +159,7 @@ class SdpInfo {
   /**
    * Constructor
    */
-  explicit SdpInfo(const std::vector<RtpMap> rtp_mappings);
+  explicit SdpInfo(const std::vector<RtpMap>& rtp_mappings);
   virtual ~SdpInfo();
   /**
    * Inits the object with a given SDP.

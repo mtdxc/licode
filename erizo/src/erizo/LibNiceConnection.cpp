@@ -198,12 +198,6 @@ void LibNiceConnection::start() {
     ufrag_ = std::string(ufrag); g_free(ufrag);
     upass_ = std::string(upass); g_free(upass);
 
-    // Set our remote credentials.  This must be done *after* we add a stream.
-    if (ice_config_.username.compare("") != 0 && ice_config_.password.compare("") != 0) {
-      Debug("setting remote credentials in constructor, ufrag:%s, pass:%s",
-                 ice_config_.username.c_str(), ice_config_.password.c_str());
-      this->setRemoteCredentials(ice_config_.username, ice_config_.password);
-    }
     // Set Port Range: If this doesn't work when linking the file libnice.sym has to be modified to include this call
     if (ice_config_.min_port != 0 && ice_config_.max_port != 0) {
       Debug("setting port range, min_port: %d, max_port: %d",
@@ -404,7 +398,8 @@ void LibNiceConnection::getCandidate(uint32_t stream_id, uint32_t component_id, 
 
 void LibNiceConnection::setRemoteCredentials(const std::string& username, const std::string& password) {
   Debug("setting remote credentials, ufrag: %s, pass: %s", username.c_str(), password.c_str());
-  nice_agent_set_remote_credentials(agent_, (guint) 1, username.c_str(), password.c_str());
+  if(agent_)
+	nice_agent_set_remote_credentials(agent_, (guint) 1, username.c_str(), password.c_str());
 }
 
 void LibNiceConnection::updateComponentState(unsigned int component_id, IceState state) {
