@@ -11,19 +11,15 @@
 #include "./logger.h"
 #include "./SdpInfo.h"
 #include "./MediaDefinitions.h"
-#include "./Stats.h"
 #include "./Transport.h"
 #include "./WebRtcConnection.h"
 #include "pipeline/Pipeline.h"
 #include "thread/Worker.h"
-#include "rtp/RtcpProcessor.h"
 #include "rtp/RtpExtensionProcessor.h"
 #include "lib/Clock.h"
 #include "pipeline/Handler.h"
 #include "pipeline/HandlerManager.h"
 #include "pipeline/Service.h"
-#include "rtp/QualityManager.h"
-#include "rtp/PacketBufferService.h"
 
 namespace erizo {
 
@@ -39,14 +35,18 @@ class MediaStreamEventListener {
     virtual ~MediaStreamEventListener() {}
     virtual void notifyMediaStreamEvent(const std::string& type, const std::string& message) = 0;
 };
+
+class QualityManager;
+class Stats;
+class RtcpProcessor;
+class PacketBufferService;
 /**
  * A MediaStream. This class represents a Media Stream that can be established with other peers via a SDP negotiation
  */
 class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
-                        public FeedbackSource, public LogContext, public HandlerManagerListener,
-                        public std::enable_shared_from_this<MediaStream>, public Service {
+                        public FeedbackSource, public HandlerManagerListener,
+                        public std::enable_shared_from_this<MediaStream>, public LogContext, public Service {
   DECLARE_LOGGER();
-  static log4cxx::LoggerPtr statsLogger;
 
  public:
   typedef typename Handler::Context Context;
@@ -64,14 +64,17 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
    * Destructor.
    */
   virtual ~MediaStream();
+
   bool init();
   void close() override;
+  void syncClose();
+
   virtual uint32_t getMaxVideoBW();
   virtual uint32_t getBitrateFromMaxQualityLayer() { return bitrate_from_max_quality_layer_; }
   virtual uint32_t getVideoBitrate() { return video_bitrate_; }
   void setVideoBitrate(uint32_t bitrate) { video_bitrate_ = bitrate; }
   void setMaxVideoBW(uint32_t max_video_bw);
-  void syncClose();
+
   bool setRemoteSdp(std::shared_ptr<SdpInfo> sdp);
 
   /**
@@ -94,8 +97,7 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   /**
    * Sets the Stats Listener for this MediaStream
    */
-  inline void setMediaStreamStatsListener(
-            MediaStreamStatsListener* listener) {
+  void setMediaStreamStatsListener(MediaStreamStatsListener* listener) {
     stats_->setStatsListener(listener);
   }
 
@@ -154,10 +156,12 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   bool isPublisher() { return is_publisher_; }
   void setBitrateFromMaxQualityLayer(uint64_t bitrate) { bitrate_from_max_quality_layer_ = bitrate; }
 
-  inline std::string toLog() {
-    return "id: " + stream_id_ + ", role:" + (is_publisher_ ? "publisher" : "subscriber") + ", " + printLogContext();
+  void Log(const char* fmt, ...) {
+	  va_list vl;
+	  va_start(vl, fmt);
+	  LogStrV(logger, fmt, vl);
+	  va_end(vl);
   }
-
  private:
   void sendPacket(packetPtr packet);
   int deliverAudioData_(packetPtr audio_packet) override;
@@ -184,10 +188,7 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
 
   uint32_t rate_control_;  // Target bitrate for hacky rate control in BPS
 
-  std::string stun_server_;
-
   time_point now_, mark_;
-
   std::shared_ptr<RtcpProcessor> rtcp_processor_;
   std::shared_ptr<Stats> stats_;
   std::shared_ptr<Stats> log_stats_;

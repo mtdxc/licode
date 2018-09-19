@@ -21,13 +21,14 @@ public:
 
 	typedef std::function<void(void)> Function;
 	struct Task {
-		int id; int delta;
+		int id; 
+		duration delta;
 		Function func;
 	};
 
 	virtual void start();
 	virtual void start(std::shared_ptr<std::promise<void>> start_promise);
-  virtual void close() { return stop(); }
+	virtual void close() { return stop(); }
 
 	void task(Function f);
 	int schedule(Function f, time_point t);

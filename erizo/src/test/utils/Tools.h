@@ -4,7 +4,7 @@
 #include <rtp/RtpHeaders.h>
 #include <MediaDefinitions.h>
 #include <Stats.h>
-
+#include "rtp/PacketBufferService.h"
 #include <queue>
 #include <string>
 #include <vector>
@@ -283,12 +283,12 @@ class BaseHandlerTest  {
 
   virtual void internalSetUp() {
     simulated_clock = std::make_shared<erizo::SimulatedClock>();
-    //simulated_worker = std::make_shared<erizo::SimulatedWorker>(simulated_clock);
-    //simulated_worker->start();
+    simulated_worker = std::make_shared<erizo::Worker>(1);
+    simulated_worker->start();
     io_worker = std::make_shared<erizo::IOWorker>();
     io_worker->start();
-    //connection = std::make_shared<erizo::MockWebRtcConnection>(simulated_worker, io_worker, ice_config, rtp_maps);
-    //media_stream = std::make_shared<erizo::MockMediaStream>(simulated_worker, connection, "", "", rtp_maps);
+    connection = std::make_shared<erizo::MockWebRtcConnection>(simulated_worker, io_worker, ice_config, rtp_maps);
+    media_stream = std::make_shared<erizo::MockMediaStream>(simulated_worker, connection, "", "", rtp_maps);
     processor = std::make_shared<erizo::MockRtcpProcessor>();
     quality_manager = std::make_shared<erizo::MockQualityManager>();
     packet_buffer_service = std::make_shared<erizo::PacketBufferService>();
@@ -344,7 +344,7 @@ class BaseHandlerTest  {
   std::shared_ptr<erizo::Reader> reader;
   std::shared_ptr<erizo::Writer> writer;
   std::shared_ptr<erizo::SimulatedClock> simulated_clock;
-  //std::shared_ptr<erizo::SimulatedWorker> simulated_worker;
+  std::shared_ptr<erizo::Worker> simulated_worker;
   std::shared_ptr<erizo::IOWorker> io_worker;
   std::shared_ptr<erizo::PacketBufferService> packet_buffer_service;
   std::queue<packetPtr> packet_queue;

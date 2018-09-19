@@ -211,13 +211,12 @@ void DtlsTransport::onCandidate(const CandidateInfo &candidate, IceConnection *c
 }
 
 void DtlsTransport::write(char* data, int len) {
-  if (ice_ == nullptr || !running_) {
+  if (ice_ == nullptr || !running_ || !data || !len) {
     return;
   }
-  int length = len;
-  SrtpChannel *srtp = srtp_.get();
 
-  if (this->getTransportState() == TRANSPORT_READY) {
+  SrtpChannel *srtp = srtp_.get();
+  if (getTransportState() == TRANSPORT_READY) {
     memcpy(protectBuf_, data, len);
     int comp = 1;
     RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(protectBuf_);
@@ -229,7 +228,7 @@ void DtlsTransport::write(char* data, int len) {
         srtp = srtcp_.get();
       }
       if (srtp && ice_->checkIceState() == IceState::READY) {
-        if (srtp->protectRtcp(protectBuf_, &length) < 0) {
+        if (srtp->protectRtcp(protectBuf_, &len) < 0) {
           return;
         }
       }
@@ -237,16 +236,16 @@ void DtlsTransport::write(char* data, int len) {
       comp = 1;
 
       if (srtp && ice_->checkIceState() == IceState::READY) {
-        if (srtp->protectRtp(protectBuf_, &length) < 0) {
+        if (srtp->protectRtp(protectBuf_, &len) < 0) {
           return;
         }
       }
     }
-    if (length <= 10) {
+    if (len <= 10) {
       return;
     }
     if (ice_->checkIceState() == IceState::READY) {
-      writeOnIce(comp, protectBuf_, length);
+      writeOnIce(comp, protectBuf_, len);
     }
   }
 }
@@ -254,23 +253,21 @@ void DtlsTransport::write(char* data, int len) {
 void DtlsTransport::onDtlsPacket(DtlsSocketContext *ctx, const unsigned char* data, unsigned int len) {
   bool is_rtcp = ctx == dtlsRtcp.get();
   int component_id = is_rtcp ? 2 : 1;
-
+#if 1
+  writeOnIce(component_id, (void*)data, len);
+#else
   packetPtr packet = std::make_shared<DataPacket>(component_id, data, len);
-
   if (is_rtcp) {
-    writeDtlsPacket(dtlsRtcp.get(), packet);
+    writeDtlsPacket(ctx, packet);
   } else {
-    writeDtlsPacket(dtlsRtp.get(), packet);
+    writeDtlsPacket(ctx, packet);
   }
-
-  Debug("Sending DTLS message, transportName: %s, componentId: %d", transport_name.c_str(), packet->comp);
+#endif
+  Debug("Sending DTLS message, transportName: %s, componentId: %d", transport_name.c_str(), component_id);
 }
 
 void DtlsTransport::writeDtlsPacket(DtlsSocketContext *ctx, packetPtr packet) {
-  char data[1500];
-  unsigned int len = packet->length;
-  memcpy(data, packet->data, len);
-  writeOnIce(packet->comp, data, len);
+  writeOnIce(packet->comp, packet->data, packet->length);
 }
 
 void DtlsTransport::onHandshakeCompleted(DtlsSocketContext *ctx, std::string clientKey, std::string serverKey,

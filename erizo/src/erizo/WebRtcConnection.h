@@ -121,24 +121,23 @@ class WebRtcConnection: public TransportListener, public LogContext,
   void syncWrite(packetPtr packet);
   void asyncTask(std::function<void(std::shared_ptr<WebRtcConnection>)> f);
 
-  bool isAudioMuted() { return audio_muted_; }
-  bool isVideoMuted() { return video_muted_; }
-
   void addMediaStream(std::shared_ptr<MediaStream> media_stream);
   void removeMediaStream(const std::string& stream_id);
   void forEachMediaStream(std::function<void(const std::shared_ptr<MediaStream>&)> func);
   void forEachMediaStreamAsync(std::function<void(const std::shared_ptr<MediaStream>&)> func);
 
   void setTransport(std::shared_ptr<Transport> transport);  // Only for Testing purposes
-
+  // unused remove later...
   std::shared_ptr<Stats> getStatsService() { return stats_; }
-
   RtpExtensionProcessor& getRtpExtensionProcessor() { return extension_processor_; }
 
   std::shared_ptr<Worker> getWorker() { return worker_; }
 
-  inline std::string toLog() {
-    return "id: " + connection_id_ + ", " + printLogContext();
+  void Log(const char* fmt, ...) {
+	  va_list vl;
+	  va_start(vl, fmt);
+	  LogStrV(logger, fmt, vl);
+	  va_end(vl);
   }
 
  private:
@@ -177,8 +176,6 @@ class WebRtcConnection: public TransportListener, public LogContext,
   std::vector<std::shared_ptr<MediaStream>> media_streams_;
   std::shared_ptr<SdpInfo> remote_sdp_;
   std::shared_ptr<SdpInfo> local_sdp_;
-  bool audio_muted_;
-  bool video_muted_;
   bool first_remote_sdp_processed_;
 
   std::unique_ptr<BandwidthDistributionAlgorithm> distributor_;

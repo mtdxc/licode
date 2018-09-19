@@ -1,7 +1,7 @@
 #include "rtp/RtpSlideShowHandler.h"
 #include "MediaStream.h"
 #include <vector>
-
+#include "QualityManager.h"
 #include "./MediaDefinitions.h"
 #include "rtp/RtpUtils.h"
 

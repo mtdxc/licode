@@ -11,7 +11,7 @@
 namespace erizo {
 DEFINE_LOGGER(RtpExtensionProcessor, "rtp.RtpExtensionProcessor");
 
-RtpExtensionProcessor::RtpExtensionProcessor(const std::vector<erizo::ExtMap> ext_mappings) :
+RtpExtensionProcessor::RtpExtensionProcessor(const std::vector<erizo::ExtMap>& ext_mappings) :
     ext_mappings_{ext_mappings}, video_orientation_{kVideoRotation_0} {
   translationMap_["urn:ietf:params:rtp-hdrext:ssrc-audio-level"] = SSRC_AUDIO_LEVEL;
   translationMap_["http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time"] = ABS_SEND_TIME;
@@ -36,7 +36,7 @@ void RtpExtensionProcessor::setSdpInfo(std::shared_ptr<SdpInfo> theInfo) {
       case VIDEO_TYPE:
         if (isValidExtension(theMap.uri)) {
           ELOG_DEBUG("Adding RTP Extension for video %s, value %u", theMap.uri.c_str(), theMap.value);
-          ext_map_video_[theMap.value] = RTPExtensions((*translationMap_.find(theMap.uri)).second);
+          ext_map_video_[theMap.value] = RTPExtensions(translationMap_[theMap.uri]);
         } else {
           ELOG_WARN("Unsupported extension %s", theMap.uri.c_str());
         }
@@ -44,7 +44,7 @@ void RtpExtensionProcessor::setSdpInfo(std::shared_ptr<SdpInfo> theInfo) {
       case AUDIO_TYPE:
         if (isValidExtension(theMap.uri)) {
           ELOG_DEBUG("Adding RTP Extension for Audio %s, value %u", theMap.uri.c_str(), theMap.value);
-          ext_map_audio_[theMap.value] = RTPExtensions((*translationMap_.find(theMap.uri)).second);
+          ext_map_audio_[theMap.value] = RTPExtensions(translationMap_[theMap.uri]);
         } else {
           ELOG_WARN("Unsupported extension %s", theMap.uri.c_str());
         }
@@ -82,15 +82,13 @@ uint32_t RtpExtensionProcessor::processRtpExtensions(packetPtr p) {
     }
     uint16_t totalExtLength = head->getExtLength();
     if (head->getExtId() == 0xBEDE) {
-      char* extBuffer = (char*)&head->extensions;  // NOLINT
-      uint8_t extByte = 0;
-      uint16_t currentPlace = 1;
+	  uint8_t* extBuffer = (uint8_t*)&head->extensions;  // NOLINT
+	  uint8_t* extEnd = extBuffer + totalExtLength;
       uint8_t extId = 0;
       uint8_t extLength = 0;
-      while (currentPlace < (totalExtLength*4)) {
-        extByte = (uint8_t)(*extBuffer);
-        extId = extByte >> 4;
-        extLength = extByte & 0x0F;
+      while (extBuffer < extEnd) {
+        extId = extBuffer[0] >> 4;
+        extLength = extBuffer[0] & 0x0F;
         if (extId != 0 && extMap[extId] != 0) {
           switch (extMap[extId]) {
             case ABS_SEND_TIME:
@@ -104,7 +102,6 @@ uint32_t RtpExtensionProcessor::processRtpExtensions(packetPtr p) {
           }
         }
         extBuffer = extBuffer + extLength + 2;
-        currentPlace = currentPlace + extLength + 2;
       }
     }
   }
@@ -115,15 +112,14 @@ VideoRotation RtpExtensionProcessor::getVideoRotation() {
   return video_orientation_;
 }
 
-uint32_t RtpExtensionProcessor::processVideoOrientation(char* buf) {
+uint32_t RtpExtensionProcessor::processVideoOrientation(uint8_t* buf) {
   VideoOrientation* head = reinterpret_cast<VideoOrientation*>(buf);
   video_orientation_ = head->getVideoOrientation();
   return 0;
 }
 
-uint32_t RtpExtensionProcessor::processAbsSendTime(char* buf) {
+uint32_t RtpExtensionProcessor::processAbsSendTime(uint8_t* buf) {
   duration now = clock::now().time_since_epoch();
-  AbsSendTimeExtension* head = reinterpret_cast<AbsSendTimeExtension*>(buf);
   auto now_sec = std::chrono::duration_cast<std::chrono::seconds>(now);
   auto now_usec = std::chrono::duration_cast<std::chrono::microseconds>(now);
 
@@ -133,6 +129,7 @@ uint32_t RtpExtensionProcessor::processAbsSendTime(char* buf) {
   uint32_t absecs = now_usec_only * ((1LL << 18) - 1) * 1e-6;
 
   absecs = (seconds << 18) + absecs;
+  AbsSendTimeExtension* head = reinterpret_cast<AbsSendTimeExtension*>(buf);
   head->setAbsSendTime(absecs);
   return 0;
 }

@@ -193,10 +193,11 @@ public:
   void set_log_context(const char* fmt, ...);
   
   void LogStr(log4cxx::LoggerPtr logger, const char* fmt, ...);
-  
+  void LogStrV(log4cxx::LoggerPtr logger, const char* fmt, va_list vl);
+
   #define Info(fmt, ...) LogStr(logger, fmt, ##__VA_ARGS__);
   #define Warn(fmt, ...) LogStr(logger, fmt, ##__VA_ARGS__);
-	#define Debug(fmt, ...) LogStr(logger, fmt, ##__VA_ARGS__);
+  #define Debug(fmt, ...) LogStr(logger, fmt, ##__VA_ARGS__);
 private:
   std::string context_log_;
 };

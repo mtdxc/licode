@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <string>
-
+#include "QualityManager.h"
 #include "./MediaDefinitions.h"
 #include "./MediaStream.h"
 #include "./RtpUtils.h"

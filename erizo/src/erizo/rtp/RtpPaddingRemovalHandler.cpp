@@ -50,7 +50,7 @@ void RtpPaddingRemovalHandler::write(Context *ctx, packetPtr packet) {
   uint32_t ssrc = rtcp_head->getSourceSSRC();
   std::shared_ptr<SequenceNumberTranslator> translator = getTranslatorForSsrc(ssrc, false);
   if (!translator) {
-    ELOG_DEBUG("No translator for ssrc %u, %s", ssrc, stream_->toLog());
+    stream_->Log("No translator for ssrc %u", ssrc);
     ctx->fireWrite(std::move(packet));
     return;
   }
@@ -66,7 +66,7 @@ void RtpPaddingRemovalHandler::write(Context *ctx, packetPtr packet) {
           if (input_seq_num.type == SequenceNumberType::Valid) {
             seq_nums.push_back(input_seq_num.input);
           } else {
-            ELOG_DEBUG("Input is not valid for %u, ssrc %u, %s", seq_num, ssrc, stream_->toLog());
+            stream_->Log("Input is not valid for %u, ssrc %u", seq_num, ssrc);
           }
           ELOG_DEBUG("Lost packet %u, input %u, ssrc %u", seq_num, input_seq_num.input, ssrc);
         }
@@ -79,7 +79,7 @@ void RtpPaddingRemovalHandler::write(Context *ctx, packetPtr packet) {
           }
           nack_header->setNackPid(pid);
           nack_header->setNackBlp(blp);
-          ELOG_DEBUG("Translated pid %u, translated blp %u, ssrc %u, %s", pid, blp, ssrc, stream_->toLog());
+          stream_->Log("Translated pid %u, translated blp %u, ssrc %u", pid, blp, ssrc);
         }
       });
     }
@@ -96,7 +96,7 @@ bool RtpPaddingRemovalHandler::removePaddingBytes(packetPtr packet,
   if (padding_length + header_length == packet->length) {
     uint16_t sequence_number = rtp_header->getSeqNumber();
     translator->get(sequence_number, true);
-    ELOG_DEBUG("Dropping packet %u, %s", sequence_number, stream_->toLog());
+    stream_->Log("Dropping packet %u", sequence_number);
     return false;
   }
   packet->length -= padding_length;
@@ -109,11 +109,10 @@ std::shared_ptr<SequenceNumberTranslator> RtpPaddingRemovalHandler::getTranslato
     auto translator_it = translator_map_.find(ssrc);
     std::shared_ptr<SequenceNumberTranslator> translator;
     if (translator_it != translator_map_.end()) {
-      ELOG_DEBUG("Found Translator for %u, %s", ssrc, stream_->toLog());
+      stream_->Log("Found Translator for %u", ssrc);
       translator = translator_it->second;
     } else if (should_create) {
-      ELOG_DEBUG("message: no Translator found creating a new one, ssrc: %u, %s", ssrc,
-      stream_->toLog());
+      stream_->Log("no Translator found creating a new one, ssrc: %u", ssrc);
       translator = std::make_shared<SequenceNumberTranslator>();
       translator_map_[ssrc] = translator;
     }

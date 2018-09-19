@@ -440,6 +440,9 @@ class RtcpHeader {
   inline void setLength(uint16_t theLength) {
     length = htons(theLength);
   }
+  inline int getSize() {
+	  return 4 * ntohs(length) + 4;
+  }
   inline uint32_t getSSRC() {
     return ntohl(ssrc);
   }

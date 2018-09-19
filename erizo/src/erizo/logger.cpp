@@ -23,17 +23,23 @@ void LogContext::set_log_context(const char* fmt, ...)
 	}
 }
 
-void LogContext::LogStr(log4cxx::LoggerPtr logger, const char* fmt, ...)
+void LogContext::LogStr(log4cxx::LoggerPtr logger, const char* fmt, ...) {
+	va_list vl;
+	va_start(vl, fmt);
+	LogStrV(logger, fmt, vl);
+	va_end(vl);
+}
+
+void LogContext::LogStrV(log4cxx::LoggerPtr logger, const char* fmt, va_list vl)
 {
-	char buffer[ELOG_MAX_BUFFER_SIZE] = { 0 };
+  char buffer[ELOG_MAX_BUFFER_SIZE] = { 0 };
   char* p = buffer;
   if (context_log_.length()) {
     strcpy(buffer, context_log_.c_str());
     p = buffer + context_log_.length();
     *p++ = ' ';
   }
-	va_list vl;
-	va_start(vl, fmt);
+
 	p += vsnprintf(p, ELOG_MAX_BUFFER_SIZE - context_log_.length() - 2, fmt, vl);
 	va_end(vl);
 #ifdef WIN32
@@ -49,11 +55,11 @@ LogTrace::LogTrace() :m_msExpire(5000)
 	LogTrace("UNDEFINED_MODULE", "NO_LOG");
 }
 /**
-* @brief LogTrace¹¹Ôìº¯Êı
+* @brief LogTraceæ„é€ å‡½æ•°
 *
-* @param strModule Ä£¿éÃû
-* @param strLog ÈÕÖ¾×Ö·û´®Ç°×º
-* @param exp ³¬Ê±Ê±¼ä£¨µ¥Î»ms,È±Ê¡Îª5000£©
+* @param strModule æ¨¡å—å
+* @param strLog æ—¥å¿—å­—ç¬¦ä¸²å‰ç¼€
+* @param exp è¶…æ—¶æ—¶é—´ï¼ˆå•ä½ms,ç¼ºçœä¸º5000ï¼‰
 */
 LogTrace::LogTrace(const char* strModule, const char* strLog, unsigned long exp)
 {

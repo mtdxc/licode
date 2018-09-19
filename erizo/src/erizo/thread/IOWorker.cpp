@@ -35,11 +35,11 @@ void IOWorker::start(std::shared_ptr<std::promise<void>> start_promise) {
       int events;
 #ifdef HAS_NICER
       struct timeval towait = {0, 100000};
-      struct timeval tv;
       int r = NR_async_event_wait2(&events, &towait);
       if (r == R_EOD) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
+      struct timeval tv;
       gettimeofday(&tv, 0);
       NR_async_timer_update_time(&tv);
 #endif

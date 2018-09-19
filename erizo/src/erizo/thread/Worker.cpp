@@ -34,8 +34,8 @@ void Worker::serviceQueue() {
 		if (!task_queue_.empty() && !stop_requested_) {
 			Task t = task_queue_.begin()->second;
 			task_queue_.erase(task_queue_.begin());
-			if (t.delta && !stop_when_empty_) {
-				task_queue_.insert(std::make_pair(clock::now() + std::chrono::milliseconds(t.delta), t));
+			if (t.delta.count() && !stop_when_empty_) {
+				task_queue_.insert(std::make_pair(clock::now() + t.delta, t));
 			}
 
 			lock.unlock();
@@ -64,8 +64,8 @@ void Worker::serviceQueue() {
 
 			Task t = task_queue_.begin()->second;
 			task_queue_.erase(task_queue_.begin());
-			if (t.delta && !stop_when_empty_) {
-				task_queue_.insert(std::make_pair(std::chrono::system_clock::now() + std::chrono::milliseconds(t.delta), t));
+			if (t.delta.count() && !stop_when_empty_) {
+				task_queue_.insert(std::make_pair(clock::now() + t.delta, t));
 			}
 
 			lock.unlock();
@@ -113,7 +113,7 @@ int Worker::schedule(Worker::Function f, time_point t) {
 	{
 		std::unique_lock<std::mutex> lock(task_mutex_);
 		task_id = ++cur_task_;
-		Task tk = { task_id, 0, f };
+		Task tk = { task_id, duration(0), f };
 		// Pairs in this multimap are sorted by the Key value, so begin() will always point to the earlier task
 		task_queue_.insert(std::make_pair(t, tk));
 	}
@@ -144,7 +144,7 @@ int Worker::scheduleEvery(Worker::Function f, duration delta_ms) {
 	{
 		std::unique_lock<std::mutex> lock(task_mutex_);
 		task_id = ++cur_task_;
-		Task tk = { task_id, delta_ms.count(), f };
+		Task tk = { task_id, delta_ms, f };
 		// Pairs in this multimap are sorted by the Key value, so begin() will always point to the earlier task
 		task_queue_.insert(std::make_pair(clock::now() + delta_ms, tk));
 	}

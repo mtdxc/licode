@@ -27,7 +27,7 @@ class RtpExtensionProcessor{
   DECLARE_LOGGER();
 
  public:
-  explicit RtpExtensionProcessor(const std::vector<erizo::ExtMap> ext_mappings);
+  explicit RtpExtensionProcessor(const std::vector<erizo::ExtMap>& ext_mappings);
   virtual ~RtpExtensionProcessor();
 
   void setSdpInfo(std::shared_ptr<SdpInfo> theInfo);
@@ -50,8 +50,8 @@ class RtpExtensionProcessor{
   std::array<RTPExtensions, 10> ext_map_video_, ext_map_audio_;
   std::map<std::string, uint8_t> translationMap_;
   VideoRotation video_orientation_;
-  uint32_t processAbsSendTime(char* buf);
-  uint32_t processVideoOrientation(char* buf);
+  uint32_t processAbsSendTime(uint8_t* buf);
+  uint32_t processVideoOrientation(uint8_t* buf);
   uint32_t stripExtension(char* buf, int len);
 };
 
