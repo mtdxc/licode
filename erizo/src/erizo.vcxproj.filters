@@ -100,6 +100,15 @@
     <Filter Include="Source files\test\utils">
       <UniqueIdentifier>{125ccf99-da26-4a8c-bdbb-5ee685bd20a4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source files\test\bandwidth">
+      <UniqueIdentifier>{0d274951-e96f-48fd-b594-40cd2c7c173a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source files\erizo\bandwidth">
+      <UniqueIdentifier>{2521f6f9-7cf9-4e81-b494-f88de1b6b4c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header files\erizo\bandwidth">
+      <UniqueIdentifier>{9e17c015-504d-4f06-9f29-f588e7910001}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="erizo\DtlsTransport.cpp">
@@ -381,6 +390,12 @@
     <ClCompile Include="erizo\rtp\RtpH264Parser.cpp">
       <Filter>Source files\erizo\rtp</Filter>
     </ClCompile>
+    <ClCompile Include="erizo\bandwidth\MaxVideoBWDistributor.cpp">
+      <Filter>Source files\erizo\bandwidth</Filter>
+    </ClCompile>
+    <ClCompile Include="erizo\bandwidth\TargetVideoBWDistributor.cpp">
+      <Filter>Source files\erizo\bandwidth</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="erizo\DtlsTransport.h">
@@ -634,6 +649,15 @@
     </ClInclude>
     <ClInclude Include="erizo\rtp\PacketCodecParser.h">
       <Filter>Header files\erizo\rtp</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\bandwidth\BandwidthDistributionAlgorithm.h">
+      <Filter>Header files\erizo\bandwidth</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\bandwidth\MaxVideoBWDistributor.h">
+      <Filter>Header files\erizo\bandwidth</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\bandwidth\TargetVideoBWDistributor.h">
+      <Filter>Header files\erizo\bandwidth</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

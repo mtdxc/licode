@@ -306,12 +306,11 @@ bool LibNiceConnection::setRemoteCandidates(const std::vector<CandidateInfo> &ca
       nice_address_set_from_string(&thecandidate->base_addr, cinfo.rAddress.c_str());
       nice_address_set_port(&thecandidate->base_addr, cinfo.rPort);
       Debug("adding relay or srflx remote candidate, %s, rAddress: %s, rPort: %d",
-                 host_info.str().c_str(),
-                 cinfo.rAddress.c_str(), cinfo.rPort);
+                 host_info.str().c_str(), cinfo.rAddress.c_str(), cinfo.rPort);
     } else {
       Debug("adding remote candidate, %s, priority: %d, componentId: %d, ufrag: %s, pass: %s",
-          host_info.str().c_str(), cinfo.priority, cinfo.componentId, cinfo.username.c_str(),
-          cinfo.password.c_str());
+          host_info.str().c_str(), cinfo.priority, cinfo.componentId, 
+          cinfo.username.c_str(), cinfo.password.c_str());
     }
     candList = g_slist_prepend(candList, thecandidate);
   }
@@ -372,8 +371,8 @@ void LibNiceConnection::getCandidate(uint32_t stream_id, uint32_t component_id, 
         cand_info.hostType = PRFLX;
         break;
       case NICE_CANDIDATE_TYPE_RELAYED:
-        char turnAddres[NICE_ADDRESS_STRING_LEN];
-        nice_address_to_string(&cand->turn->server, turnAddres);
+        //char turnAddres[NICE_ADDRESS_STRING_LEN];
+        //nice_address_to_string(&cand->turn->server, turnAddres);
         cand_info.hostType = RELAY;
         cand_info.rAddress = std::string(baseAddress);
         cand_info.rPort = nice_address_get_port(&cand->base_addr);
@@ -399,7 +398,7 @@ void LibNiceConnection::getCandidate(uint32_t stream_id, uint32_t component_id, 
 void LibNiceConnection::setRemoteCredentials(const std::string& username, const std::string& password) {
   Debug("setting remote credentials, ufrag: %s, pass: %s", username.c_str(), password.c_str());
   if(agent_)
-	nice_agent_set_remote_credentials(agent_, (guint) 1, username.c_str(), password.c_str());
+  	nice_agent_set_remote_credentials(agent_, (guint) 1, username.c_str(), password.c_str());
 }
 
 void LibNiceConnection::updateComponentState(unsigned int component_id, IceState state) {

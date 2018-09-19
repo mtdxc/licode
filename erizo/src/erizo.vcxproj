@@ -11,6 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="erizo\bandwidth\MaxVideoBWDistributor.cpp" />
+    <ClCompile Include="erizo\bandwidth\TargetVideoBWDistributor.cpp" />
     <ClCompile Include="erizo\DtlsTransport.cpp" />
     <ClCompile Include="erizo\dtls\bf_dwrap.c" />
     <ClCompile Include="erizo\dtls\DtlsClient.cpp">
@@ -109,6 +111,9 @@
     <ClCompile Include="test\thread\SchedulerTest.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="erizo\bandwidth\BandwidthDistributionAlgorithm.h" />
+    <ClInclude Include="erizo\bandwidth\MaxVideoBWDistributor.h" />
+    <ClInclude Include="erizo\bandwidth\TargetVideoBWDistributor.h" />
     <ClInclude Include="erizo\DtlsTransport.h" />
     <ClInclude Include="erizo\dtls\bf_dwrap.h" />
     <ClInclude Include="erizo\dtls\DtlsSocket.h" />

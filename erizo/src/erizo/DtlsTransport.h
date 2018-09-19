@@ -40,7 +40,7 @@ class DtlsTransport : dtls::DtlsReceiver, public Transport {
   void updateIceStateSync(IceState state, IceConnection *conn);
 
  private:
-  char protectBuf_[5000];
+  char protectBuf_[1500];
   std::unique_ptr<dtls::DtlsSocketContext> dtlsRtp, dtlsRtcp;
   std::mutex writeMutex_, sessionMutex_;
   std::unique_ptr<SrtpChannel> srtp_, srtcp_;
