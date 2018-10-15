@@ -35,7 +35,7 @@ WebRtcConnection::WebRtcConnection(std::shared_ptr<Worker> worker, std::shared_p
   Info("constructor, stunserver: %s, stunPort: %d, minPort: %d, maxPort: %d",
       ice_config.stun_server.c_str(), ice_config.stun_port, ice_config.min_port, ice_config.max_port);
   stats_ = std::make_shared<Stats>();
-  distributor_ = std::unique_ptr<BandwidthDistributionAlgorithm>(new TargetVideoBWDistributor());
+  distributor_.reset(new TargetVideoBWDistributor());
   global_state_ = CONN_INITIAL;
 
   sending_ = true;
