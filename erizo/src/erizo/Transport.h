@@ -76,7 +76,7 @@ class Transport : public std::enable_shared_from_this<Transport>, public IceConn
     return ice_->setRemoteCandidates(candidates, isBundle);
   }
 
-  void onPacketReceived(packetPtr packet) {
+  virtual void onPacketReceived(packetPtr packet) {
     std::weak_ptr<Transport> weak_transport = Transport::shared_from_this();
     worker_->task([weak_transport, packet]() {
       if (auto this_ptr = weak_transport.lock()) {

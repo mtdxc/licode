@@ -38,7 +38,7 @@ const std::string& IceConnection::getLocalPassword() const {
   return upass_;
 }
 
-IceState IceConnection::checkIceState() {
+IceState IceConnection::getIceState() {
   return ice_state_;
 }
 

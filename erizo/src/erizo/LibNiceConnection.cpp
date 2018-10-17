@@ -72,7 +72,7 @@ LibNiceConnection::~LibNiceConnection() {
 
 void LibNiceConnection::close() {
   AutoLock lock(close_mutex_);
-  if (this->checkIceState() == IceState::FINISHED) {
+  if (getIceState() == IceState::FINISHED) {
     return;
   }
   Debug("closing");
@@ -118,7 +118,7 @@ void LibNiceConnection::onData(unsigned int component_id, char* buf, int len) {
   IceState state;
   {
     AutoLock lock(close_mutex_);
-    state = this->checkIceState();
+    state = getIceState();
   }
   if (state == IceState::READY) {
     packetPtr packet (new DataPacket());
@@ -134,7 +134,7 @@ void LibNiceConnection::onData(unsigned int component_id, char* buf, int len) {
 
 int LibNiceConnection::sendData(unsigned int component_id, const void* buf, int len) {
   int val = -1;
-  if (this->checkIceState() == IceState::READY) {
+  if (getIceState() == IceState::READY) {
     val = nice_agent_send(agent_, 1, component_id, len, reinterpret_cast<const gchar*>(buf));
   }
   if (val != len) {
@@ -145,7 +145,7 @@ int LibNiceConnection::sendData(unsigned int component_id, const void* buf, int 
 
 void LibNiceConnection::start() {
 	AutoLock lock(close_mutex_);
-    if (this->checkIceState() != INITIAL) {
+    if (getIceState() != INITIAL) {
       return;
     }
     context_ = g_main_context_new();

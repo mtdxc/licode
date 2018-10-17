@@ -108,7 +108,7 @@ int NicerConnection::ice_checking(void *obj, nr_ice_peer_ctx *pctx) {
 
 int NicerConnection::ice_connected(void *obj, nr_ice_peer_ctx *pctx) {
   NicerConnection *conn = reinterpret_cast<NicerConnection*>(obj);
-  if (conn->checkIceState() == IceState::FAILED) {
+  if (conn->getIceState() == IceState::FAILED) {
     return 0;
   }
   conn->updateIceState(IceState::READY);
@@ -472,7 +472,7 @@ void NicerConnection::setRemoteCredentialsSync(const std::string& username, cons
 }
 
 int NicerConnection::sendData(unsigned int component_id, const void* buf, int len) {
-  if (checkIceState() != IceState::READY) {
+  if (getIceState() != IceState::READY) {
     return -1;
   }
   packetPtr packet (new DataPacket());
@@ -572,7 +572,7 @@ void NicerConnection::onData(unsigned int component_id, char* buf, int len) {
   IceState state;
   {
     boost::mutex::scoped_lock lock(close_mutex_);
-    state = this->checkIceState();
+    state = getIceState();
   }
   if (state == IceState::READY) {
     packetPtr packet (new DataPacket());

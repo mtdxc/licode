@@ -30,7 +30,6 @@ class DtlsTransport : dtls::DtlsReceiver, public Transport {
   void onCandidate(const CandidateInfo &candidate, IceConnection *conn) override;
   void write(char* data, int len) override;
   void onDtlsPacket(dtls::DtlsSocketContext *ctx, const unsigned char* data, unsigned int len) override;
-  void writeDtlsPacket(dtls::DtlsSocketContext *ctx, packetPtr packet);
   void onHandshakeCompleted(dtls::DtlsSocketContext *ctx, std::string clientKey, std::string serverKey,
                             std::string srtp_profile) override;
   void onHandshakeFailed(dtls::DtlsSocketContext *ctx, const std::string& error) override;

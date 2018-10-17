@@ -75,7 +75,7 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, c
                             bool isServer, std::shared_ptr<Worker> worker, std::shared_ptr<IOWorker> io_worker):
   Transport(med, transport_name, connection_id, bundle, rtcp_mux, transport_listener, iceConfig, worker, io_worker),
   readyRtp(false), readyRtcp(false), isServer_(isServer) {
-    Debug("constructor, transportName: %s, isBundle: %d", transport_name.c_str(), bundle);
+    Debug("constructor isBundle: %d", bundle);
     dtlsRtp.reset(new DtlsSocketContext());
 
     int comps = 1;
@@ -164,7 +164,7 @@ void DtlsTransport::onIceData(packetPtr packet) {
   int length = len;
   SrtpChannel *srtp = srtp_.get();
   if (DtlsTransport::isDtlsPacket(data, len)) {
-    Debug("Received DTLS message, transportName: %s, componentId: %u", transport_name.c_str(), component_id);
+    Debug("Received DTLS message componentId: %u", component_id);
     if (component_id == 1) {
       std::lock_guard<std::mutex> guard(dtls_mutex);
       dtlsRtp->read(reinterpret_cast<unsigned char*>(data), len);
@@ -211,7 +211,7 @@ void DtlsTransport::onCandidate(const CandidateInfo &candidate, IceConnection *c
 }
 
 void DtlsTransport::write(char* data, int len) {
-  if (ice_ == nullptr || !running_ || !data || !len) {
+  if (!ice_ || !running_ || !data || !len) {
     return;
   }
 
@@ -227,7 +227,7 @@ void DtlsTransport::write(char* data, int len) {
       if (dtlsRtcp != NULL) {
         srtp = srtcp_.get();
       }
-      if (srtp && ice_->checkIceState() == IceState::READY) {
+      if (srtp && ice_->getIceState() == IceState::READY) {
         if (srtp->protectRtcp(protectBuf_, &len) < 0) {
           return;
         }
@@ -235,7 +235,7 @@ void DtlsTransport::write(char* data, int len) {
     } else {
       comp = 1;
 
-      if (srtp && ice_->checkIceState() == IceState::READY) {
+      if (srtp && ice_->getIceState() == IceState::READY) {
         if (srtp->protectRtp(protectBuf_, &len) < 0) {
           return;
         }
@@ -244,7 +244,7 @@ void DtlsTransport::write(char* data, int len) {
     if (len <= 10) {
       return;
     }
-    if (ice_->checkIceState() == IceState::READY) {
+    if (ice_->getIceState() == IceState::READY) {
       writeOnIce(comp, protectBuf_, len);
     }
   }
@@ -253,28 +253,13 @@ void DtlsTransport::write(char* data, int len) {
 void DtlsTransport::onDtlsPacket(DtlsSocketContext *ctx, const unsigned char* data, unsigned int len) {
   bool is_rtcp = ctx == dtlsRtcp.get();
   int component_id = is_rtcp ? 2 : 1;
-#if 1
   writeOnIce(component_id, (void*)data, len);
-#else
-  packetPtr packet = std::make_shared<DataPacket>(component_id, data, len);
-  if (is_rtcp) {
-    writeDtlsPacket(ctx, packet);
-  } else {
-    writeDtlsPacket(ctx, packet);
-  }
-#endif
   Debug("Sending DTLS message, transportName: %s, componentId: %d", transport_name.c_str(), component_id);
-}
-
-void DtlsTransport::writeDtlsPacket(DtlsSocketContext *ctx, packetPtr packet) {
-  writeOnIce(packet->comp, packet->data, packet->length);
 }
 
 void DtlsTransport::onHandshakeCompleted(DtlsSocketContext *ctx, std::string clientKey, std::string serverKey,
                                          std::string srtp_profile) {
   AutoLock lock(sessionMutex_);
-  std::string temp;
-
   if (rtp_timeout_checker_) {
     rtp_timeout_checker_->cancel();
   }
@@ -305,8 +290,7 @@ void DtlsTransport::onHandshakeCompleted(DtlsSocketContext *ctx, std::string cli
       updateTransportState(TRANSPORT_FAILED);
     }
   }
-  Debug("HandShakeCompleted, transportName:%s, readyRtp:%d, readyRtcp:%d",
-             transport_name.c_str(), readyRtp, readyRtcp);
+  Debug("HandShakeCompleted, transportName:%s, readyRtp:%d, readyRtcp:%d", transport_name.c_str(), readyRtp, readyRtcp);
   if (readyRtp && readyRtcp) {
     updateTransportState(TRANSPORT_READY);
   }
