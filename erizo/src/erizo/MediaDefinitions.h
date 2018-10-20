@@ -17,6 +17,9 @@ enum packetType {
     OTHER_PACKET
 };
 
+class RtcpHeader;
+class RtpHeader;
+
 struct DataPacket {
   DataPacket() = default;
   DataPacket(int comp_, const char *data_, int length_, packetType type_, uint64_t received_time_ms_);
@@ -25,7 +28,9 @@ struct DataPacket {
 
   bool belongsToSpatialLayer(int spatial_layer_);
   bool belongsToTemporalLayer(int temporal_layer_);
-
+  RtcpHeader* rtcp() const;
+  RtpHeader* rtp() const;
+  bool isRtcp() const;
   int comp;
   packetType type;
   char data[1500];

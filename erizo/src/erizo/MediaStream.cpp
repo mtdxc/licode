@@ -422,9 +422,9 @@ void MediaStream::onTransportData(packetPtr incoming_packet, Transport *transpor
 
   packetPtr packet = std::make_shared<DataPacket>(*incoming_packet);
 
-  if (transport->mediaType == AUDIO_TYPE) {
+  if (transport->media_type() == AUDIO_TYPE) {
     packet->type = AUDIO_PACKET;
-  } else if (transport->mediaType == VIDEO_TYPE) {
+  } else if (transport->media_type() == VIDEO_TYPE) {
     packet->type = VIDEO_PACKET;
   }
 

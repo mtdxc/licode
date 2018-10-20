@@ -16,9 +16,9 @@ class DtlsTransport : dtls::DtlsReceiver, public Transport {
   DECLARE_LOGGER();
 
  public:
-  DtlsTransport(MediaType med, const std::string& transport_name, const std::string& connection_id, bool bundle,
-                bool rtcp_mux, std::weak_ptr<TransportListener> transport_listener, const IceConfig& iceConfig,
-                bool isServer, std::shared_ptr<Worker> worker,
+  DtlsTransport(const IceConfig& iceConfig, bool bundle, bool rtcp_mux, bool isServer, 
+                std::weak_ptr<TransportListener> transport_listener,
+                std::shared_ptr<Worker> worker,
                 std::shared_ptr<IOWorker> io_worker);
   virtual ~DtlsTransport();
 
@@ -58,12 +58,11 @@ class TimeoutChecker {
  public:
   TimeoutChecker(DtlsTransport* transport, dtls::DtlsSocketContext* ctx);
   virtual ~TimeoutChecker();
+
   void scheduleCheck();
   void cancel();
-
  private:
   void scheduleNext();
-  void resend();
 
  private:
   DtlsTransport* transport_;

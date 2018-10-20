@@ -22,9 +22,7 @@ void PacketCodecParser::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   if (!chead->isRtcp() && enabled_) {
     RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
-    RtpMap *codec =
-        stream_->getRemoteSdpInfo()->getCodecByExternalPayloadType(
-            rtp_header->getPayloadType());
+    RtpMap *codec = stream_->getRemoteSdpInfo()->getCodecByExternalPayloadType(rtp_header->getPayloadType());
     if (codec) {
       packet->codec = codec->encoding_name;
       packet->clock_rate = codec->clock_rate;

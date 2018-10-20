@@ -69,11 +69,10 @@ void TimeoutChecker::scheduleNext() {
   }, std::chrono::seconds(check_seconds_));
 }
 
-DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, const std::string& connection_id,
-                            bool bundle, bool rtcp_mux, std::weak_ptr<TransportListener> transport_listener,
-                            const IceConfig& iceConfig, 
-                            bool isServer, std::shared_ptr<Worker> worker, std::shared_ptr<IOWorker> io_worker):
-  Transport(med, transport_name, connection_id, bundle, rtcp_mux, transport_listener, iceConfig, worker, io_worker),
+DtlsTransport::DtlsTransport(const IceConfig& iceConfig, bool bundle, bool rtcp_mux, bool isServer, 
+                            std::weak_ptr<TransportListener> transport_listener,
+                            std::shared_ptr<Worker> worker, std::shared_ptr<IOWorker> io_worker):
+  Transport(iceConfig, bundle, rtcp_mux, transport_listener, worker, io_worker),
   readyRtp(false), readyRtcp(false), isServer_(isServer) {
     Debug("constructor isBundle: %d", bundle);
     dtlsRtp.reset(new DtlsSocketContext());
@@ -102,9 +101,6 @@ DtlsTransport::DtlsTransport(MediaType med, const std::string &transport_name, c
         dtlsRtcp->setDtlsReceiver(this);
       }
     }
-    iceConfig_.connection_id = connection_id_;
-    iceConfig_.transport_name = transport_name;
-    iceConfig_.media_type = med;
     iceConfig_.ice_components = comps;
     if (iceConfig_.use_nicer) {
 #ifdef HAS_NICER
@@ -254,7 +250,7 @@ void DtlsTransport::onDtlsPacket(DtlsSocketContext *ctx, const unsigned char* da
   bool is_rtcp = ctx == dtlsRtcp.get();
   int component_id = is_rtcp ? 2 : 1;
   writeOnIce(component_id, (void*)data, len);
-  Debug("Sending DTLS message, transportName: %s, componentId: %d", transport_name.c_str(), component_id);
+  Debug("Sending DTLS message, componentId: %d", component_id);
 }
 
 void DtlsTransport::onHandshakeCompleted(DtlsSocketContext *ctx, std::string clientKey, std::string serverKey,
@@ -290,14 +286,14 @@ void DtlsTransport::onHandshakeCompleted(DtlsSocketContext *ctx, std::string cli
       updateTransportState(TRANSPORT_FAILED);
     }
   }
-  Debug("HandShakeCompleted, transportName:%s, readyRtp:%d, readyRtcp:%d", transport_name.c_str(), readyRtp, readyRtcp);
+  Debug("HandShakeCompleted, readyRtp:%d, readyRtcp:%d", readyRtp, readyRtcp);
   if (readyRtp && readyRtcp) {
     updateTransportState(TRANSPORT_READY);
   }
 }
 
 void DtlsTransport::onHandshakeFailed(DtlsSocketContext *ctx, const std::string& error) {
-  Warn("Handshake failed, transportName:%s, openSSLerror: %s", transport_name.c_str(), error.c_str());
+  Warn("Handshake failed: %s", error.c_str());
   running_ = false;
   updateTransportState(TRANSPORT_FAILED);
 }
@@ -319,7 +315,7 @@ void DtlsTransport::updateIceStateSync(IceState state, IceConnection *conn) {
   if (!running_) {
     return;
   }
-  Debug("IceState, transportName: %s, state: %d, isBundle: %d", transport_name.c_str(), state, bundle_);
+  Debug("IceState state: %d, isBundle: %d", state, bundle_);
   if (state == IceState::INITIAL && this->getTransportState() != TRANSPORT_STARTED) {
     updateTransportState(TRANSPORT_STARTED);
   } else if (state == IceState::CANDIDATES_RECEIVED && this->getTransportState() != TRANSPORT_GATHERED) {
@@ -330,12 +326,12 @@ void DtlsTransport::updateIceStateSync(IceState state, IceConnection *conn) {
     updateTransportState(TRANSPORT_FAILED);
   } else if (state == IceState::READY) {
     if (!isServer_ && dtlsRtp && !dtlsRtp->started) {
-      Info("DTLSRTP Start, transportName: %s", transport_name.c_str());
+      Info("DTLSRTP Start");
       dtlsRtp->start();
       rtp_timeout_checker_->scheduleCheck();
     }
     if (!isServer_ && dtlsRtcp != NULL && !dtlsRtcp->started) {
-      Debug("DTLSRTCP Start, transportName: %s", transport_name.c_str());
+      Debug("DTLSRTCP Start");
       dtlsRtcp->start();
       rtcp_timeout_checker_->scheduleCheck();
     }
@@ -343,7 +339,7 @@ void DtlsTransport::updateIceStateSync(IceState state, IceConnection *conn) {
 }
 
 void DtlsTransport::processLocalSdp(SdpInfo *localSdp_) {
-  Debug("processing local sdp, transportName: %s", transport_name.c_str());
+  Debug("processing local sdp");
   localSdp_->isFingerprint = true;
   localSdp_->fingerprint = getMyFingerprint();
   std::string username(ice_->getLocalUsername());
@@ -352,9 +348,9 @@ void DtlsTransport::processLocalSdp(SdpInfo *localSdp_) {
     localSdp_->setCredentials(username, password, VIDEO_TYPE);
     localSdp_->setCredentials(username, password, AUDIO_TYPE);
   } else {
-    localSdp_->setCredentials(username, password, this->mediaType);
+    localSdp_->setCredentials(username, password, media_type());
   }
-  Debug("processed local sdp, transportName: %s, ufrag: %s, pass: %s", transport_name.c_str(), username.c_str(), password.c_str());
+  Debug("processed local sdp ufrag: %s, pass: %s", username.c_str(), password.c_str());
 }
 
 bool DtlsTransport::isDtlsPacket(const char* buf, int len) {

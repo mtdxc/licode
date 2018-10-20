@@ -12,7 +12,6 @@
 #include <map>
 
 #include "./IceConnection.h"
-#include "./MediaDefinitions.h"
 #include "./SdpInfo.h"
 #include "./logger.h"
 #include <condition_variable>

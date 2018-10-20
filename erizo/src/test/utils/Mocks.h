@@ -62,10 +62,10 @@ class MockMediaSink : public MediaSink {
 
 class MockTransport: public Transport {
  public:
-  MockTransport(std::string connection_id, bool bundle, const IceConfig &ice_config,
+  MockTransport(const IceConfig &ice_config, bool bundle,
                 std::shared_ptr<Worker> worker, std::shared_ptr<IOWorker> io_worker) :
-    Transport(VIDEO_TYPE, "video", connection_id, bundle, true,
-              std::shared_ptr<erizo::TransportListener>(nullptr), ice_config,
+    Transport(ice_config, bundle, true,
+              std::shared_ptr<erizo::TransportListener>(nullptr), 
               worker, io_worker) {}
 
   virtual ~MockTransport() {

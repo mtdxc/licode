@@ -31,6 +31,7 @@ WebRtcConnection::WebRtcConnection(std::shared_ptr<Worker> worker, std::shared_p
     remote_sdp_{std::make_shared<SdpInfo>(rtp_mappings)}, local_sdp_{std::make_shared<SdpInfo>(rtp_mappings)} {
   audio_enabled_ = video_enabled_ = bundle_ = false;
   first_remote_sdp_processed_ = false;
+  ice_config_.connection_id = connection_id;
   set_log_context("PC.%s", connection_id.c_str());
   Info("constructor, stunserver: %s, stunPort: %d, minPort: %d, maxPort: %d",
       ice_config.stun_server.c_str(), ice_config.stun_port, ice_config.min_port, ice_config.max_port);
@@ -104,23 +105,29 @@ bool WebRtcConnection::createOffer(bool video_enabled, bool audioEnabled, bool b
 
 
   auto listener = std::dynamic_pointer_cast<TransportListener>(shared_from_this());
-
+  IceConfig config = ice_config_;
   if (bundle_) {
-    video_transport_.reset(new DtlsTransport(VIDEO_TYPE, "video", connection_id_, bundle_, true,
-                                            listener, ice_config_ , true, worker_, io_worker_));
+    config.media_type = VIDEO_TYPE;
+    config.transport_name = "video";
+    video_transport_.reset(new DtlsTransport(config, bundle_, true, true,
+                                            listener, worker_, io_worker_));
     video_transport_->copyLogContextFrom(this);
     video_transport_->start();
   } else {
     if (!video_transport_ && video_enabled_) {
       // For now we don't re/check transports, if they are already created we leave them there
-      video_transport_.reset(new DtlsTransport(VIDEO_TYPE, "video", connection_id_, bundle_, true,
-                                              listener, ice_config_ , true, worker_, io_worker_));
+      config.media_type = VIDEO_TYPE;
+      config.transport_name = "video";
+      video_transport_.reset(new DtlsTransport(ice_config_, bundle_, true, true,
+                                              listener, worker_, io_worker_));
       video_transport_->copyLogContextFrom(this);
       video_transport_->start();
     }
     if (!audio_transport_ && audio_enabled_) {
-      audio_transport_.reset(new DtlsTransport(AUDIO_TYPE, "audio", connection_id_, bundle_, true,
-                                              listener, ice_config_, true, worker_, io_worker_));
+      config.media_type = AUDIO_TYPE;
+      config.transport_name = "audio";
+      audio_transport_.reset(new DtlsTransport(config, bundle_, true, true,
+                                              listener, worker_, io_worker_));
       audio_transport_->copyLogContextFrom(this);
       audio_transport_->start();
     }
@@ -302,28 +309,35 @@ bool WebRtcConnection::processRemoteSdp(std::string stream_id) {
       if (remote_sdp_->hasVideo || bundle_) {
         if (!video_transport_) {
           Log("Creating videoTransport");
-          video_transport_.reset(new DtlsTransport(VIDEO_TYPE, "video", connection_id_, bundle_, remote_sdp_->isRtcpMux,
-                                                  listener, ice_config_ , false, worker_, io_worker_));
+          IceConfig config = ice_config_;
+          config.media_type = VIDEO_TYPE;
+          config.transport_name = "video";
+          video_transport_.reset(new DtlsTransport(config, bundle_, remote_sdp_->isRtcpMux, false,
+                                                  listener, worker_, io_worker_));
           video_transport_->copyLogContextFrom(this);
           video_transport_->start();
         }
-
-		std::string username = remote_sdp_->getUsername(VIDEO_TYPE);
-		std::string password = remote_sdp_->getPassword(VIDEO_TYPE);
+        
+        std::string username = remote_sdp_->getUsername(VIDEO_TYPE);
+        std::string password = remote_sdp_->getPassword(VIDEO_TYPE);
         Log("Updating videoTransport, ufrag: %s, pass: %s", username.c_str(), password.c_str());
         video_transport_->getIceConnection()->setRemoteCredentials(username, password);
       }
       if (!bundle_ && remote_sdp_->hasAudio) {
         if (!audio_transport_) {
           Log("Creating audioTransport");
-          audio_transport_.reset(new DtlsTransport(AUDIO_TYPE, "audio", connection_id_, bundle_, remote_sdp_->isRtcpMux,
-                                                  listener, ice_config_, false, worker_, io_worker_));
+          IceConfig config = ice_config_;
+          config.media_type = AUDIO_TYPE;
+          config.transport_name = "audio";
+          audio_transport_.reset(new DtlsTransport(config, bundle_, remote_sdp_->isRtcpMux, false,
+                                                  listener, worker_, io_worker_));
           audio_transport_->copyLogContextFrom(this);
           audio_transport_->start();
         }
-		std::string username = remote_sdp_->getUsername(AUDIO_TYPE);
-		std::string password = remote_sdp_->getPassword(AUDIO_TYPE);
-		Log("Update audioTransport, ufrag: %s, pass: %s", username.c_str(), password.c_str());
+        
+        std::string username = remote_sdp_->getUsername(AUDIO_TYPE);
+        std::string password = remote_sdp_->getPassword(AUDIO_TYPE);
+        Log("Update audioTransport, ufrag: %s, pass: %s", username.c_str(), password.c_str());
         audio_transport_->getIceConnection()->setRemoteCredentials(username, password);
       }
     }
@@ -431,7 +445,7 @@ void WebRtcConnection::onCandidate(const CandidateInfo& cand, Transport *transpo
   Log("Discovered New Candidate, candidate: %s", sdp.c_str());
   if (ice_config_.should_trickle) {
     if (!bundle_) {
-      std::string object = getJSONCandidate(transport->transport_name, sdp);
+      std::string object = getJSONCandidate(transport->transport_name(), sdp);
       maybeNotifyWebRtcConnectionEvent(CONN_CANDIDATE, object);
     } else {
       if (remote_sdp_->hasAudio) {
@@ -518,7 +532,7 @@ void WebRtcConnection::asyncTask(std::function<void(std::shared_ptr<WebRtcConnec
 }
 
 void WebRtcConnection::updateState(TransportState state, Transport * transport) {
-  Log("transportName: %s, new_state: %d", transport->transport_name.c_str(), state);
+  Log("updateState new_state: %d", state);
   AutoLock lock(state_mutex_);
   WebRTCEvent temp = global_state_;
   std::string msg;
@@ -591,7 +605,7 @@ void WebRtcConnection::updateState(TransportState state, Transport * transport) 
       temp = CONN_FAILED;
       sending_ = false;
       msg = remote_sdp_->getSdp();
-      Warn("Transport Failed, transportType: %s", transport->transport_name.c_str() );
+      Warn("Transport Failed");
       cond_.notify_one();
       break;
     default:
@@ -601,7 +615,7 @@ void WebRtcConnection::updateState(TransportState state, Transport * transport) 
 
   if (audio_transport_ && video_transport_) {
     Log("Update Transport State transportName: %s, videoTransportState: %d , audioTransportState: %d, calculatedState: %d, globalState: %d",
-      transport->transport_name.c_str(),
+      transport->transport_name(),
       static_cast<int>(audio_transport_->getTransportState()),
       static_cast<int>(video_transport_->getTransportState()),
       static_cast<int>(temp),

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <string.h>
 #include <lib/Clock.h>
+#include "rtp/RtpHeaders.h"
 #include "MediaDefinitions.h"
 namespace erizo{
   
@@ -49,5 +50,24 @@ bool erizo::MediaSource::isVideoSourceSSRC(uint32_t ssrc)
 	return (found_ssrc != video_source_ssrc_list_.end());
 }
 
+RtcpHeader* DataPacket::rtcp() const
+{
+	RtcpHeader* rtcp = (RtcpHeader*)data;
+	if (length && rtcp->isRtcp()) {
+		return rtcp;
+	}
+	return NULL;
+}
 
+RtpHeader* DataPacket::rtp() const
+{
+	if (length && !((RtcpHeader*)data)->isRtcp())
+		return (RtpHeader*)data;
+	return NULL;
+}
+
+bool DataPacket::isRtcp() const
+{
+	return ((RtcpHeader*)data)->isRtcp();
+}
 }

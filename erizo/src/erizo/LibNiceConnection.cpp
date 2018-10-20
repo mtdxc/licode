@@ -9,7 +9,6 @@
 #include <vector>
 #include <sstream>
 #include "LibNiceConnection.h"
-#include "SdpInfo.h"
 #include "lib/Clock.h"
 
 using std::memcpy;
@@ -28,7 +27,7 @@ void cb_nice_recv(NiceAgent* agent, guint stream_id, guint component_id,
     return;
   }
   LibNiceConnection* nicecon = reinterpret_cast<LibNiceConnection*>(user_data);
-  nicecon->onData(component_id, reinterpret_cast<char*> (buf), static_cast<unsigned int> (len));
+  nicecon->onData(component_id, buf, len);
 }
 
 void cb_new_candidate(NiceAgent *agent, guint stream_id, guint component_id, gchar *foundation,
@@ -76,7 +75,7 @@ void LibNiceConnection::close() {
     return;
   }
   Debug("closing");
-  this->updateIceState(IceState::FINISHED);
+  updateIceState(IceState::FINISHED);
   if (loop_ != NULL) {
     Debug("main loop quit");
     g_main_loop_quit(loop_);
@@ -111,7 +110,7 @@ void LibNiceConnection::close() {
     g_main_context_unref(context_);
     context_ = NULL;
   }
-  Debug("closed, this: %p", this);
+  Debug("closed");
 }
 
 void LibNiceConnection::onData(unsigned int component_id, char* buf, int len) {
@@ -121,10 +120,7 @@ void LibNiceConnection::onData(unsigned int component_id, char* buf, int len) {
     state = getIceState();
   }
   if (state == IceState::READY) {
-    packetPtr packet (new DataPacket());
-    memcpy(packet->data, buf, len);
-    packet->comp = component_id;
-    packet->length = len;
+    packetPtr packet (new DataPacket(component_id, (unsigned char*)buf, len));
     packet->received_time_ms = ClockUtils::timePointToMs(clock::now());
     if (auto listener = getIceListener().lock()) {
       listener->onPacketReceived(packet);
@@ -144,17 +140,18 @@ int LibNiceConnection::sendData(unsigned int component_id, const void* buf, int 
 }
 
 void LibNiceConnection::start() {
-	AutoLock lock(close_mutex_);
+    AutoLock lock(close_mutex_);
     if (getIceState() != INITIAL) {
       return;
     }
     context_ = g_main_context_new();
-    Debug("creating Nice Agent");
+    Debug("creating NiceAgent");
     nice_debug_enable(FALSE);
     // Create a nice agent
     agent_ = nice_agent_new(context_, NICE_COMPATIBILITY_RFC5245);
     loop_ = g_main_loop_new(context_, FALSE);
     thread_ = std::thread(&LibNiceConnection::mainLoop, this);
+
     GValue controllingMode = { 0 };
     g_value_init(&controllingMode, G_TYPE_BOOLEAN);
     g_value_set_boolean(&controllingMode, false);
@@ -193,6 +190,7 @@ void LibNiceConnection::start() {
     // Create a new stream and start gathering candidates
     Debug("adding stream, iceComponents: %d", ice_config_.ice_components);
     nice_agent_add_stream(agent_, ice_config_.ice_components);
+
     gchar *ufrag = NULL, *upass = NULL;
     nice_agent_get_local_credentials(agent_, 1, &ufrag, &upass);
     ufrag_ = std::string(ufrag); g_free(ufrag);
@@ -200,26 +198,26 @@ void LibNiceConnection::start() {
 
     // Set Port Range: If this doesn't work when linking the file libnice.sym has to be modified to include this call
     if (ice_config_.min_port != 0 && ice_config_.max_port != 0) {
-      Debug("setting port range, min_port: %d, max_port: %d",
-                 ice_config_.min_port, ice_config_.max_port);
-      nice_agent_set_port_range(agent_, (guint)1, (guint)1, (guint)ice_config_.min_port,
-          (guint)ice_config_.max_port);
+      Debug("setting port range: %d -> %d", ice_config_.min_port, ice_config_.max_port);
+      nice_agent_set_port_range(agent_, (guint)1, (guint)1, (guint)ice_config_.min_port, (guint)ice_config_.max_port);
     }
 
     if (!ice_config_.network_interface.empty()) {
-      const char* public_ip = nice_interfaces_get_ip_for_interface((gchar*)ice_config_.network_interface.c_str());
+      gchar* public_ip = nice_interfaces_get_ip_for_interface((gchar*)ice_config_.network_interface.c_str());
       if (public_ip) {
+        Debug("set local_address %s", public_ip);
 				NiceAddress addr;
 				nice_address_init(&addr);
 				nice_address_set_from_string(&addr, public_ip);
 				nice_agent_add_local_address(agent_, &addr);
+				g_free(public_ip);
       }
     }
 
     if (ice_config_.turn_server.length() != 0 && ice_config_.turn_port != 0) {
       Debug("configuring TURN, turn_server: %s , turn_port: %d, turn_username: %s, turn_pass: %s",
-                 ice_config_.turn_server.c_str(),
-          ice_config_.turn_port, ice_config_.turn_username.c_str(), ice_config_.turn_pass.c_str());
+                ice_config_.turn_server.c_str(), ice_config_.turn_port,
+								ice_config_.turn_username.c_str(), ice_config_.turn_pass.c_str());
 
       for (unsigned int i = 1; i <= ice_config_.ice_components ; i++) {
 				nice_agent_set_relay_info(agent_,
@@ -233,12 +231,10 @@ void LibNiceConnection::start() {
       }
     }
 
-    if (agent_) {
-      for (unsigned int i = 1; i <= ice_config_.ice_components; i++) {
-        nice_agent_attach_recv(agent_, 1, i, context_, reinterpret_cast<NiceAgentRecvFunc>(cb_nice_recv), this);
-      }
+    for (unsigned int i = 1; i <= ice_config_.ice_components; i++) {
+      nice_agent_attach_recv(agent_, 1, i, context_, reinterpret_cast<NiceAgentRecvFunc>(cb_nice_recv), this);
     }
-    Debug("gathering, this: %p", this);
+    Debug("start gathering");
     nice_agent_gather_candidates(agent_, 1);
 }
 
@@ -288,8 +284,8 @@ bool LibNiceConnection::setRemoteCandidates(const std::vector<CandidateInfo> &ca
       continue;
     }
     NiceCandidate* thecandidate = nice_candidate_new(nice_cand_type);
-    thecandidate->username = strdup(cinfo.username.c_str());
-    thecandidate->password = strdup(cinfo.password.c_str());
+    thecandidate->username = g_strdup(cinfo.username.c_str());
+    thecandidate->password = g_strdup(cinfo.password.c_str());
     thecandidate->stream_id = (guint) 1;
     thecandidate->component_id = cinfo.componentId;
     thecandidate->priority = cinfo.priority;
@@ -339,6 +335,7 @@ void LibNiceConnection::getCandidate(uint32_t stream_id, uint32_t component_id, 
     nice_address_to_string(&cand->base_addr, baseAddress);
     candsDelivered_++;
     if (strstr(address, ":") != NULL) {  // We ignore IPv6 candidates at this point
+      Debug("ignore ipv6 addr %s", address);
       continue;
     }
     CandidateInfo cand_info;
@@ -385,7 +382,7 @@ void LibNiceConnection::getCandidate(uint32_t stream_id, uint32_t component_id, 
     cand_info.username = ufrag_;
     cand_info.password = upass_;
     // localCandidates->push_back(cand_info);
-    if (auto listener = this->getIceListener().lock()) {
+    if (auto listener = getIceListener().lock()) {
       listener->onCandidate(cand_info, this);
     }
   }
@@ -425,7 +422,7 @@ void LibNiceConnection::updateComponentState(unsigned int component_id, IceState
       return;
     }
   }
-  this->updateIceState(state);
+  updateIceState(state);
 }
 
 std::string getHostTypeFromCandidate(NiceCandidate *candidate) {
@@ -448,13 +445,13 @@ CandidatePair LibNiceConnection::getSelectedPair() {
   selectedPair.erizoCandidatePort = nice_address_get_port(&local->addr);
   selectedPair.erizoHostType = getHostTypeFromCandidate(local);
   Debug("selected pair, local_addr: %s, local_port: %d, local_type: %s",
-              ipaddr, nice_address_get_port(&local->addr), selectedPair.erizoHostType.c_str());
+              ipaddr, selectedPair.erizoCandidatePort, selectedPair.erizoHostType.c_str());
   nice_address_to_string(&remote->addr, ipaddr);
   selectedPair.clientCandidateIp = std::string(ipaddr);
   selectedPair.clientCandidatePort = nice_address_get_port(&remote->addr);
   selectedPair.clientHostType = getHostTypeFromCandidate(local);
   Info("selected pair, remote_addr: %s, remote_port: %d, remote_type: %s",
-             ipaddr, nice_address_get_port(&remote->addr), selectedPair.clientHostType.c_str());
+             ipaddr, selectedPair.clientCandidatePort, selectedPair.clientHostType.c_str());
   return selectedPair;
 }
 

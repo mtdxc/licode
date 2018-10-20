@@ -32,8 +32,8 @@ void IOWorker::start(std::shared_ptr<std::promise<void>> start_promise) {
   thread_ = std::unique_ptr<std::thread>(new std::thread([this, start_promise] {
     start_promise->set_value();
     while (!closed_) {
-      int events;
 #ifdef HAS_NICER
+      int events;
       struct timeval towait = {0, 100000};
       int r = NR_async_event_wait2(&events, &towait);
       if (r == R_EOD) {
