@@ -49,6 +49,7 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   DECLARE_LOGGER();
 
  public:
+  typedef std::shared_ptr<MediaStream> Ptr;
   typedef typename Handler::Context Context;
   bool audio_enabled_;
   bool video_enabled_;

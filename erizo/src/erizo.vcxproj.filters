@@ -126,9 +126,6 @@
     <ClCompile Include="erizo\SdpInfo.cpp">
       <Filter>Source files\erizo</Filter>
     </ClCompile>
-    <ClCompile Include="erizo\SrtpChannel.cpp">
-      <Filter>Source files\erizo</Filter>
-    </ClCompile>
     <ClCompile Include="erizo\Stats.cpp">
       <Filter>Source files\erizo</Filter>
     </ClCompile>
@@ -396,6 +393,9 @@
     <ClCompile Include="erizo\bandwidth\TargetVideoBWDistributor.cpp">
       <Filter>Source files\erizo\bandwidth</Filter>
     </ClCompile>
+    <ClCompile Include="erizo\SrtpChannel.cpp">
+      <Filter>Source files\erizo\dtls</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="erizo\DtlsTransport.h">
@@ -420,9 +420,6 @@
       <Filter>Header files\erizo</Filter>
     </ClInclude>
     <ClInclude Include="erizo\SdpInfo.h">
-      <Filter>Header files\erizo</Filter>
-    </ClInclude>
-    <ClInclude Include="erizo\SrtpChannel.h">
       <Filter>Header files\erizo</Filter>
     </ClInclude>
     <ClInclude Include="erizo\Stats.h">
@@ -658,6 +655,9 @@
     </ClInclude>
     <ClInclude Include="erizo\bandwidth\TargetVideoBWDistributor.h">
       <Filter>Header files\erizo\bandwidth</Filter>
+    </ClInclude>
+    <ClInclude Include="erizo\SrtpChannel.h">
+      <Filter>Header files\erizo\dtls</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

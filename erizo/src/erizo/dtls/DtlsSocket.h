@@ -1,20 +1,20 @@
 #ifndef ERIZO_SRC_ERIZO_DTLS_DTLSSOCKET_H_
 #define ERIZO_SRC_ERIZO_DTLS_DTLSSOCKET_H_
 
-extern "C" {
-#include <srtp.h>
-
-#include <openssl/e_os2.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <openssl/crypto.h>
-#include <openssl/ssl.h>
-}
-
 #include <memory>
 #include <string>
 #include <mutex>
 #include "../logger.h"
+
+// openssl type declare
+struct bio_st;  typedef struct bio_st BIO;
+struct x509_st; typedef struct x509_st X509;
+struct ssl_st;  typedef struct ssl_st SSL;
+struct ssl_ctx_st; typedef struct ssl_ctx_st SSL_CTX;
+struct evp_pkey_st; typedef struct evp_pkey_st EVP_PKEY;
+struct srtp_protection_profile_st; typedef struct srtp_protection_profile_st SRTP_PROTECTION_PROFILE;
+// srtp type declare
+struct srtp_policy_t;
 
 const int SRTP_MASTER_KEY_KEY_LEN = 16;
 const int SRTP_MASTER_KEY_SALT_LEN = 14;

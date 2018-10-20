@@ -25,7 +25,7 @@ DEFINE_LOGGER(WebRtcConnection, "WebRtcConnection");
 WebRtcConnection::WebRtcConnection(std::shared_ptr<Worker> worker, std::shared_ptr<IOWorker> io_worker,
     const std::string& connection_id, const IceConfig& ice_config, const std::vector<RtpMap>& rtp_mappings,
     const std::vector<erizo::ExtMap>& ext_mappings, WebRtcConnectionEventListener* listener) :
-    connection_id_{connection_id}, conn_event_listener_{listener},
+    conn_event_listener_{listener},
     ice_config_{ice_config}, rtp_mappings_{rtp_mappings}, extension_processor_{ext_mappings},
     worker_{worker}, io_worker_{io_worker},
     remote_sdp_{std::make_shared<SdpInfo>(rtp_mappings)}, local_sdp_{std::make_shared<SdpInfo>(rtp_mappings)} {
@@ -80,10 +80,10 @@ bool WebRtcConnection::init() {
   return true;
 }
 
-bool WebRtcConnection::createOffer(bool video_enabled, bool audioEnabled, bool bundle) {
+bool WebRtcConnection::createOffer(bool videoEnabled, bool audioEnabled, bool bundle) {
   AutoLock lock(state_mutex_);
   bundle_ = bundle;
-  video_enabled_ = video_enabled;
+  video_enabled_ = videoEnabled;
   audio_enabled_ = audioEnabled;
   local_sdp_->createOfferSdp(video_enabled_, audio_enabled_, bundle_);
   local_sdp_->dtlsRole = ACTPASS;
@@ -139,7 +139,7 @@ bool WebRtcConnection::createOffer(bool video_enabled, bool audioEnabled, bool b
 }
 
 void WebRtcConnection::addMediaStream(std::shared_ptr<MediaStream> media_stream) {
-  asyncTask([media_stream] (std::shared_ptr<WebRtcConnection> connection) {
+  asyncTask([=](std::shared_ptr<WebRtcConnection> connection) {
     connection->Log("Adding mediaStream, id: %s", media_stream->getId().c_str());
     connection->media_streams_.push_back(media_stream);
   });
@@ -183,7 +183,7 @@ void WebRtcConnection::forEachMediaStreamAsync(std::function<void(const std::sha
 
 bool WebRtcConnection::setRemoteSdpInfo(std::shared_ptr<SdpInfo> sdp, std::string stream_id) {
   asyncTask([sdp, stream_id] (std::shared_ptr<WebRtcConnection> connection) {
-	connection->Log("setting remote SDPInfo");
+  	connection->Log("setting remote SDPInfo");
     if (!connection->sending_) {
       return;
     }
@@ -197,6 +197,7 @@ bool WebRtcConnection::setRemoteSdpInfo(std::shared_ptr<SdpInfo> sdp, std::strin
 std::shared_ptr<SdpInfo> WebRtcConnection::getLocalSdpInfo() {
   AutoLock lock(state_mutex_);
   Log("getting local SDPInfo");
+  // fill local_sdp 's ssrc_map from stream
   forEachMediaStream([this] (const std::shared_ptr<MediaStream> &media_stream) {
     if (!media_stream->isRunning() || media_stream->isPublisher()) {
       Log("getting local SDPInfo stream not running, stream_id: %s", media_stream->getId());
@@ -241,11 +242,12 @@ std::shared_ptr<SdpInfo> WebRtcConnection::getLocalSdpInfo() {
 
 bool WebRtcConnection::setRemoteSdp(const std::string &sdp, std::string stream_id) {
   asyncTask([sdp, stream_id] (std::shared_ptr<WebRtcConnection> connection) {
-    connection->Log("setting remote SDP");
     if (!connection->sending_) {
+      connection->Log("wrong sending_ stat skip setRemoteSdp");
       return;
     }
 
+    connection->Log("setting remote SDP %s", sdp.c_str());
     connection->remote_sdp_->initWithSdp(sdp, "");
     connection->processRemoteSdp(stream_id);
   });
@@ -264,7 +266,7 @@ void WebRtcConnection::setRemoteSdpsToMediaStreams(std::string stream_id) {
     std::weak_ptr<WebRtcConnection> weak_this = shared_from_this();
     (*stream)->asyncTask([weak_this, stream_id] (const std::shared_ptr<MediaStream> &media_stream) {
       if (auto connection = weak_this.lock()) {
-		// apply remote and local sdp to stream
+        // apply remote and local sdp to stream
         media_stream->setRemoteSdp(connection->remote_sdp_);
         connection->Log("setting remote SDP to stream, stream: %s", media_stream->getId());
         connection->onRemoteSdpsSetToMediaStreams(stream_id);
@@ -277,7 +279,7 @@ void WebRtcConnection::setRemoteSdpsToMediaStreams(std::string stream_id) {
 
 void WebRtcConnection::onRemoteSdpsSetToMediaStreams(std::string stream_id) {
   asyncTask([stream_id] (std::shared_ptr<WebRtcConnection> connection) {
-	connection->Log("SDP processed");
+    connection->Log("SDP processed with stream: %s", stream_id.c_str());
     std::string sdp = connection->getLocalSdp();
     connection->maybeNotifyWebRtcConnectionEvent(CONN_SDP_PROCESSED, sdp, stream_id);
   });
@@ -363,11 +365,9 @@ bool WebRtcConnection::addRemoteCandidate(const std::string &mid, int mLineIndex
   // TODO(pedro) Check type of transport.
   Log("Adding remote Candidate, candidate: %s, mid: %s, sdpMLine: %d", sdp.c_str(), mid.c_str(), mLineIndex);
   if (!video_transport_ && !audio_transport_) {
-    Warn("addRemoteCandidate on NULL transport");
+    Warn("addRemoteCandidate without transport, skip it");
     return false;
   }
-  MediaType theType;
-  std::string theMid;
 
   // TODO(pedro) check if this works with video+audio and no bundle
   if (mLineIndex == -1) {
@@ -380,6 +380,8 @@ bool WebRtcConnection::addRemoteCandidate(const std::string &mid, int mLineIndex
     return true;
   }
 
+  MediaType theType;
+  std::string theMid;
   if ((!mid.compare("video")) || (mLineIndex == remote_sdp_->videoSdpMLine)) {
     theType = VIDEO_TYPE;
     theMid = "video";
@@ -399,12 +401,12 @@ bool WebRtcConnection::addRemoteCandidate(const std::string &mid, int mLineIndex
     } else if (theType == AUDIO_TYPE) {
       res = audio_transport_->setRemoteCandidates(tempSdp.getCandidateInfos(), bundle_);
     } else {
-      Warn("add remote candidate with no Media (video or audio), candidate: %s", sdp.c_str() );
+      Warn("add remote candidate without Media (video or audio), candidate: %s", sdp.c_str() );
     }
   }
 
-  for (uint8_t it = 0; it < tempSdp.getCandidateInfos().size(); it++) {
-    remote_sdp_->addCandidate(tempSdp.getCandidateInfos()[it]);
+  for (CandidateInfo cand : tempSdp.getCandidateInfos()) {
+    remote_sdp_->addCandidate(cand);
   }
   return res;
 }
@@ -425,6 +427,7 @@ std::string WebRtcConnection::getJSONCandidate(const std::string& mid, const std
   std::map <std::string, std::string> object;
   object["sdpMid"] = mid;
   object["candidate"] = sdp;
+  // bug: json int -> string
   object["sdpMLineIndex"] = std::to_string((mid.compare("video")?local_sdp_->audioSdpMLine : local_sdp_->videoSdpMLine));
 
   std::ostringstream theString;
@@ -453,8 +456,8 @@ void WebRtcConnection::onCandidate(const CandidateInfo& cand, Transport *transpo
         maybeNotifyWebRtcConnectionEvent(CONN_CANDIDATE, object);
       }
       if (remote_sdp_->hasVideo) {
-        std::string object2 = getJSONCandidate("video", sdp);
-        maybeNotifyWebRtcConnectionEvent(CONN_CANDIDATE, object2);
+        std::string object = getJSONCandidate("video", sdp);
+        maybeNotifyWebRtcConnectionEvent(CONN_CANDIDATE, object);
       }
     }
   }
@@ -462,6 +465,7 @@ void WebRtcConnection::onCandidate(const CandidateInfo& cand, Transport *transpo
 
 void WebRtcConnection::onREMBFromTransport(RtcpHeader *chead, Transport *transport) {
   std::vector<std::shared_ptr<MediaStream>> streams;
+  // 根据REMB查找stream
   for (uint8_t index = 0; index < chead->getREMBNumSSRC(); index++) {
     uint32_t ssrc_feed = chead->getREMBFeedSSRC(index);
     forEachMediaStream([ssrc_feed, &streams] (const std::shared_ptr<MediaStream> &media_stream) {
@@ -470,7 +474,7 @@ void WebRtcConnection::onREMBFromTransport(RtcpHeader *chead, Transport *transpo
       }
     });
   }
-
+  // 分发带宽: 对每个流根据分配的带宽生成一remb消息，并传递给stream
   distributor_->distribute(chead->getREMBBitRate(), chead->getSSRC(), streams, transport);
 }
 
@@ -480,8 +484,8 @@ void WebRtcConnection::onRtcpFromTransport(packetPtr packet, Transport *transpor
       onREMBFromTransport(chead, transport);
       return;
     }
-	uint32_t ssrc = chead->isFeedback() ? chead->getSourceSSRC() : chead->getSSRC();
-	packetPtr rtcp = std::make_shared<DataPacket>(packet->comp, (unsigned char*)chead, chead->getSize());
+    uint32_t ssrc = chead->isFeedback() ? chead->getSourceSSRC() : chead->getSSRC();
+    packetPtr rtcp = std::make_shared<DataPacket>(packet->comp, (unsigned char*)chead, chead->getSize());
     forEachMediaStream([rtcp, transport, ssrc] (const std::shared_ptr<MediaStream> &media_stream) {
       if (media_stream->isSourceSSRC(ssrc) || media_stream->isSinkSSRC(ssrc)) {
         media_stream->onTransportData(rtcp, transport);
@@ -494,13 +498,11 @@ void WebRtcConnection::onTransportData(packetPtr packet, Transport *transport) {
   if (getCurrentState() != CONN_READY) {
     return;
   }
-  char* buf = packet->data;
-  RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (buf);
-  if (chead->isRtcp()) {
+
+  if (packet->isRtcp()) {
     onRtcpFromTransport(packet, transport);
-    return;
   } else {
-    RtpHeader *head = reinterpret_cast<RtpHeader*> (buf);
+    RtpHeader *head = packet->rtp();
     uint32_t ssrc = head->getSSRC();
     forEachMediaStream([packet, transport, ssrc] (const std::shared_ptr<MediaStream> &media_stream) {
       if (media_stream->isSourceSSRC(ssrc) || media_stream->isSinkSSRC(ssrc)) {
@@ -532,12 +534,12 @@ void WebRtcConnection::asyncTask(std::function<void(std::shared_ptr<WebRtcConnec
 }
 
 void WebRtcConnection::updateState(TransportState state, Transport * transport) {
-  Log("updateState new_state: %d", state);
+  Log("updateState new_state: %s", TransportStateStr(state));
   AutoLock lock(state_mutex_);
   WebRTCEvent temp = global_state_;
   std::string msg;
   if (!video_transport_ && !audio_transport_) {
-    Warn("Updating NULL transport, state: %d", state);
+    Warn("Updating NULL transport");
     return;
   }
   if (global_state_ == CONN_FAILED) {
@@ -585,20 +587,18 @@ void WebRtcConnection::updateState(TransportState state, Transport * transport) 
     case TRANSPORT_READY:
       if (bundle_) {
         temp = CONN_READY;
-        trackTransportInfo();
-        forEachMediaStreamAsync([] (const std::shared_ptr<MediaStream> &media_stream) {
-          media_stream->sendPLIToFeedback();
-        });
       } else {
         if ((!remote_sdp_->hasAudio || (audio_transport_ && audio_transport_->getTransportState() == TRANSPORT_READY)) &&
             (!remote_sdp_->hasVideo || (video_transport_ && video_transport_->getTransportState() == TRANSPORT_READY))) {
             // WebRTCConnection will be ready only when all channels are ready.
             temp = CONN_READY;
-            trackTransportInfo();
-            forEachMediaStreamAsync([] (const std::shared_ptr<MediaStream> &media_stream) {
-              media_stream->sendPLIToFeedback();
-            });
           }
+      }
+      if (CONN_READY == temp) {
+        trackTransportInfo();
+        forEachMediaStreamAsync([](const std::shared_ptr<MediaStream> &media_stream) {
+          media_stream->sendPLIToFeedback();
+        });
       }
       break;
     case TRANSPORT_FAILED:
@@ -614,10 +614,10 @@ void WebRtcConnection::updateState(TransportState state, Transport * transport) 
   }
 
   if (audio_transport_ && video_transport_) {
-    Log("Update Transport State transportName: %s, videoTransportState: %d , audioTransportState: %d, calculatedState: %d, globalState: %d",
+    Log("Update Transport State transportName: %s, videoTransportState: %s , audioTransportState: %s, calculatedState: %d, globalState: %d",
       transport->transport_name(),
-      static_cast<int>(audio_transport_->getTransportState()),
-      static_cast<int>(video_transport_->getTransportState()),
+      TransportStateStr(audio_transport_->getTransportState()),
+      TransportStateStr(video_transport_->getTransportState()),
       static_cast<int>(temp),
       static_cast<int>(global_state_));
   }
@@ -644,9 +644,9 @@ void WebRtcConnection::trackTransportInfo() {
     audio_info = candidate_pair.clientHostType;
   }
 
-  asyncTask([audio_info, video_info] (std::shared_ptr<WebRtcConnection> connection) {
+  asyncTask([=] (std::shared_ptr<WebRtcConnection> connection) {
     connection->forEachMediaStreamAsync(
-      [audio_info, video_info] (const std::shared_ptr<MediaStream> &media_stream) {
+      [=] (const std::shared_ptr<MediaStream> &media_stream) {
         media_stream->setTransportInfo(audio_info, video_info);
       });
   });

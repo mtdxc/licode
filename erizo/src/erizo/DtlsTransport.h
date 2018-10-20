@@ -46,7 +46,6 @@ class DtlsTransport : dtls::DtlsReceiver, public Transport {
   bool readyRtp, readyRtcp;
   bool isServer_;
   std::unique_ptr<TimeoutChecker> rtcp_timeout_checker_, rtp_timeout_checker_;
-  packetPtr p_;
 };
 
 class TimeoutChecker {

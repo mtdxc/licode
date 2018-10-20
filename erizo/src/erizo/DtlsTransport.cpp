@@ -21,6 +21,10 @@ DEFINE_LOGGER(TimeoutChecker, "TimeoutChecker");
 using std::memcpy;
 using namespace dtls;
 static std::mutex dtls_mutex;
+const char* TransportStateStr(TransportState s) {
+  static const char dict[][16] = { "INITIAL", "STARTED", "GATHERED", "READY", "FINISHED", "FAILED" };
+  return dict[s];
+}
 
 TimeoutChecker::TimeoutChecker(DtlsTransport* transport, dtls::DtlsSocketContext* ctx)
     : transport_(transport), socket_context_(ctx),
@@ -79,7 +83,7 @@ DtlsTransport::DtlsTransport(const IceConfig& iceConfig, bool bundle, bool rtcp_
 
     int comps = 1;
     if (isServer_) {
-      Debug("creating  passive-server");
+      Debug("creating passive-server");
       dtlsRtp->createServer();
       dtlsRtp->setDtlsReceiver(this);
 
@@ -117,12 +121,16 @@ DtlsTransport::DtlsTransport(const IceConfig& iceConfig, bool bundle, bool rtcp_
   }
 
 DtlsTransport::~DtlsTransport() {
-  if (this->state_ != TRANSPORT_FINISHED) {
-    this->close();
+  if (state_ != TRANSPORT_FINISHED) {
+    close();
   }
 }
 
 void DtlsTransport::start() {
+  if (!ice_) {
+    Warn("start without ice");
+    return;
+  } 
   ice_->setIceListener(shared_from_this());
   ice_->copyLogContextFrom(this);
   Debug("starting ice");
@@ -138,14 +146,15 @@ void DtlsTransport::close() {
   if (rtcp_timeout_checker_) {
     rtcp_timeout_checker_->cancel();
   }
-  ice_->close();
+  if(ice_)
+    ice_->close();
   if (dtlsRtp) {
     dtlsRtp->close();
   }
   if (dtlsRtcp) {
     dtlsRtcp->close();
   }
-  this->state_ = TRANSPORT_FINISHED;
+  state_ = TRANSPORT_FINISHED;
   Debug("closed");
 }
 
@@ -157,7 +166,6 @@ void DtlsTransport::onIceData(packetPtr packet) {
   char *data = packet->data;
   unsigned int component_id = packet->comp;
 
-  int length = len;
   SrtpChannel *srtp = srtp_.get();
   if (DtlsTransport::isDtlsPacket(data, len)) {
     Debug("Received DTLS message componentId: %u", component_id);
@@ -169,33 +177,34 @@ void DtlsTransport::onIceData(packetPtr packet) {
       dtlsRtcp->read(reinterpret_cast<unsigned char*>(data), len);
     }
     return;
-  } else if (this->getTransportState() == TRANSPORT_READY) {
-    packetPtr unprotect_packet = std::make_shared<DataPacket>(component_id,
-      data, len, VIDEO_PACKET, packet->received_time_ms);
+  } else if (getTransportState() == TRANSPORT_READY) {
 
     if (dtlsRtcp != NULL && component_id == 2) {
       srtp = srtcp_.get();
     }
     if (srtp != NULL) {
-      RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(unprotect_packet->data);
+      packet = std::make_shared<DataPacket>(component_id,
+        data, len, VIDEO_PACKET, packet->received_time_ms);
+      RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
       if (chead->isRtcp()) {
-        if (srtp->unprotectRtcp(unprotect_packet->data, &unprotect_packet->length) < 0) {
+        if (srtp->unprotectRtcp(packet->data, &packet->length) < 0) {
           return;
         }
       } else {
-        if (srtp->unprotectRtp(unprotect_packet->data, &unprotect_packet->length) < 0) {
+        if (srtp->unprotectRtp(packet->data, &packet->length) < 0) {
           return;
         }
       }
     } else {
-      return;
+      // support with no srtp 
+      // return;
     }
 
-    if (length <= 0) {
+    if (len <= 0) {
       return;
     }
     if (auto listener = getTransportListener().lock()) {
-      listener->onTransportData(unprotect_packet, this);
+      listener->onTransportData(packet, this);
     }
   }
 }
@@ -247,8 +256,7 @@ void DtlsTransport::write(char* data, int len) {
 }
 
 void DtlsTransport::onDtlsPacket(DtlsSocketContext *ctx, const unsigned char* data, unsigned int len) {
-  bool is_rtcp = ctx == dtlsRtcp.get();
-  int component_id = is_rtcp ? 2 : 1;
+  int component_id = (ctx == dtlsRtcp.get()) ? 2 : 1;
   writeOnIce(component_id, (void*)data, len);
   Debug("Sending DTLS message, componentId: %d", component_id);
 }
@@ -299,7 +307,7 @@ void DtlsTransport::onHandshakeFailed(DtlsSocketContext *ctx, const std::string&
 }
 
 std::string DtlsTransport::getMyFingerprint() const {
-  return dtlsRtp->getFingerprint();
+  return dtlsRtp?dtlsRtp->getFingerprint():"";
 }
 
 void DtlsTransport::updateIceState(IceState state, IceConnection *conn) {
@@ -316,9 +324,9 @@ void DtlsTransport::updateIceStateSync(IceState state, IceConnection *conn) {
     return;
   }
   Debug("IceState state: %d, isBundle: %d", state, bundle_);
-  if (state == IceState::INITIAL && this->getTransportState() != TRANSPORT_STARTED) {
+  if (state == IceState::INITIAL && getTransportState() != TRANSPORT_STARTED) {
     updateTransportState(TRANSPORT_STARTED);
-  } else if (state == IceState::CANDIDATES_RECEIVED && this->getTransportState() != TRANSPORT_GATHERED) {
+  } else if (state == IceState::CANDIDATES_RECEIVED && getTransportState() != TRANSPORT_GATHERED) {
     updateTransportState(TRANSPORT_GATHERED);
   } else if (state == IceState::FAILED) {
     Debug("Ice Failed");
@@ -330,11 +338,13 @@ void DtlsTransport::updateIceStateSync(IceState state, IceConnection *conn) {
       dtlsRtp->start();
       rtp_timeout_checker_->scheduleCheck();
     }
-    if (!isServer_ && dtlsRtcp != NULL && !dtlsRtcp->started) {
+    if (!isServer_ && dtlsRtcp && !dtlsRtcp->started) {
       Debug("DTLSRTCP Start");
       dtlsRtcp->start();
       rtcp_timeout_checker_->scheduleCheck();
     }
+    // when without srtp
+    // updateTransportState(TRANSPORT_READY);
   }
 }
 
@@ -354,13 +364,5 @@ void DtlsTransport::processLocalSdp(SdpInfo *localSdp_) {
 }
 
 bool DtlsTransport::isDtlsPacket(const char* buf, int len) {
-  int data = DtlsSocketContext::demuxPacket(reinterpret_cast<const unsigned char*>(buf), len);
-  switch (data) {
-    case DtlsSocketContext::dtls:
-      return true;
-      break;
-    default:
-      return false;
-      break;
-  }
+  return DtlsSocketContext::dtls == DtlsSocketContext::demuxPacket(reinterpret_cast<const unsigned char*>(buf), len);
 }

@@ -112,6 +112,16 @@ LogTrace::~LogTrace()
 #include <fstream>
 #include <mutex>
 #include <WinSock2.h>
+
+const char* FileName(const char* path)
+{
+  const char* p = strrchr(path, '/');
+  if (p) return p + 1;
+  p = strrchr(path, '\\');
+  if (p) return p + 1;
+  return path;
+}
+
 void LogOut(char* strLog, int nLen)
 {
 	OutputDebugStringA(strLog);

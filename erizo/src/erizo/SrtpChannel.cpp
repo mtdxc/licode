@@ -6,7 +6,7 @@
 #include <nice/nice.h>
 #include "MediaDefinitions.h"
 #include <string>
-
+#include "rtp/RtpHeaders.h"
 #include "SrtpChannel.h"
 
 namespace erizo {
@@ -105,11 +105,10 @@ int SrtpChannel::unprotectRtp(char* buffer, int *len) {
   if (val == 0) {
     return 0;
   } else {
-    RtcpHeader* head = reinterpret_cast<RtcpHeader*>(buffer);
-    RtpHeader* headrtp = reinterpret_cast<RtpHeader*>(buffer);
+    RtpHeader* head = reinterpret_cast<RtpHeader*>(buffer);
     if (val != 10) {  // Do not warn about reply errors
-      ELOG_DEBUG("Error SrtpChannel::unprotectRtp %u packettype %d pt %d",
-                 val, head->packettype, headrtp->payloadtype);
+      ELOG_DEBUG("Error SrtpChannel::unprotectRtp %u seq %d pt %d",
+                 val, head->seqnum, head->payloadtype);
     }
     return -1;
   }

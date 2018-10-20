@@ -15,7 +15,7 @@
 enum TransportState {
   TRANSPORT_INITIAL, TRANSPORT_STARTED, TRANSPORT_GATHERED, TRANSPORT_READY, TRANSPORT_FINISHED, TRANSPORT_FAILED
 };
-
+const char* TransportStateStr(TransportState s);
 namespace erizo {
 class Transport;
 

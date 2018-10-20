@@ -40,7 +40,8 @@ namespace log4cxx{
  public:
 		static LoggerPtr getLogger(const char* name) { return name; }
 	};
-  }
+}
+
 void LogOut(int level, const char* module, const char* fmt, ...);
 void LogOut2(int level, const char* module, const char* file, int line,  const char* fmt, ...);
 #define DECLARE_LOGGER() static const char* logger;
@@ -173,6 +174,8 @@ if (logger->isFatalEnabled()) { \
 }
 
 #endif
+const char* FileName(const char* path);
+#define FILENAME_LOGGER() static const char* logger = FileName(__FILE__);
 
 class LogContext {
 public:
@@ -183,7 +186,7 @@ public:
 
   void setLogContext(std::map<std::string, std::string> context);
   void copyLogContextFrom(LogContext *log_context) {
-		context_log_ = log_context->context_log_;
+		//context_log_ = log_context->context_log_;
   }
 
   const char* printLogContext() const {

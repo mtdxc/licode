@@ -10,13 +10,13 @@
 #include "./MediaDefinitions.h"
 #include "./Transport.h"
 #include "./Stats.h"
-#include "bandwidth/BandwidthDistributionAlgorithm.h"
+#include "lib/Clock.h"
 #include "pipeline/Pipeline.h"
 #include "thread/Worker.h"
 #include "thread/IOWorker.h"
 #include "rtp/RtcpProcessor.h"
 #include "rtp/RtpExtensionProcessor.h"
-#include "lib/Clock.h"
+#include "bandwidth/BandwidthDistributionAlgorithm.h"
 
 namespace erizo {
 
@@ -53,7 +53,7 @@ class WebRtcConnection: public TransportListener, public LogContext,
   DECLARE_LOGGER();
 
  public:
-
+   typedef std::shared_ptr<WebRtcConnection> Ptr;
   /**
    * Constructor.
    * Constructs an empty WebRTCConnection without any configuration.
@@ -152,7 +152,6 @@ class WebRtcConnection: public TransportListener, public LogContext,
         const std::string& stream_id = "");
 
  private:
-  std::string connection_id_;
   bool audio_enabled_;
   bool video_enabled_;
   bool sending_;

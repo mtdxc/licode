@@ -127,19 +127,11 @@ void RtpUtils::forEachRtcpBlock(packetPtr packet, std::function<void(RtcpHeader*
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   int len = packet->length;
   if (chead->isRtcp()) {
-    char* moving_buffer = packet->data;
-    int rtcp_length = 0;
-    int total_length = 0;
-    int currentBlock = 0;
-
-    do {
-      moving_buffer += rtcp_length;
-      chead = reinterpret_cast<RtcpHeader*>(moving_buffer);
-      rtcp_length = (ntohs(chead->length) + 1) * 4;
-      total_length += rtcp_length;
+    for (int cur = 0; cur < len; ) {
+      chead = reinterpret_cast<RtcpHeader*>(packet->data+cur);
       f(chead);
-      currentBlock++;
-    } while (total_length < len);
+      cur += chead->getSize();
+    }
   }
 }
 

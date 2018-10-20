@@ -8,6 +8,7 @@ extern "C" {
 #include <openssl/bn.h>
 #include <openssl/srtp.h>
 #include <openssl/opensslv.h>
+#include <openssl/err.h>
 #include <srtp.h>
 }
 
@@ -300,8 +301,11 @@ int createCert(const std::string& pAor, int expireDays, int keyLen, X509*& outCe
 
       if ((data[0] == 0)   || (data[0] == 1))
         return stun;
-      if ((data[0] >= 128) && (data[0] <= 191))
+      if ((data[0] >= 128) && (data[0] <= 191)) {
+        // for rtcp detect
+        // (data[1] >= RTCP_MIN_PT && data[1] <= RTCP_MAX_PT)
         return rtp;
+      }
       if ((data[0] >= 20)  && (data[0] <= 64))
         return dtls;
 

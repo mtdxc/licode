@@ -1,10 +1,17 @@
-#include "dtls/DtlsSocket.h"
-
 #include <iostream>
 #include <cassert>
 #include <cstring>
 #include <string>
+#include "dtls/DtlsSocket.h"
+extern "C" {
+#include <srtp.h>
+#include <openssl/e_os2.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/crypto.h>
+#include <openssl/ssl.h>
 #include "./bf_dwrap.h"
+}
 
 using namespace dtls;
 using std::memcpy;
@@ -80,12 +87,7 @@ bool DtlsSocket::handlePacketMaybe(const unsigned char* bytes, unsigned int len)
     return false;
   }
   DtlsSocketContext::PacketType pType = DtlsSocketContext::demuxPacket(bytes, len);
-
   if (pType != DtlsSocketContext::dtls) {
-    return false;
-  }
-
-  if (mSsl == nullptr) {
     return false;
   }
 
@@ -98,7 +100,7 @@ bool DtlsSocket::handlePacketMaybe(const unsigned char* bytes, unsigned int len)
   // Note: we must catch any below exceptions--if there are any
   try {
     doHandshakeIteration();
-  } catch (int e) {
+  } catch (...) {
     return false;
   }
   return true;
@@ -118,7 +120,7 @@ void DtlsSocket::doHandshakeIteration() {
   int sslerr;
 
   if (mHandshakeCompleted)
-  return;
+    return;
 
   int r = SSL_do_handshake(mSsl);
   errbuf[0] = 0;
@@ -142,7 +144,6 @@ void DtlsSocket::doHandshakeIteration() {
       break;
     default:
       ELOG_ERROR("SSL error %d", sslerr);
-
       mSocketContext->handshakeFailed(errbuf);
       // Note: need to fall through to propagate alerts, if any
       break;
