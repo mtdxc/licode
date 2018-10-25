@@ -98,7 +98,7 @@ class ContextImplBase : public PipelineContext {
   // PipelineContext overrides
   void attachPipeline() override {
     if (!attached_) {
-      this->attachContext(handler_.get(), impl_);
+      attachContext(handler_.get(), impl_);
       handler_->attachPipeline(impl_);
       attached_ = true;
     }
@@ -159,98 +159,98 @@ class ContextImpl
   explicit ContextImpl(
       std::weak_ptr<PipelineBase> pipeline,
       std::shared_ptr<H> handler) {
-    this->impl_ = this;
-    this->initialize(pipeline, std::move(handler));
+    impl_ = this;
+    initialize(pipeline, std::move(handler));
   }
 
   // For StaticPipeline
   ContextImpl() {
-    this->impl_ = this;
+    impl_ = this;
   }
 
   ~ContextImpl() = default;
 
   // HandlerContext overrides
   void fireRead(packetPtr packet) override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextIn_) {
-      this->nextIn_->read(std::move(packet));
+    auto guard = pipelineWeak_.lock();
+    if (nextIn_) {
+      nextIn_->read(std::move(packet));
     }
   }
 
   void fireReadEOF() override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextIn_) {
-      this->nextIn_->readEOF();
+    auto guard = pipelineWeak_.lock();
+    if (nextIn_) {
+      nextIn_->readEOF();
     }
   }
 
   void fireTransportActive() override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextIn_) {
-      this->nextIn_->transportActive();
+    auto guard = pipelineWeak_.lock();
+    if (nextIn_) {
+      nextIn_->transportActive();
     }
   }
 
   void fireTransportInactive() override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextIn_) {
-      this->nextIn_->transportInactive();
+    auto guard = pipelineWeak_.lock();
+    if (nextIn_) {
+      nextIn_->transportInactive();
     }
   }
 
   void fireWrite(packetPtr packet) override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextOut_) {
-      this->nextOut_->write(std::move(packet));
+    auto guard = pipelineWeak_.lock();
+    if (nextOut_) {
+      nextOut_->write(std::move(packet));
     }
   }
 
   void fireClose() override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextOut_) {
-      this->nextOut_->close();
+    auto guard = pipelineWeak_.lock();
+    if (nextOut_) {
+      nextOut_->close();
     }
   }
 
   PipelineBase* getPipeline() override {
-    return this->pipelineRaw_;
+    return pipelineRaw_;
   }
 
   std::shared_ptr<PipelineBase> getPipelineShared() override {
-    return this->pipelineWeak_.lock();
+    return pipelineWeak_.lock();
   }
 
   // InboundLink overrides
   void read(packetPtr packet) override {
-    auto guard = this->pipelineWeak_.lock();
-    this->handler_->read(this, std::move(packet));
+    auto guard = pipelineWeak_.lock();
+    handler_->read(this, std::move(packet));
   }
 
   void readEOF() override {
-    auto guard = this->pipelineWeak_.lock();
-    this->handler_->readEOF(this);
+    auto guard = pipelineWeak_.lock();
+    handler_->readEOF(this);
   }
 
   void transportActive() override {
-    auto guard = this->pipelineWeak_.lock();
-    this->handler_->transportActive(this);
+    auto guard = pipelineWeak_.lock();
+    handler_->transportActive(this);
   }
 
   void transportInactive() override {
-    auto guard = this->pipelineWeak_.lock();
-    this->handler_->transportInactive(this);
+    auto guard = pipelineWeak_.lock();
+    handler_->transportInactive(this);
   }
 
   // OutboundLink overrides
   void write(packetPtr packet) override {
-    auto guard = this->pipelineWeak_.lock();
-    this->handler_->write(this, std::move(packet));
+    auto guard = pipelineWeak_.lock();
+    handler_->write(this, std::move(packet));
   }
 
   void close() override {
-    auto guard = this->pipelineWeak_.lock();
-    this->handler_->close(this);
+    auto guard = pipelineWeak_.lock();
+    handler_->close(this);
   }
 };
 
@@ -265,73 +265,73 @@ class InboundContextImpl
   explicit InboundContextImpl(
       std::weak_ptr<PipelineBase> pipeline,
       std::shared_ptr<H> handler) {
-    this->impl_ = this;
-    this->initialize(pipeline, std::move(handler));
+    impl_ = this;
+    initialize(pipeline, std::move(handler));
   }
 
   // For StaticPipeline
   InboundContextImpl() {
-    this->impl_ = this;
+    impl_ = this;
   }
 
   ~InboundContextImpl() = default;
 
   // InboundHandlerContext overrides
   void fireRead(packetPtr packet) override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextIn_) {
-      this->nextIn_->read(std::move(packet));
+    auto guard = pipelineWeak_.lock();
+    if (nextIn_) {
+      nextIn_->read(std::move(packet));
     }
   }
 
   void fireReadEOF() override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextIn_) {
-      this->nextIn_->readEOF();
+    auto guard = pipelineWeak_.lock();
+    if (nextIn_) {
+      nextIn_->readEOF();
     }
   }
 
   void fireTransportActive() override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextIn_) {
-      this->nextIn_->transportActive();
+    auto guard = pipelineWeak_.lock();
+    if (nextIn_) {
+      nextIn_->transportActive();
     }
   }
 
   void fireTransportInactive() override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextIn_) {
-      this->nextIn_->transportInactive();
+    auto guard = pipelineWeak_.lock();
+    if (nextIn_) {
+      nextIn_->transportInactive();
     }
   }
 
   PipelineBase* getPipeline() override {
-    return this->pipelineRaw_;
+    return pipelineRaw_;
   }
 
   std::shared_ptr<PipelineBase> getPipelineShared() override {
-    return this->pipelineWeak_.lock();
+    return pipelineWeak_.lock();
   }
 
   // InboundLink overrides
   void read(packetPtr packet) override {
-    auto guard = this->pipelineWeak_.lock();
-    this->handler_->read(this, std::move(packet));
+    auto guard = pipelineWeak_.lock();
+    handler_->read(this, std::move(packet));
   }
 
   void readEOF() override {
-    auto guard = this->pipelineWeak_.lock();
-    this->handler_->readEOF(this);
+    auto guard = pipelineWeak_.lock();
+    handler_->readEOF(this);
   }
 
   void transportActive() override {
-    auto guard = this->pipelineWeak_.lock();
-    this->handler_->transportActive(this);
+    auto guard = pipelineWeak_.lock();
+    handler_->transportActive(this);
   }
 
   void transportInactive() override {
-    auto guard = this->pipelineWeak_.lock();
-    this->handler_->transportInactive(this);
+    auto guard = pipelineWeak_.lock();
+    handler_->transportInactive(this);
   }
 };
 
@@ -346,49 +346,49 @@ class OutboundContextImpl
   explicit OutboundContextImpl(
       std::weak_ptr<PipelineBase> pipeline,
       std::shared_ptr<H> handler) {
-    this->impl_ = this;
-    this->initialize(pipeline, std::move(handler));
+    impl_ = this;
+    initialize(pipeline, std::move(handler));
   }
 
   // For StaticPipeline
   OutboundContextImpl() {
-    this->impl_ = this;
+    impl_ = this;
   }
 
   ~OutboundContextImpl() = default;
 
   // OutboundHandlerContext overrides
   void fireWrite(packetPtr packet) override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextOut_) {
-      return this->nextOut_->write(std::move(packet));
+    auto guard = pipelineWeak_.lock();
+    if (nextOut_) {
+      return nextOut_->write(std::move(packet));
     }
   }
 
   void fireClose() override {
-    auto guard = this->pipelineWeak_.lock();
-    if (this->nextOut_) {
-      return this->nextOut_->close();
+    auto guard = pipelineWeak_.lock();
+    if (nextOut_) {
+      return nextOut_->close();
     }
   }
 
   PipelineBase* getPipeline() override {
-    return this->pipelineRaw_;
+    return pipelineRaw_;
   }
 
   std::shared_ptr<PipelineBase> getPipelineShared() override {
-    return this->pipelineWeak_.lock();
+    return pipelineWeak_.lock();
   }
 
   // OutboundLink overrides
   void write(packetPtr packet) override {
-    auto guard = this->pipelineWeak_.lock();
-    return this->handler_->write(this, std::move(packet));
+    auto guard = pipelineWeak_.lock();
+    return handler_->write(this, std::move(packet));
   }
 
   void close() override {
-    auto guard = this->pipelineWeak_.lock();
-    return this->handler_->close(this);
+    auto guard = pipelineWeak_.lock();
+    return handler_->close(this);
   }
 };
 

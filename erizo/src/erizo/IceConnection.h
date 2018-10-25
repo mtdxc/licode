@@ -21,7 +21,6 @@ typedef struct _GMainLoop GMainLoop;
 namespace erizo {
 
 // forward declarations
-typedef packetPtr packetPtr;
 class CandidateInfo;
 class WebRtcConnection;
 class IceConnection;

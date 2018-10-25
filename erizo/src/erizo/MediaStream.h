@@ -49,7 +49,6 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   DECLARE_LOGGER();
 
  public:
-  typedef std::shared_ptr<MediaStream> Ptr;
   typedef typename Handler::Context Context;
   bool audio_enabled_;
   bool video_enabled_;
@@ -59,7 +58,7 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
    * Constructs an empty MediaStream without any configuration.
    */
   MediaStream(std::shared_ptr<Worker> worker, std::shared_ptr<WebRtcConnection> connection,
-      const std::string& media_stream_id, const std::string& media_stream_label,
+      const std::string& stream_id, const std::string& stream_label,
       bool is_publisher);
   /**
    * Destructor.
@@ -70,13 +69,14 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   void close() override;
   void syncClose();
 
-  virtual uint32_t getMaxVideoBW();
+  bool setRemoteSdp(std::shared_ptr<SdpInfo> sdp);
+
   virtual uint32_t getBitrateFromMaxQualityLayer() { return bitrate_from_max_quality_layer_; }
+  void setBitrateFromMaxQualityLayer(uint64_t bitrate) { bitrate_from_max_quality_layer_ = bitrate; }
   virtual uint32_t getVideoBitrate() { return video_bitrate_; }
   void setVideoBitrate(uint32_t bitrate) { video_bitrate_ = bitrate; }
+  virtual uint32_t getMaxVideoBW();
   void setMaxVideoBW(uint32_t max_video_bw);
-
-  bool setRemoteSdp(std::shared_ptr<SdpInfo> sdp);
 
   /**
    * Sends a PLI Packet
@@ -127,6 +127,7 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   void notifyToEventSink(MediaEventPtr event);
 
   void asyncTask(std::function<void(std::shared_ptr<MediaStream>)> f);
+  void asyncTask(std::function<void()> f);
 
   void initializeStats();
   void printStats();
@@ -149,13 +150,12 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
 
   bool isSourceSSRC(uint32_t ssrc);
   bool isSinkSSRC(uint32_t ssrc);
-  void parseIncomingPayloadType(char *buf, int len, packetType type);
+  void parseIncomingPayloadType(packetPtr packet, packetType type);
 
-  bool isPipelineInitialized() { return pipeline_initialized_; }
-  bool isRunning() { return pipeline_initialized_ && sending_; }
+  bool isPipelineInitialized() const { return pipeline_initialized_; }
+  bool isRunning() const { return pipeline_initialized_ && sending_; }
   Pipeline::Ptr getPipeline() { return pipeline_; }
   bool isPublisher() { return is_publisher_; }
-  void setBitrateFromMaxQualityLayer(uint64_t bitrate) { bitrate_from_max_quality_layer_ = bitrate; }
 
   void Log(const char* fmt, ...) {
 	  va_list vl;
@@ -169,7 +169,9 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   int deliverVideoData_(packetPtr video_packet) override;
   int deliverFeedback_(packetPtr fb_packet) override;
   int deliverEvent_(MediaEventPtr event) override;
+
   void initializePipeline();
+
   void transferLayerStats(std::string spatial, std::string temporal);
   void transferMediaStats(std::string target_node, std::string source_parent, std::string source_node);
 
@@ -177,8 +179,8 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   // parses incoming payload type, replaces occurence in buf
 
  private:
-  std::mutex event_listener_mutex_;
-  MediaStreamEventListener* media_stream_event_listener_;
+  std::mutex event_mutex_;
+  MediaStreamEventListener* event_listener_ = nullptr;
   std::shared_ptr<WebRtcConnection> connection_;
   std::string stream_id_;
   std::string mslabel_;
@@ -208,9 +210,9 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
 
   bool is_publisher_;
 
-  std::atomic_bool simulcast_;
-  std::atomic<uint64_t> bitrate_from_max_quality_layer_;
-  std::atomic<uint32_t> video_bitrate_;
+  std::atomic_bool simulcast_ = false;
+  std::atomic<uint64_t> bitrate_from_max_quality_layer_ = 0;
+  std::atomic<uint32_t> video_bitrate_ = 0;
  protected:
   std::shared_ptr<SdpInfo> remote_sdp_;
 };

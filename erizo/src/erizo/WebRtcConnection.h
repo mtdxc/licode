@@ -120,7 +120,7 @@ class WebRtcConnection: public TransportListener, public LogContext,
   void write(packetPtr packet);
   void syncWrite(packetPtr packet);
   void asyncTask(std::function<void(std::shared_ptr<WebRtcConnection>)> f);
-
+  void asyncTask(std::function<void()> f);
   void addMediaStream(std::shared_ptr<MediaStream> media_stream);
   void removeMediaStream(const std::string& stream_id);
   void forEachMediaStream(std::function<void(const std::shared_ptr<MediaStream>&)> func);

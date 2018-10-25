@@ -187,9 +187,10 @@ class MediaSource: public virtual Monitor {
         AutoLock lock(monitor_mutex_);
         if (video_source_ssrc_list_.empty()) {
           video_source_ssrc_list_.push_back(ssrc);
-          return;
         }
-        video_source_ssrc_list_[0] = ssrc;
+        else {
+          video_source_ssrc_list_[0] = ssrc;
+        }
     }
     std::vector<uint32_t> getVideoSourceSSRCList() {
         AutoLock lock(monitor_mutex_);

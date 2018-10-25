@@ -95,6 +95,7 @@ void Pipeline::close() {
 
 void Pipeline::finalize() {
   front_ = nullptr;
+  // 将所有inCtxs串起来，形成一个单向链表，尾部为空
   if (!inCtxs_.empty()) {
     front_ = dynamic_cast<InboundLink*>(inCtxs_.front());
     for (size_t i = 0; i < inCtxs_.size() - 1; i++) {

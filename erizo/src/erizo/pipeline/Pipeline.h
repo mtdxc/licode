@@ -19,32 +19,9 @@
 
 namespace erizo {
 
-class PipelineBase;
-
-class PipelineManager {
- public:
-  virtual ~PipelineManager() = default;
-  virtual void deletePipeline(PipelineBase* pipeline) = 0;
-  virtual void refreshTimeout() {}
-};
-
 class PipelineBase : public std::enable_shared_from_this<PipelineBase> {
  public:
   virtual ~PipelineBase() = default;
-
-  void setPipelineManager(PipelineManager* manager) {
-    manager_ = manager;
-  }
-
-  PipelineManager* getPipelineManager() {
-    return manager_;
-  }
-
-  void deletePipeline() {
-    if (manager_) {
-      manager_->deletePipeline(this);
-    }
-  }
 
   template <class H>
   PipelineBase& addBack(std::shared_ptr<H> handler);
@@ -71,7 +48,6 @@ class PipelineBase : public std::enable_shared_from_this<PipelineBase> {
   PipelineBase& remove();
 
   PipelineBase& removeFront();
-
   PipelineBase& removeBack();
 
   template <class H>
@@ -118,15 +94,16 @@ class PipelineBase : public std::enable_shared_from_this<PipelineBase> {
   void addContextFront(Context* ctx);
 
   void detachHandlers();
-
+  // 所有上下文（生存期管理）
   std::vector<std::shared_ptr<PipelineContext>> ctxs_;
+  // In或Both上下文（维护前后顺序）
   std::vector<PipelineContext*> inCtxs_;
+  // Out或Both上下文（维护前后顺序）
   std::vector<PipelineContext*> outCtxs_;
-
+  // 服务数组
   std::vector<std::shared_ptr<PipelineServiceContext>> service_ctxs_;
 
  private:
-  PipelineManager* manager_{nullptr};
 
   template <class Context>
   PipelineBase& addHelper(std::shared_ptr<Context>&& ctx, bool front);  // NOLINT
@@ -161,21 +138,18 @@ class Pipeline : public PipelineBase {
   ~Pipeline();
 
   void read(packetPtr packet);
-
   void readEOF();
 
-  void transportActive();
-
-  void transportInactive();
-
   void write(packetPtr packet);
-
   void close();
 
+  // 完成In/out链表构建
   void finalize() override;
-
+  // 通知ctx
   void notifyUpdate();
+  // 通知ctx和Service
   void notifyEvent(MediaEventPtr event);
+
   void enable(std::string name);
   void disable(std::string name);
 

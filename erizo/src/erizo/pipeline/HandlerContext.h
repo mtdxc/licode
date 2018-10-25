@@ -21,12 +21,12 @@ class PipelineBase;
 class HandlerContext {
  public:
   virtual ~HandlerContext() = default;
-
+  // Inbound
   virtual void fireRead(packetPtr packet) = 0;
   virtual void fireReadEOF() = 0;
   virtual void fireTransportActive() = 0;
   virtual void fireTransportInactive() = 0;
-
+  // Outbound
   virtual void fireWrite(packetPtr packet) = 0;
   virtual void fireClose() = 0;
 

@@ -76,8 +76,7 @@ packetPtr RtpUtils::createPLI(uint32_t source_ssrc, uint32_t sink_ssrc) {
   pli.setSourceSSRC(source_ssrc);
   pli.setLength(2);
   char *buf = reinterpret_cast<char*>(&pli);
-  int len = (pli.getLength() + 1) * 4;
-  return std::make_shared<DataPacket>(0, buf, len, VIDEO_PACKET);
+  return std::make_shared<DataPacket>(0, buf, pli.getSize(), VIDEO_PACKET);
 }
 
 packetPtr RtpUtils::createFIR(uint32_t source_ssrc, uint32_t sink_ssrc, uint8_t seq_number) {
