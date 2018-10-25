@@ -95,7 +95,7 @@ uint32_t MediaStream::getMaxVideoBW() {
 }
 
 void MediaStream::setMaxVideoBW(uint32_t max_video_bw) {
-  asyncTask([max_video_bw, this] () {
+  asyncTask([=]{
     if (rtcp_processor_) {
       Log("setMaxVideoBW %u", max_video_bw);
       rtcp_processor_->setMaxVideoBW(max_video_bw * 1000);
@@ -258,10 +258,10 @@ void MediaStream::initializeStats() {
 }
 
 void MediaStream::transferLayerStats(std::string spatial, std::string temporal) {
-  std::string node = "SL" + spatial + "TL" + temporal;
   if (stats_->getNode().hasChild("qualityLayers") &&
       stats_->getNode()["qualityLayers"].hasChild(spatial) &&
       stats_->getNode()["qualityLayers"][spatial].hasChild(temporal)) {
+    std::string node = "SL" + spatial + "TL" + temporal;
     log_stats_->getNode().insertStat(node, CumulativeStat{stats_->getNode()["qualityLayers"][spatial][temporal].value()});
   }
 }
@@ -510,7 +510,8 @@ void MediaStream::notifyMediaStreamEvent(const std::string& type, const std::str
 }
 
 void MediaStream::notifyToEventSink(MediaEventPtr event) {
-  event_sink_->deliverEvent(std::move(event));
+  if(event_sink_)
+    event_sink_->deliverEvent(std::move(event));
 }
 
 int MediaStream::sendPLI() {
@@ -607,13 +608,14 @@ void MediaStream::setTransportInfo(std::string audio_info, std::string video_inf
 
 void MediaStream::setFeedbackReports(bool will_send_fb, uint32_t target_bitrate) {
   if (slide_show_mode_) {
-    Log("reset target_bitrate %u to 0 for in slide_show_mode_", target_bitrate);
+    Log("slide_show_mode ignore target_bitrate setting %u", target_bitrate);
     target_bitrate = 0;
   }
 
   Log("setFeedbackReports %d, bitrate %u", will_send_fb, target_bitrate);
   should_send_feedback_ = will_send_fb;
   if (target_bitrate == 1) {
+    Log("disable video");
     video_enabled_ = false;
   }
   rate_control_ = target_bitrate;
@@ -631,7 +633,7 @@ WebRTCEvent MediaStream::getCurrentState() {
 }
 
 void MediaStream::getJSONStats(std::function<void(std::string)> callback) {
-  asyncTask([callback, this] () {
+  asyncTask([=] () {
     std::string requested_stats = stats_->getStats();
     // Log("stats: %s", requested_stats.c_str());
     callback(requested_stats);
@@ -639,7 +641,7 @@ void MediaStream::getJSONStats(std::function<void(std::string)> callback) {
 }
 
 void MediaStream::changeDeliverPayloadType(DataPacket *dp, packetType type) { 
-  if (!dp->isRtcp()) {
+  if (dp && !dp->isRtcp()) {
     RtpHeader* h = dp->rtp();
       int internalPT = h->getPayloadType();
       int externalPT = internalPT;
@@ -680,7 +682,7 @@ void MediaStream::write(packetPtr packet) {
 }
 
 void MediaStream::enableHandler(const std::string &name) {
-  asyncTask([name,this] (std::shared_ptr<MediaStream> conn) {
+  asyncTask([name,this] () {
       if (pipeline_) {
         Log("enableHandler %s", name.c_str());
         pipeline_->enable(name);
@@ -689,7 +691,7 @@ void MediaStream::enableHandler(const std::string &name) {
 }
 
 void MediaStream::disableHandler(const std::string &name) {
-  asyncTask([name, this] (std::shared_ptr<MediaStream> conn) {
+  asyncTask([name, this] () {
     if (pipeline_) {
       Log("disableHandler %s", name.c_str());
       pipeline_->disable(name);
@@ -701,15 +703,6 @@ void MediaStream::notifyUpdateToHandlers() {
   asyncTask([this]() {
     if (pipeline_) {
       pipeline_->notifyUpdate();
-    }
-  });
-}
-
-void MediaStream::asyncTask(std::function<void(std::shared_ptr<MediaStream>)> f) {
-  std::weak_ptr<MediaStream> weak_this = shared_from_this();
-  worker_->task([weak_this, f] {
-    if (auto this_ptr = weak_this.lock()) {
-      f(this_ptr);
     }
   });
 }
@@ -743,7 +736,7 @@ void MediaStream::sendPacket(packetPtr p) {
       }
       partial_bitrate = ((sentVideoBytes - lastSecondVideoBytes) * 8) * 10;
       if (partial_bitrate > this->rate_control_) {
-        // Log("skip packet %p for rate_control", p.get());
+        // Log("skip packet %p,%d for rate_control", p.get(), p->length);
         return;
       }
       sentVideoBytes += p->length;

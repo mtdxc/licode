@@ -173,7 +173,7 @@ void WebRtcConnection::forEachMediaStream(std::function<void(const std::shared_p
 void WebRtcConnection::forEachMediaStreamAsync(std::function<void(const std::shared_ptr<MediaStream>&)> func) {
   std::for_each(media_streams_.begin(), media_streams_.end(),
     [func] (const std::shared_ptr<MediaStream> &stream) {
-    stream->asyncTask([func] (const std::shared_ptr<MediaStream> &stream) {
+    stream->asyncTask([=]() {
       func(stream);
     });
   });
@@ -262,12 +262,13 @@ void WebRtcConnection::setRemoteSdpsToMediaStreams(std::string stream_id) {
 
   if (stream != media_streams_.end()) {
     std::weak_ptr<WebRtcConnection> weak_this = shared_from_this();
-    (*stream)->asyncTask([weak_this, stream_id] (const std::shared_ptr<MediaStream> &media_stream) {
+    std::shared_ptr<MediaStream> media_stream = *stream;
+    media_stream->asyncTask([=] () {
       if (auto connection = weak_this.lock()) {
         // apply remote and local sdp to stream
         media_stream->setRemoteSdp(connection->remote_sdp_);
         connection->Log("setting remote SDP to stream, stream: %s", media_stream->getId());
-        connection->onRemoteSdpsSetToMediaStreams(stream_id);
+        onRemoteSdpsSetToMediaStreams(stream_id);
       }
     });
   } else {

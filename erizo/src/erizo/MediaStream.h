@@ -126,7 +126,6 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
 
   void notifyToEventSink(MediaEventPtr event);
 
-  void asyncTask(std::function<void(std::shared_ptr<MediaStream>)> f);
   void asyncTask(std::function<void()> f);
 
   void initializeStats();
