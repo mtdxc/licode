@@ -52,9 +52,10 @@ void PliPacerHandler::sendPLI() {
 
 void PliPacerHandler::sendFIR() {
   stream_->Log("Timed out waiting for a keyframe");
+  // why 3?
   getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
-  getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
-  getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
+  //getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
+  //getContext()->fireWrite(RtpUtils::createFIR(video_source_ssrc_, video_sink_ssrc_, fir_seq_number_++));
   waiting_for_keyframe_ = false;
   scheduled_pli_ = 0;
 }

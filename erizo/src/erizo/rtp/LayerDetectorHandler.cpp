@@ -32,8 +32,7 @@ void LayerDetectorHandler::disable() {
 }
 
 void LayerDetectorHandler::read(Context *ctx, packetPtr packet) {
-  RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
-  if (!chead->isRtcp() && enabled_ && packet->type == VIDEO_PACKET) {
+  if (enabled_ && packet->type == VIDEO_PACKET && !packet->isRtcp()) {
     if (packet->codec == "VP8") {
       parseLayerInfoFromVP8(packet);
     } else if (packet->codec == "VP9") {
@@ -73,27 +72,24 @@ void LayerDetectorHandler::notifyLayerInfoChangedEventMaybe() {
 }
 
 int LayerDetectorHandler::getSsrcPosition(uint32_t ssrc) {
-  std::vector<uint32_t>::iterator item = std::find(video_ssrc_list_.begin(), video_ssrc_list_.end(), ssrc);
-  size_t index = std::distance(video_ssrc_list_.begin(), item);
-  if (index != video_ssrc_list_.size()) {
-    return index;
-  }
+  for (int i = 0; i < video_ssrc_list_.size(); i++)
+    if (video_ssrc_list_[i] == ssrc)
+      return i;
   return -1;
 }
 
 void LayerDetectorHandler::parseLayerInfoFromVP8(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
-  unsigned char* start_buffer = reinterpret_cast<unsigned char*> (packet->data);
-  start_buffer = start_buffer + rtp_header->getHeaderLength();
-  RTPPayloadVP8* payload = vp8_parser_.parseVP8(
-      start_buffer, packet->length - rtp_header->getHeaderLength());
+  RTPPayloadVP8* payload = vp8_parser_.parseVP8((unsigned char*)
+      packet->data + rtp_header->getHeaderLength(),
+      packet->length - rtp_header->getHeaderLength());
   if (payload->hasPictureID) {
     packet->picture_id = payload->pictureID;
   }
   if (payload->hasTl0PicIdx) {
     packet->tl0_pic_idx = payload->tl0PicIdx;
   }
-  packet->compatible_temporal_layers = {};
+  packet->compatible_temporal_layers.clear();
   switch (payload->tID) {
     case 0: addTemporalLayerAndCalculateRate(packet, 0, payload->beginningOfPartition);
     case 1: addTemporalLayerAndCalculateRate(packet, 1, payload->beginningOfPartition);
@@ -132,10 +128,9 @@ void LayerDetectorHandler::addTemporalLayerAndCalculateRate(const packetPtr &pac
 
 void LayerDetectorHandler::parseLayerInfoFromVP9(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
-  unsigned char* start_buffer = reinterpret_cast<unsigned char*> (packet->data);
-  start_buffer = start_buffer + rtp_header->getHeaderLength();
-  RTPPayloadVP9* payload = vp9_parser_.parseVP9(
-      start_buffer, packet->length - rtp_header->getHeaderLength());
+  RTPPayloadVP9* payload = vp9_parser_.parseVP9((unsigned char*)
+    packet->data + rtp_header->getHeaderLength(),
+    packet->length - rtp_header->getHeaderLength());
 
   int spatial_layer = payload->spatialID;
 
@@ -144,7 +139,7 @@ void LayerDetectorHandler::parseLayerInfoFromVP9(packetPtr packet) {
     packet->compatible_spatial_layers.push_back(i);
   }
 
-  packet->compatible_temporal_layers = {};
+  packet->compatible_temporal_layers.clear();
   switch (payload->temporalID) {
     case 0: addTemporalLayerAndCalculateRate(packet, 0, payload->beginningOfLayerFrame);
     case 2: addTemporalLayerAndCalculateRate(packet, 1, payload->beginningOfLayerFrame);
@@ -180,10 +175,9 @@ void LayerDetectorHandler::parseLayerInfoFromVP9(packetPtr packet) {
 
 void LayerDetectorHandler::parseLayerInfoFromH264(packetPtr packet) {
   RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
-  unsigned char* start_buffer = reinterpret_cast<unsigned char*> (packet->data);
-  start_buffer = start_buffer + rtp_header->getHeaderLength();
-  RTPPayloadH264* payload = h264_parser_.parseH264(
-      start_buffer, packet->length - rtp_header->getHeaderLength());
+  RTPPayloadH264* payload = h264_parser_.parseH264((unsigned char*)
+    packet->data + rtp_header->getHeaderLength(),
+    packet->length - rtp_header->getHeaderLength());
 
   int position = getSsrcPosition(rtp_header->getSSRC());
   packet->compatible_spatial_layers = {position};
@@ -197,7 +191,6 @@ void LayerDetectorHandler::parseLayerInfoFromH264(packetPtr packet) {
   addTemporalLayerAndCalculateRate(packet, 0, payload->start_bit);
 
   notifyLayerInfoChangedEventMaybe();
-
   delete payload;
 }
 

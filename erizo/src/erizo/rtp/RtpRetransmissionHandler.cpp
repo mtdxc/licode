@@ -71,12 +71,14 @@ void RtpRetransmissionHandler::read(Context *ctx, packetPtr packet) {
   bool contains_nack = false;
   bool is_fully_recovered = true;
 
-  RtpUtils::forEachRtcpBlock(packet, [this, &contains_nack, &is_fully_recovered](RtcpHeader *chead) {
+  RtcpHeader *chead = NULL;
+  RtcpAccess acs(packet->data, packet->length);
+  while (chead = acs.Next()) {
     if (chead->packettype == RTCP_RTP_Feedback_PT) {
       contains_nack = true;
 
       RtpUtils::forEachNack(chead, [this, chead, &is_fully_recovered](uint16_t new_seq_num,
-         uint16_t new_plb, RtcpHeader* nack_head) {
+        uint16_t new_plb, RtcpHeader* nack_head) {
         uint16_t initial_seq_num = new_seq_num;
         uint16_t plb = new_plb;
 
@@ -85,32 +87,33 @@ void RtpRetransmissionHandler::read(Context *ctx, packetPtr packet) {
           bool packet_nacked = i == -1 || (plb >> i) & 0x0001;
 
           if (packet_nacked) {
-          packetPtr recovered;
+            packetPtr recovered;
 
-          if (stream_->getVideoSinkSSRC() == chead->getSourceSSRC()) {
-            recovered = packet_buffer_->getVideoPacket(seq_num);
-          } else if (stream_->getAudioSinkSSRC() == chead->getSourceSSRC()) {
-            recovered = packet_buffer_->getAudioPacket(seq_num);
-          }
+            if (stream_->getVideoSinkSSRC() == chead->getSourceSSRC()) {
+              recovered = packet_buffer_->getVideoPacket(seq_num);
+            }
+            else if (stream_->getAudioSinkSSRC() == chead->getSourceSSRC()) {
+              recovered = packet_buffer_->getAudioPacket(seq_num);
+            }
 
-          if (recovered.get()) {
-            if (!bucket_.consume(recovered->length)) {
-              continue;
+            if (recovered) {
+              if (!bucket_.consume(recovered->length)) {
+                continue;
+              }
+              RtpHeader *recovered_head = reinterpret_cast<RtpHeader*> (recovered->data);
+              if (recovered_head->getSeqNumber() == seq_num) {
+                getRtxBitrateStat() += recovered->length;
+                getContext()->fireWrite(recovered);
+                continue;
+              }
             }
-            RtpHeader *recovered_head = reinterpret_cast<RtpHeader*> (recovered->data);
-            if (recovered_head->getSeqNumber() == seq_num) {
-              getRtxBitrateStat() += recovered->length;
-              getContext()->fireWrite(recovered);
-              continue;
-            }
-          }
-          ELOG_DEBUG("Packet missed in buffer %d", seq_num);
-          is_fully_recovered = false;
+            ELOG_DEBUG("Packet missed in buffer %d", seq_num);
+            is_fully_recovered = false;
           }
         }
       });
     }
-  });
+  }
   if (!contains_nack || !is_fully_recovered) {
     ctx->fireRead(std::move(packet));
   }
@@ -120,8 +123,7 @@ void RtpRetransmissionHandler::write(Context *ctx, packetPtr packet) {
   if (!initialized_) {
     return;
   }
-  RtcpHeader *chead = reinterpret_cast<RtcpHeader*> (packet->data);
-  if (!chead->isRtcp()) {
+  if (!packet->isRtcp()) {
     packet_buffer_->insertPacket(packet);
   }
   ctx->fireWrite(std::move(packet));

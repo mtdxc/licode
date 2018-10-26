@@ -20,7 +20,10 @@ static constexpr int kBurstSize = 1300 * 20;  // 20 packets with almost max size
 namespace erizo {
 
 class MediaStream;
-
+/*
+write时候缓存数据到PacketBufferService
+read nack时重传数据
+*/
 class RtpRetransmissionHandler : public Handler {
  public:
   DECLARE_LOGGER();

@@ -59,9 +59,8 @@ void TokenBucket::reset(const uint64_t rate, const uint64_t burst_size) {
 }
 
 bool TokenBucket::consume(const uint64_t tokens) {
-  const uint64_t now = std::chrono::duration_cast<std::chrono::microseconds>(
-            clock_->now().time_since_epoch())
-            .count();
+  
+  const uint64_t now = clock_->msTime();
   const uint64_t time_needed = tokens * time_per_token_.load(std::memory_order_relaxed);
   const uint64_t min_time = now - time_per_burst_.load(std::memory_order_relaxed);
   uint64_t old_time = time_.load(std::memory_order_relaxed);

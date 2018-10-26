@@ -39,7 +39,7 @@ bool RtcpNackGenerator::handleRtpPacket(packetPtr packet) {
     //  Look for it in nack list, remove it if its there
     auto nack_info = std::find_if(nack_info_list_.begin(), nack_info_list_.end(),
         [seq_num](NackInfo& current_nack) {
-        return (current_nack.seq_num == seq_num);
+            return (current_nack.seq_num == seq_num);
         });
     if (nack_info != nack_info_list_.end()) {
       ELOG_DEBUG("message: Recovered Packet %u", seq_num);
@@ -47,18 +47,15 @@ bool RtcpNackGenerator::handleRtpPacket(packetPtr packet) {
     }
     return false;
   }
-  bool available_nacks = addNacks(seq_num);
-  highest_seq_num_ = seq_num;
-  return available_nacks;
-}
-
-bool RtcpNackGenerator::addNacks(uint16_t seq_num) {
-  for (uint16_t current_seq_num = highest_seq_num_ + 1; current_seq_num != seq_num; current_seq_num++) {
-    ELOG_DEBUG("message: Inserting a new Nack in list, ssrc: %u, seq_num: %u", ssrc_, current_seq_num);
-    nack_info_list_.push_back(NackInfo{current_seq_num});
-  }
-  while (nack_info_list_.size() > kMaxNacks) {
-     nack_info_list_.erase(nack_info_list_.end() - 1);
+  else {
+    for (uint16_t current_seq_num = highest_seq_num_ + 1; current_seq_num != seq_num; current_seq_num++) {
+      ELOG_DEBUG("message: Inserting a new Nack in list, ssrc: %u, seq_num: %u", ssrc_, current_seq_num);
+      nack_info_list_.push_back(NackInfo{ current_seq_num });
+    }
+    while (nack_info_list_.size() > kMaxNacks) {
+      nack_info_list_.erase(nack_info_list_.end() - 1);
+    }
+    highest_seq_num_ = seq_num;
   }
   return !nack_info_list_.empty();
 }
@@ -68,7 +65,7 @@ bool RtcpNackGenerator::addNackPacketToRr(packetPtr rr_packet) {
   // Only does it if it's time (> 100 ms since last NACK)
   std::vector <NackBlock> nack_vector;
   ELOG_DEBUG("message: Adding nacks to RR, nack_info_list_.size(): %lu", nack_info_list_.size());
-  uint64_t now_ms = ClockUtils::timePointToMs(clock_->now());
+  uint64_t now_ms = clock_->msTime();
   for (uint16_t index = 0; index < nack_info_list_.size(); index++) {
     NackInfo& base_nack_info = nack_info_list_[index];
     if (!isTimeToRetransmit(base_nack_info, now_ms)) {

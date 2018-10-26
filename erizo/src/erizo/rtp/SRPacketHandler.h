@@ -12,10 +12,11 @@
 namespace erizo {
 
 class MediaStream;
-
+/*
+根据ssrc统计发送字节，并填充RTCP SR报告
+*/
 class SRPacketHandler: public Handler {
   DECLARE_LOGGER();
-
 
  public:
   SRPacketHandler();
@@ -28,6 +29,7 @@ class SRPacketHandler: public Handler {
   }
 
   void read(Context *ctx, packetPtr packet) override;
+  // only do this..
   void write(Context *ctx, packetPtr packet) override;
   void notifyUpdate() override;
 

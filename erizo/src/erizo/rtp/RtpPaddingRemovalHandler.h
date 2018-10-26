@@ -12,9 +12,9 @@ namespace erizo {
 
 class MediaStream;
 
-class RtpPaddingRemovalHandler: public Handler, public std::enable_shared_from_this<RtpPaddingRemovalHandler> {
+class RtpPaddingRemovalHandler: public Handler, 
+  public std::enable_shared_from_this<RtpPaddingRemovalHandler> {
   DECLARE_LOGGER();
-
 
  public:
   RtpPaddingRemovalHandler();
@@ -31,10 +31,8 @@ class RtpPaddingRemovalHandler: public Handler, public std::enable_shared_from_t
   void notifyUpdate() override;
 
  private:
-  bool removePaddingBytes(packetPtr packet,
-      std::shared_ptr<SequenceNumberTranslator> translator);
-  std::shared_ptr<SequenceNumberTranslator> getTranslatorForSsrc(uint32_t ssrc,
-    bool should_create);
+  bool removePaddingBytes(packetPtr packet, std::shared_ptr<SequenceNumberTranslator> translator);
+  std::shared_ptr<SequenceNumberTranslator> getTranslatorForSsrc(uint32_t ssrc, bool should_create);
 
  private:
   bool enabled_;

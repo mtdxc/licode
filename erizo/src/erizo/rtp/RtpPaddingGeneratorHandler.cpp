@@ -48,7 +48,6 @@ void RtpPaddingGeneratorHandler::notifyUpdate() {
   }
 
   auto quality_manager = pipeline->getService<QualityManager>();
-
   if (quality_manager->isPaddingEnabled() && !enabled_) {
     enablePadding();
   } else if (!quality_manager->isPaddingEnabled() && enabled_) {
@@ -69,7 +68,10 @@ void RtpPaddingGeneratorHandler::write(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   bool is_higher_sequence_number = false;
   if (packet->type == VIDEO_PACKET && !chead->isRtcp()) {
-    stream_->getWorker()->unschedule(scheduled_task_);
+    if (scheduled_task_) {
+      stream_->getWorker()->unschedule(scheduled_task_);
+      scheduled_task_ = 0;
+    }
     is_higher_sequence_number = isHigherSequenceNumber(packet);
     if (!first_packet_received_) {
       started_at_ = clock_->now();

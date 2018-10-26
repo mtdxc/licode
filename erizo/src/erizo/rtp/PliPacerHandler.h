@@ -11,7 +11,10 @@
 namespace erizo {
 
 class MediaStream;
-
+/*
+当上层请求关键帧时，保证pli请求会得到重传...
+why? 还不如做个周期请求关键帧的
+*/
 class PliPacerHandler: public Handler, public std::enable_shared_from_this<PliPacerHandler> {
   DECLARE_LOGGER();
 

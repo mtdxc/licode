@@ -46,6 +46,8 @@ public:
   static inline uint64_t timePointToMs(time_point tp) {
     return std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();
   }
+
+  static inline uint64_t msNow() { return timePointToMs(clock::now()); }
 };
 }  // namespace erizo
 #endif  // ERIZO_SRC_ERIZO_LIB_CLOCK_H_

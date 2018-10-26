@@ -31,7 +31,7 @@ void RtpUtils::updateREMB(RtcpHeader *chead, uint64_t bitrate) {
 
 void RtpUtils::forEachNack(RtcpHeader *chead, std::function<void(uint16_t, uint16_t, RtcpHeader*)> f) {
   if (chead->packettype == RTCP_RTP_Feedback_PT) {
-    int length = (chead->getLength() + 1)*4;
+    int length = chead->getSize();
     int current_position = kNackCommonHeaderLengthBytes;
     uint8_t* aux_pointer = reinterpret_cast<uint8_t*>(chead);
     RtcpHeader* aux_chead;
@@ -75,8 +75,7 @@ packetPtr RtpUtils::createPLI(uint32_t source_ssrc, uint32_t sink_ssrc) {
   pli.setSSRC(sink_ssrc);
   pli.setSourceSSRC(source_ssrc);
   pli.setLength(2);
-  char *buf = reinterpret_cast<char*>(&pli);
-  return std::make_shared<DataPacket>(0, buf, pli.getSize(), VIDEO_PACKET);
+  return std::make_shared<DataPacket>(0, (char*)&pli, pli.getSize(), VIDEO_PACKET);
 }
 
 packetPtr RtpUtils::createFIR(uint32_t source_ssrc, uint32_t sink_ssrc, uint8_t seq_number) {
@@ -88,9 +87,7 @@ packetPtr RtpUtils::createFIR(uint32_t source_ssrc, uint32_t sink_ssrc, uint8_t 
   fir.setLength(4);
   fir.setFIRSourceSSRC(source_ssrc);
   fir.setFIRSequenceNumber(seq_number);
-  char *buf = reinterpret_cast<char*>(&fir);
-  int len = (fir.getLength() + 1) * 4;
-  return std::make_shared<DataPacket>(0, buf, len, VIDEO_PACKET);
+  return std::make_shared<DataPacket>(0, (char*)&fir, fir.getSize(), VIDEO_PACKET);
 }
 
 packetPtr RtpUtils::createREMB(uint32_t ssrc, std::vector<uint32_t> ssrc_list, uint32_t bitrate) {
@@ -108,9 +105,7 @@ packetPtr RtpUtils::createREMB(uint32_t ssrc, std::vector<uint32_t> ssrc_list, u
   for (uint32_t feed_ssrc : ssrc_list) {
     remb.setREMBFeedSSRC(index++, feed_ssrc);
   }
-  int len = (remb.getLength() + 1) * 4;
-  char *buf = reinterpret_cast<char*>(&remb);
-  return std::make_shared<erizo::DataPacket>(0, buf, len, erizo::OTHER_PACKET);
+  return std::make_shared<erizo::DataPacket>(0, (char*)&remb, remb.getSize(), erizo::OTHER_PACKET);
 }
 
 
@@ -147,7 +142,6 @@ packetPtr RtpUtils::makePaddingPacket(packetPtr packet, uint8_t padding_size) {
   new_header->setPadding(true);
   new_header->setMarker(false);
   packet_buffer[packet_length - 1] = padding_size;
-
   return std::make_shared<DataPacket>(packet->comp, packet_buffer, packet_length, packet->type);
 }
 

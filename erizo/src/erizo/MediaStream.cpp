@@ -57,7 +57,7 @@ MediaStream::MediaStream(std::shared_ptr<Worker> worker,
     worker_{std::move(worker)},
     is_publisher_{is_publisher}{
   audio_enabled_ = video_enabled_ = audio_muted_ = video_muted_ = false;
-  bundle_ = false; pipeline_initialized_ = false;  slide_show_mode_ = false;
+  bundle_ = false; pipeline_initialized_ = false; slide_show_mode_ = false;
   set_log_context("%cs.%s", is_publisher_ ? 'P' : 'S', stream_id_.c_str());
   Log("constructor");
   
@@ -155,6 +155,7 @@ bool MediaStream::setRemoteSdp(std::shared_ptr<SdpInfo> sdp) {
 
   if (pipeline_initialized_ && pipeline_) {
     pipeline_->notifyUpdate();
+    Log("already inited skip setRemoteSdp");
     return true;
   }
 
@@ -181,10 +182,12 @@ bool MediaStream::setRemoteSdp(std::shared_ptr<SdpInfo> sdp) {
 
   audio_enabled_ = remote_sdp_->hasAudio;
   video_enabled_ = remote_sdp_->hasVideo;
-
+  Log("audio_enabled %d, video_enabled %d", audio_enabled_, video_enabled_);
+  Log("AudioSourceSSRC %u", getAudioSourceSSRC());
   rtcp_processor_->addSourceSsrc(getAudioSourceSSRC());
   for(uint32_t ssrc: video_source_ssrc_list_){
-      rtcp_processor_->addSourceSsrc(ssrc);
+    Log("VideoSourceSSRC %u", ssrc);
+    rtcp_processor_->addSourceSsrc(ssrc);
   };
 
   initializePipeline();
@@ -355,7 +358,7 @@ void MediaStream::initializePipeline() {
   pipeline_->addFront(std::make_shared<LayerDetectorHandler>());
   pipeline_->addFront(std::make_shared<OutgoingStatsHandler>());
   pipeline_->addFront(std::make_shared<PacketCodecParser>());
-
+  
   pipeline_->addFront(std::make_shared<PacketWriter>(this));
   pipeline_->finalize();
   pipeline_initialized_ = true;
@@ -451,9 +454,9 @@ void MediaStream::read(packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
   uint32_t recvSSRC = 0;
   if (!chead->isRtcp()) {
-    recvSSRC = packet->rtp()->getSSRC();
+    recvSSRC = ((RtcpHeader*)packet->data)->getSSRC();
   } else if (chead->packettype == RTCP_Sender_PT || chead->packettype == RTCP_SDES_PT) {  // Sender Report
-    recvSSRC = packet->rtcp()->getSSRC();
+    recvSSRC = chead->getSSRC();
   }
   // DELIVER FEEDBACK (RR, FEEDBACK PACKETS)
   if (chead->isFeedback()) {
@@ -467,10 +470,10 @@ void MediaStream::read(packetPtr packet) {
       // Deliver data
       if (isVideoSourceSSRC(recvSSRC) && video_sink_) {
         parseIncomingPayloadType(packet, VIDEO_PACKET);
-        video_sink_->deliverVideoData(std::move(packet));
+        video_sink_->deliverVideoData(packet);
       } else if (isAudioSourceSSRC(recvSSRC) && audio_sink_) {
         parseIncomingPayloadType(packet, AUDIO_PACKET);
-        audio_sink_->deliverAudioData(std::move(packet));
+        audio_sink_->deliverAudioData(packet);
       } else {
         Log("read video unknownSSRC: %u, localVideoSSRC: %u, localAudioSSRC: %u", recvSSRC, getVideoSourceSSRC(), getAudioSourceSSRC());
       }
@@ -482,7 +485,7 @@ void MediaStream::read(packetPtr packet) {
           Log("discoveredAudioSourceSSRC:%u", recvSSRC);
           setAudioSourceSSRC(recvSSRC);
         }
-        audio_sink_->deliverAudioData(std::move(packet));
+        audio_sink_->deliverAudioData(packet);
       } else if (packet->type == VIDEO_PACKET && video_sink_) {
         parseIncomingPayloadType(packet, VIDEO_PACKET);
         // Firefox does not send SSRC in SDP
@@ -491,7 +494,7 @@ void MediaStream::read(packetPtr packet) {
           setVideoSourceSSRC(recvSSRC);
         }
         // change ssrc for RTP packets, don't touch here if RTCP
-        video_sink_->deliverVideoData(std::move(packet));
+        video_sink_->deliverVideoData(packet);
       }
     }  // if not bundle
   }  // if not Feedback
@@ -541,7 +544,7 @@ void MediaStream::sendPacketAsync(packetPtr packet) {
     return;
   }
 
-  changeDeliverPayloadType(packet.get(), packet->type);
+  changeDeliverPayloadType(packet, packet->type);
   asyncTask([=] {
     sendPacket(packet);
   });
@@ -640,7 +643,7 @@ void MediaStream::getJSONStats(std::function<void(std::string)> callback) {
   });
 }
 
-void MediaStream::changeDeliverPayloadType(DataPacket *dp, packetType type) { 
+void MediaStream::changeDeliverPayloadType(packetPtr dp, packetType type) {
   if (dp && !dp->isRtcp()) {
     RtpHeader* h = dp->rtp();
       int internalPT = h->getPayloadType();
@@ -720,22 +723,23 @@ void MediaStream::sendPacket(packetPtr p) {
   if (!sending_) {
     return;
   }
-  uint32_t partial_bitrate = 0;
+  // @todo move to member declared
   uint64_t sentVideoBytes = 0;
   uint64_t lastSecondVideoBytes = 0;
 
+  uint32_t partial_bitrate = 0;
   if (rate_control_ && !slide_show_mode_) {
     if (p->type == VIDEO_PACKET) {
       if (rate_control_ == 1) {
         return;
       }
-      now_ = clock::now();
-      if ((now_ - mark_) >= kBitrateControlPeriod) {
-        mark_ = now_;
+      time_point now = clock::now();
+      if ((now - mark_) >= kBitrateControlPeriod) {
+        mark_ = now;
         lastSecondVideoBytes = sentVideoBytes;
       }
       partial_bitrate = ((sentVideoBytes - lastSecondVideoBytes) * 8) * 10;
-      if (partial_bitrate > this->rate_control_) {
+      if (partial_bitrate > rate_control_) {
         // Log("skip packet %p,%d for rate_control", p.get(), p->length);
         return;
       }

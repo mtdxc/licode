@@ -581,6 +581,20 @@ class RtcpHeader {
   }
 };
 
+class RtcpAccess {
+  char* buf_;
+  int size_, cur_;
+public:
+  RtcpAccess(char* buf, int len) :buf_(buf), size_(len), cur_(0) {}
+  RtcpHeader* Next() {
+    RtcpHeader* ret = NULL;
+    if (buf_ && cur_ < size_) {
+      ret = (RtcpHeader*)(buf_ + cur_);
+      cur_ += ret->getSize();
+    }
+    return ret;
+  }
+};
 
 //    0                   1                   2                   3
 //    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1

@@ -5,10 +5,11 @@
 #include "./MediaDefinitions.h"
 #include "rtp/RtpHeaders.h"
 #include "pipeline/Service.h"
-
+// cache size
 static constexpr uint16_t kServicePacketBufferSize = 256;
 
 namespace erizo {
+// simple ring audio video buffer base seq
 class PacketBufferService: public Service {
  public:
   DECLARE_LOGGER();

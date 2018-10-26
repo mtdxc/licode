@@ -73,7 +73,7 @@ class LayerDetectorHandler: public InboundHandler, public std::enable_shared_fro
   std::vector<uint32_t> video_frame_height_list_;
   std::vector<uint32_t> video_frame_width_list_;
   std::vector<MovingIntervalRateStat> video_frame_rate_list_;
-  std::chrono::steady_clock::time_point last_event_sent_;
+  erizo::time_point last_event_sent_;
 };
 }  // namespace erizo
 

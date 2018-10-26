@@ -32,14 +32,12 @@ class RtcpNackGenerator{
   bool addNackPacketToRr(packetPtr rr_packet);
 
  private:
-  bool addNacks(uint16_t seq_num);
   bool isTimeToRetransmit(const NackInfo& nack_info, uint64_t current_time_ms);
 
  private:
   bool initialized_;
   uint16_t highest_seq_num_;
   uint32_t ssrc_;
-  NackInfo nack_info_;
   std::vector<NackInfo> nack_info_list_;
   std::shared_ptr<Clock> clock_;
 };

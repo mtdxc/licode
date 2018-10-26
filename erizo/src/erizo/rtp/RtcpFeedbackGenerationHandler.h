@@ -23,11 +23,8 @@ class RtcpGeneratorPair {
   std::shared_ptr<RtcpNackGenerator> nack_generator;
 };
 
-
 class RtcpFeedbackGenerationHandler: public Handler {
   DECLARE_LOGGER();
-
-
  public:
   explicit RtcpFeedbackGenerationHandler(bool nacks_enabled = true,
       std::shared_ptr<Clock> the_clock = std::make_shared<SteadyClock>());
@@ -46,7 +43,7 @@ class RtcpFeedbackGenerationHandler: public Handler {
 
  private:
   MediaStream *stream_;
-  std::map<uint32_t, std::shared_ptr<RtcpGeneratorPair>> generators_map_;
+  std::map<uint32_t, RtcpGeneratorPair> generators_map_;
 
   bool enabled_, initialized_;
   bool nacks_enabled_;

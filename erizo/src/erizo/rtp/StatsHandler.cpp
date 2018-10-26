@@ -1,11 +1,7 @@
-#include "rtp/StatsHandler.h"
-
 #include <string>
-
+#include "rtp/StatsHandler.h"
 #include "./MediaDefinitions.h"
 #include "./MediaStream.h"
-
-
 
 namespace erizo {
 
@@ -18,8 +14,8 @@ void StatsCalculator::update(MediaStream *stream, std::shared_ptr<Stats> stats) 
     stream_ = stream;
     stats_ = stats;
     if (!getStatsInfo().hasChild("total")) {
-      getStatsInfo()["total"].insertStat("bitrateCalculated", MovingIntervalRateStat{kRateStatIntervalSize,
-        kRateStatIntervals, 8.});
+      getStatsInfo()["total"].insertStat("bitrateCalculated", 
+        MovingIntervalRateStat{kRateStatIntervalSize, kRateStatIntervals, 8.});
     }
   }
 }
@@ -34,12 +30,11 @@ void StatsCalculator::processPacket(packetPtr packet) {
 }
 
 void StatsCalculator::processRtpPacket(packetPtr packet) {
-  char* buf = packet->data;
   int len = packet->length;
-  RtpHeader* head = reinterpret_cast<RtpHeader*>(buf);
+  RtpHeader* head = reinterpret_cast<RtpHeader*>(packet->data);
   uint32_t ssrc = head->getSSRC();
   if (!stream_->isSinkSSRC(ssrc) && !stream_->isSourceSSRC(ssrc)) {
-    ELOG_DEBUG("message: Unknown SSRC in processRtpPacket, ssrc: %u, PT: %u", ssrc, head->getPayloadType());
+    ELOG_DEBUG("processRtpPacket: Unknown SSRC %u, PT: %u", ssrc, head->getPayloadType());
     return;
   }
   if (!getStatsInfo()[ssrc].hasChild("bitrateCalculated")) {
@@ -48,8 +43,8 @@ void StatsCalculator::processRtpPacket(packetPtr packet) {
     } else if (stream_->isAudioSourceSSRC(ssrc) || stream_->isAudioSinkSSRC(ssrc)) {
       getStatsInfo()[ssrc].insertStat("type", StringStat{"audio"});
     }
-    getStatsInfo()[ssrc].insertStat("bitrateCalculated", MovingIntervalRateStat{kRateStatIntervalSize,
-        kRateStatIntervals, 8.});
+    getStatsInfo()[ssrc].insertStat("bitrateCalculated", 
+      MovingIntervalRateStat{kRateStatIntervalSize, kRateStatIntervals, 8.});
   }
   getStatsInfo()[ssrc]["bitrateCalculated"] += len;
   getStatsInfo()["total"]["bitrateCalculated"] += len;
@@ -73,14 +68,9 @@ void StatsCalculator::processRtcpPacket(packetPtr packet) {
   char* buf = packet->data;
   int len = packet->length;
 
-  char* movingBuf = buf;
-  int rtcpLength = 0;
-  int totalLength = 0;
   uint32_t ssrc = 0;
-
   bool is_feedback_on_publisher = false;
-
-  RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(movingBuf);
+  RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(buf);
   if (chead->isFeedback()) {
     ssrc = chead->getSourceSSRC();
     if (!stream_->isSinkSSRC(ssrc)) {
@@ -93,13 +83,10 @@ void StatsCalculator::processRtcpPacket(packetPtr packet) {
     }
   }
 
-  ELOG_DEBUG("RTCP packet received, type: %u, size: %u, packetLength: %u", chead->getPacketType(),
-       ((ntohs(chead->length) + 1) * 4), len);
-  do {
-    movingBuf += rtcpLength;
-    RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(movingBuf);
-    rtcpLength = (ntohs(chead->length) + 1) * 4;
-    totalLength += rtcpLength;
+  ELOG_DEBUG("RTCP packet received, type: %u, size: %u, packetLength: %u", 
+    chead->getPacketType(), chead->getSize(), len);
+  RtcpAccess acs(buf, len);
+  while(chead = acs.Next()) {
     ELOG_DEBUG("RTCP SubPacket: PT %d, SSRC %u, sourceSSRC %u, block count %d",
         chead->packettype, chead->getSSRC(), chead->getSourceSSRC(), chead->getBlockCount());
     switch (chead->packettype) {
@@ -170,7 +157,7 @@ void StatsCalculator::processRtcpPacket(packetPtr packet) {
         ELOG_DEBUG("Unknown RTCP Packet, %d", chead->packettype);
         break;
     }
-  } while (totalLength < len);
+  }
   notifyStats();
 }
 
@@ -185,8 +172,9 @@ void IncomingStatsHandler::notifyUpdate() {
     return;
   }
   auto pipeline = getContext()->getPipelineShared();
-  update(pipeline->getService<MediaStream>().get(),
-             pipeline->getService<Stats>());
+  if (pipeline) {
+    update(pipeline->getService<MediaStream>().get(), pipeline->getService<Stats>());
+  }
 }
 
 void IncomingStatsHandler::read(Context *ctx, packetPtr packet) {
@@ -205,8 +193,9 @@ void OutgoingStatsHandler::notifyUpdate() {
     return;
   }
   auto pipeline = getContext()->getPipelineShared();
-  update(pipeline->getService<MediaStream>().get(),
-             pipeline->getService<Stats>());
+  if (pipeline) {
+    update(pipeline->getService<MediaStream>().get(), pipeline->getService<Stats>());
+  }
 }
 
 void OutgoingStatsHandler::write(Context *ctx, packetPtr packet) {

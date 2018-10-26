@@ -82,18 +82,16 @@ void RtpSlideShowHandler::read(Context *ctx, packetPtr packet) {
 }
 
 void RtpSlideShowHandler::write(Context *ctx, packetPtr packet) {
-  RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
   RtcpHeader *rtcp_header = reinterpret_cast<RtcpHeader*>(packet->data);
   if (packet->type != VIDEO_PACKET || rtcp_header->isRtcp()) {
     ctx->fireWrite(std::move(packet));
     return;
   }
   bool should_skip_packet = false;
-
-  last_timestamp_received_ = rtp_header->getTimestamp();
-
-  uint16_t packet_seq_num = rtp_header->getSeqNumber();
   bool is_keyframe = false;
+  RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
+  last_timestamp_received_ = rtp_header->getTimestamp();
+  uint16_t packet_seq_num = rtp_header->getSeqNumber();
   RtpMap *codec = stream_->getRemoteSdpInfo()->getCodecByExternalPayloadType(rtp_header->getPayloadType());
   if (codec && (codec->encoding_name == "VP8" || codec->encoding_name == "H264")) {
     is_keyframe = isVP8OrH264Keyframe(packet);

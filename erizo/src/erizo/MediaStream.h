@@ -13,10 +13,10 @@
 #include "./MediaDefinitions.h"
 #include "./Transport.h"
 #include "./WebRtcConnection.h"
-#include "pipeline/Pipeline.h"
 #include "thread/Worker.h"
 #include "rtp/RtpExtensionProcessor.h"
 #include "lib/Clock.h"
+#include "pipeline/Pipeline.h"
 #include "pipeline/Handler.h"
 #include "pipeline/HandlerManager.h"
 #include "pipeline/Service.h"
@@ -116,8 +116,9 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   void setVideoConstraints(int max_video_width, int max_video_height, int max_video_frame_rate);
 
   void setMetadata(std::map<std::string, std::string> metadata);
-
+  // 将Packet传递给sink等
   void read(packetPtr packet);
+  // 写到connection
   void write(packetPtr packet);
 
   void enableHandler(const std::string &name);
@@ -174,7 +175,7 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
   void transferLayerStats(std::string spatial, std::string temporal);
   void transferMediaStats(std::string target_node, std::string source_parent, std::string source_node);
 
-  void changeDeliverPayloadType(DataPacket *dp, packetType type);
+  void changeDeliverPayloadType(packetPtr dp, packetType type);
   // parses incoming payload type, replaces occurence in buf
 
  private:
@@ -190,7 +191,7 @@ class MediaStream: public MediaSink, public MediaSource, public FeedbackSink,
 
   uint32_t rate_control_;  // Target bitrate for hacky rate control in BPS
 
-  time_point now_, mark_;
+  time_point mark_;
   std::shared_ptr<RtcpProcessor> rtcp_processor_;
   std::shared_ptr<Stats> stats_;
   std::shared_ptr<Stats> log_stats_;

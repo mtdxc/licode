@@ -19,9 +19,8 @@ void RtpPaddingRemovalHandler::disable() {
 
 void RtpPaddingRemovalHandler::read(Context *ctx, packetPtr packet) {
   RtcpHeader *chead = reinterpret_cast<RtcpHeader*>(packet->data);
-  RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
-
   if (!chead->isRtcp() && enabled_ && packet->type == VIDEO_PACKET) {
+    RtpHeader *rtp_header = reinterpret_cast<RtpHeader*>(packet->data);
     uint32_t ssrc = rtp_header->getSSRC();
     std::shared_ptr<SequenceNumberTranslator> translator = getTranslatorForSsrc(ssrc, true);
     if (!removePaddingBytes(packet, translator)) {
@@ -29,13 +28,11 @@ void RtpPaddingRemovalHandler::read(Context *ctx, packetPtr packet) {
     }
     uint16_t sequence_number = rtp_header->getSeqNumber();
     SequenceNumber sequence_number_info = translator->get(sequence_number, false);
-
     if (sequence_number_info.type != SequenceNumberType::Valid) {
       ELOG_DEBUG("Invalid translation %u, ssrc: %u", sequence_number, ssrc);
       return;
     }
-    ELOG_DEBUG("Changing seq_number from %u to %u, ssrc %u", sequence_number, sequence_number_info.output,
-     ssrc);
+    ELOG_DEBUG("Changing seq_number from %u to %u, ssrc %u", sequence_number, sequence_number_info.output, ssrc);
     rtp_header->setSeqNumber(sequence_number_info.output);
   }
   ctx->fireRead(std::move(packet));
@@ -54,10 +51,10 @@ void RtpPaddingRemovalHandler::write(Context *ctx, packetPtr packet) {
     ctx->fireWrite(std::move(packet));
     return;
   }
-  RtpUtils::forEachRtcpBlock(packet, [this, translator, ssrc](RtcpHeader *chead) {
+  RtcpAccess acs(packet->data, packet->length);
+  while(RtcpHeader *chead=acs.Next()){
     if (chead->packettype == RTCP_RTP_Feedback_PT) {
-      RtpUtils::forEachNack(chead, [this, translator, ssrc](uint16_t new_seq_num, uint16_t new_plb,
-      RtcpHeader* nack_header) {
+      RtpUtils::forEachNack(chead, [=](uint16_t new_seq_num, uint16_t new_plb, RtcpHeader* nack_header) {
         uint16_t initial_seq_num = new_seq_num;
         std::vector<uint16_t> seq_nums;
         for (int i = -1; i <= 15; i++) {
@@ -83,7 +80,7 @@ void RtpPaddingRemovalHandler::write(Context *ctx, packetPtr packet) {
         }
       });
     }
-  });
+  }
   ctx->fireWrite(std::move(packet));
 }
 
@@ -104,12 +101,10 @@ bool RtpPaddingRemovalHandler::removePaddingBytes(packetPtr packet,
   return true;
 }
 
-std::shared_ptr<SequenceNumberTranslator> RtpPaddingRemovalHandler::getTranslatorForSsrc(uint32_t ssrc,
-  bool should_create) {
+std::shared_ptr<SequenceNumberTranslator> RtpPaddingRemovalHandler::getTranslatorForSsrc(uint32_t ssrc, bool should_create) {
     auto translator_it = translator_map_.find(ssrc);
     std::shared_ptr<SequenceNumberTranslator> translator;
     if (translator_it != translator_map_.end()) {
-      stream_->Log("Found Translator for %u", ssrc);
       translator = translator_it->second;
     } else if (should_create) {
       stream_->Log("no Translator found creating a new one, ssrc: %u", ssrc);

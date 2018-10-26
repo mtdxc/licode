@@ -8,7 +8,6 @@
 
 #include "Stats.h"
 #include "MediaStream.h"
-#include "lib/Clock.h"
 
 namespace erizo {
 

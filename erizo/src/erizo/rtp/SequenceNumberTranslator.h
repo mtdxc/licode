@@ -26,7 +26,8 @@ struct SequenceNumber {
   SequenceNumberType type;
 };
 
-class SequenceNumberTranslator: public Service, public std::enable_shared_from_this<SequenceNumberTranslator> {
+class SequenceNumberTranslator: public Service, 
+  public std::enable_shared_from_this<SequenceNumberTranslator> {
   DECLARE_LOGGER();
 
  public:
